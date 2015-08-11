@@ -1,6 +1,6 @@
 # DotStat extension for JDemetra+
 
-This plugin provides time series from a DotStat server to [JDemetra+](https://github.com/jdemetra/jdemetra-app).  
+This plugin provides time series from a [DotStat](http://siscc.oecd.org/Home/Product) server to [JDemetra+](https://github.com/jdemetra/jdemetra-app).  
 Note that it also supports any server that complies with the [SDMX RESTful API v2.1](http://sdmx.org/wp-content/uploads/2013/09/SDMX_2_1-SECTION_07_WebServicesGuidelines_2013-04.pdf).
 
 [![Download](https://img.shields.io/github/release/nbbrd/jdemetra-dotstat.svg)](https://github.com/nbbrd/jdemetra-dotstat/releases/latest)
@@ -8,7 +8,7 @@ Note that it also supports any server that complies with the [SDMX RESTful API v
 ## Build requirements
 
 * JDK 7 or later
-* Maven
+* Maven 3
 
 ## Build
 
