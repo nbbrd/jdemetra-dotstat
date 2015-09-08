@@ -76,4 +76,11 @@
                 needsCredentials="false"
                 needsURLEncoding="false"
                 supportsCompression="false" />
+    <entrypoint name="INSEE" 
+                description="Institut national de la statistique et des études économiques" 
+                url="http://www.bdm.insee.fr/series/sdmx" 
+                type="Sdmx21"
+                needsCredentials="false"
+                needsURLEncoding="false"
+                supportsCompression="false" />
 </entrypoints>

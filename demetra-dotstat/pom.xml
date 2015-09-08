@@ -10,6 +10,7 @@
 
     <groupId>be.nbb.demetra</groupId>
     <artifactId>demetra-dotstat</artifactId>
+    <version>2.0.1</version>
     
     <name>Demetra - DotStat</name>
     <description>DotStat extension for JDemetra+</description>
@@ -26,7 +27,7 @@
         <dependency>
             <groupId>it.bancaditalia.oss</groupId>
             <artifactId>sdmx</artifactId>
-            <version>1.3</version>
+            <version>1.4.1</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -42,7 +43,7 @@
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>demetra-jdbc</artifactId>
-            <version>${project.version}</version>
+            <version>2.0.0</version>
         </dependency>
     </dependencies>
     

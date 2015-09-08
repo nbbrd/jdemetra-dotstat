@@ -30,7 +30,6 @@ import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbBean;
-import ec.tss.tsproviders.db.DbProvider;
 import it.bancaditalia.oss.sdmx.util.Configuration;
 import java.io.IOException;
 import java.util.Map;
@@ -44,7 +43,7 @@ import org.slf4j.LoggerFactory;
  * @author Philippe Charles
  */
 @ServiceProvider(service = ITsProvider.class)
-public class DotStatProvider extends DbProvider<DotStatBean> {
+public class DotStatProvider extends FixedDbProvider<DotStatBean> {
 
     public static final String NAME = "DOTSTAT", VERSION = "20150203";
     private SdmxConnectionSupplier supplier;

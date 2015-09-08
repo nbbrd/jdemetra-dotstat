@@ -18,13 +18,12 @@ package be.nbb.demetra.dotstat;
 
 import be.nbb.sdmx.FlowRef;
 import ec.tss.tsproviders.DataSource;
-import ec.tss.tsproviders.db.DbBean;
 
 /**
  *
  * @author Philippe Charles
  */
-public class DotStatBean extends DbBean.BulkBean {
+public class DotStatBean extends FixedDbBean.BulkBean {
 
     public DotStatBean() {
     }
