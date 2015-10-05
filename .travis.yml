@@ -3,4 +3,9 @@ jdk:
   - openjdk7
   - oraclejdk7
   - oraclejdk8
+before_install:
+  - git clone https://github.com/amattioc/SDMX.git ~/builds/sdmx
+  - cd ~/builds/sdmx/JAVA
+  - mvn clean install
+  - cd ~
 script: cd demetra-dotstat && mvn clean install && cd ../nbdemetra-dotstat && mvn clean install
