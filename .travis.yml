@@ -7,5 +7,5 @@ before_install:
   - git clone https://github.com/amattioc/SDMX.git ~/builds/sdmx
   - cd ~/builds/sdmx/JAVA
   - mvn clean install -DskipTests=true
-  - cd ~
+  - cd ~/nbbrd/jdemetra-dotstat
 script: cd demetra-dotstat && mvn clean install && cd ../nbdemetra-dotstat && mvn clean install
