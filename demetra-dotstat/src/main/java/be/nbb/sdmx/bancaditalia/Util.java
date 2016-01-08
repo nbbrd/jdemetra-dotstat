@@ -19,13 +19,23 @@ package be.nbb.sdmx.bancaditalia;
 import be.nbb.sdmx.DataStructure;
 import be.nbb.sdmx.ResourceRef;
 import be.nbb.sdmx.FlowRef;
+import be.nbb.sdmx.SdmxConnection;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import it.bancaditalia.oss.sdmx.api.Codelist;
 import it.bancaditalia.oss.sdmx.api.DSDIdentifier;
 import it.bancaditalia.oss.sdmx.api.DataFlowStructure;
 import it.bancaditalia.oss.sdmx.api.Dataflow;
 import it.bancaditalia.oss.sdmx.api.Dimension;
+import it.bancaditalia.oss.sdmx.api.GenericSDMXClient;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
 import lombok.experimental.UtilityClass;
 
 /**
@@ -53,5 +63,24 @@ final class Util {
             dimensions.add(new be.nbb.sdmx.Dimension(o.getId(), o.getPosition(), toCodelist(o.getCodeList()), o.getName()));
         }
         return new DataStructure(new ResourceRef(dfs.getAgency(), dfs.getId(), dfs.getVersion()), dimensions, dfs.getName(), dfs.getTimeDimension(), dfs.getMeasure());
+    }
+
+    public interface ClientSupplier {
+
+        @Nonnull
+        GenericSDMXClient getClient(@Nonnull URL endpoint, @Nonnull Properties info) throws MalformedURLException;
+    }
+
+    private final static Cache<String, Object> CACHE = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
+
+    @Nonnull
+    public SdmxConnection getConnection(@Nonnull String url, @Nonnull Properties info, @Nonnull ClientSupplier supplier) throws IOException {
+        try {
+            URL endpoint = new URL(url);
+            GenericSDMXClient client = supplier.getClient(endpoint, info);
+            return new CachedSdmxConnection(client, endpoint.getHost(), CACHE);
+        } catch (MalformedURLException ex) {
+            throw new IOException(ex);
+        }
     }
 }

@@ -34,11 +34,11 @@ import javax.annotation.Nonnull;
  *
  * @author Philippe Charles
  */
-class SdmxConnectionImpl extends SdmxConnection {
+class SdmxConnectionAdapter extends SdmxConnection {
 
     private final GenericSDMXClient client;
 
-    public SdmxConnectionImpl(GenericSDMXClient client) {
+    public SdmxConnectionAdapter(GenericSDMXClient client) {
         this.client = client;
     }
 
