@@ -17,8 +17,9 @@
 package be.nbb.sdmx.bancaditalia;
 
 import be.nbb.sdmx.SdmxConnection;
+import static be.nbb.sdmx.bancaditalia.Util.NEEDS_CREDENTIALS_PROPERTY;
+import static be.nbb.sdmx.bancaditalia.Util.get;
 import be.nbb.sdmx.driver.SdmxDriver;
-import ec.tss.tsproviders.utils.Parsers;
 import it.bancaditalia.oss.sdmx.api.GenericSDMXClient;
 import it.bancaditalia.oss.sdmx.client.custom.RestSdmx20Client;
 import java.io.IOException;
@@ -39,7 +40,7 @@ public final class Sdmx20Driver extends SdmxDriver {
     private final Util.ClientSupplier supplier = new Util.ClientSupplier() {
         @Override
         public GenericSDMXClient getClient(URL endpoint, Properties info) throws MalformedURLException {
-            return new RestSdmx20Client("", endpoint, isNeedsCredentials(info), null, "compact_v2") {
+            return new RestSdmx20Client("", endpoint, get(info, NEEDS_CREDENTIALS_PROPERTY, false), null, "compact_v2") {
             };
         }
     };
@@ -52,10 +53,5 @@ public final class Sdmx20Driver extends SdmxDriver {
     @Override
     public boolean acceptsURL(String url) throws IOException {
         return url.startsWith(PREFIX);
-    }
-
-    private boolean isNeedsCredentials(Properties info) {
-        String value = info.getProperty("needsCredentials");
-        return value != null ? Parsers.boolParser().tryParse(value).or(Boolean.FALSE) : false;
     }
 }

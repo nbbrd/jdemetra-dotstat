@@ -22,6 +22,7 @@ import be.nbb.sdmx.FlowRef;
 import be.nbb.sdmx.SdmxConnection;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import ec.tss.tsproviders.utils.Parsers;
 import it.bancaditalia.oss.sdmx.api.Codelist;
 import it.bancaditalia.oss.sdmx.api.DSDIdentifier;
 import it.bancaditalia.oss.sdmx.api.DataFlowStructure;
@@ -82,5 +83,15 @@ final class Util {
         } catch (MalformedURLException ex) {
             throw new IOException(ex);
         }
+    }
+
+    public static final String SUPPORTS_COMPRESSION_PROPERTY = "supportsCompression";
+    public static final String NEEDS_CREDENTIALS_PROPERTY = "needsCredentials";
+    public static final String NEEDS_URL_ENCODING_PROPERTY = "needsURLEncoding";
+    public static final String SERIES_KEYS_ONLY_SUPPORTED_PROPERTY = "seriesKeysOnlySupported";
+
+    public static boolean get(Properties p, String name, boolean defaultValue) {
+        String value = p.getProperty(name);
+        return value != null ? Parsers.boolParser().tryParse(value).or(defaultValue) : defaultValue;
     }
 }

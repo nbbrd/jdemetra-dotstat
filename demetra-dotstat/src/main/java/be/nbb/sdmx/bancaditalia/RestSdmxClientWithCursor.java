@@ -28,15 +28,20 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import javax.annotation.Nonnull;
+import lombok.Builder;
+import lombok.Value;
 
 /**
  *
  * @author Philippe Charles
  */
-final class ExtRestSdmxClient extends RestSdmxClient {
+final class RestSdmxClientWithCursor extends RestSdmxClient {
 
-    public ExtRestSdmxClient(String name, URL endpoint, boolean needsCredentials, boolean needsURLEncoding, boolean supportsCompression) {
-        super(name, endpoint, needsCredentials, needsURLEncoding, supportsCompression);
+    private final Config config;
+
+    public RestSdmxClientWithCursor(@Nonnull String name, @Nonnull URL endpoint, @Nonnull Config config) {
+        super(name, endpoint, config.isNeedsCredentials(), config.isNeedsURLEncoding(), config.isSupportsCompression());
+        this.config = config;
     }
 
     @Nonnull
@@ -47,5 +52,20 @@ final class ExtRestSdmxClient extends RestSdmxClient {
             throw new SdmxException("The query returned a null stream");
         }
         return SdmxParser.getDefault().compactData21(stream, Util.toDataStructure(dsd));
+    }
+
+    @Nonnull
+    Config getConfig() {
+        return config;
+    }
+
+    @Value
+    @Builder
+    static class Config {
+
+        private boolean needsCredentials;
+        private boolean needsURLEncoding;
+        private boolean supportsCompression;
+        private boolean seriesKeysOnlySupported;
     }
 }
