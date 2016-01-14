@@ -40,7 +40,7 @@ public final class Key {
 
     private final String[] items;
 
-    private Key(String[] items) {
+    private Key(@Nonnull String[] items) {
         this.items = items;
     }
 
@@ -50,15 +50,15 @@ public final class Key {
     }
 
     @Nonnull
-    public String getItem(int index) throws IndexOutOfBoundsException {
+    public String getItem(@Nonnegative int index) throws IndexOutOfBoundsException {
         return items[index];
     }
 
-    public boolean isWildcard(int index) throws IndexOutOfBoundsException {
+    public boolean isWildcard(@Nonnegative int index) throws IndexOutOfBoundsException {
         return WILDCARD.equals(items[index]);
     }
 
-    public boolean contains(Key input) {
+    public boolean contains(@Nonnull Key input) {
         for (int i = 0; i < getSize(); i++) {
             if (!isWildcard(i) && !getItem(i).equals(input.getItem(i))) {
                 return false;

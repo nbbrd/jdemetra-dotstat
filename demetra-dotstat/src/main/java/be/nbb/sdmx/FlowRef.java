@@ -16,9 +16,9 @@
  */
 package be.nbb.sdmx;
 
-import com.google.common.base.Strings;
 import java.util.Objects;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -45,10 +45,10 @@ public final class FlowRef {
     private final String flowId;
     private final String version;
 
-    public FlowRef(String agencyId, String flowId, String version) {
-        this.agencyId = Strings.isNullOrEmpty(agencyId) ? ALL_AGENCIES : agencyId;
+    private FlowRef(@Nonnull String agencyId, @Nonnull String flowId, @Nonnull String version) {
+        this.agencyId = agencyId;
         this.flowId = flowId;
-        this.version = Strings.isNullOrEmpty(version) ? LATEST_VERSION : version;
+        this.version = version;
     }
 
     @Nonnull
@@ -64,6 +64,12 @@ public final class FlowRef {
     @Nonnull
     public String getVersion() {
         return version;
+    }
+
+    public boolean contains(@Nonnull FlowRef that) {
+        return (this.agencyId.equals(ALL_AGENCIES) || this.agencyId.equals(that.agencyId))
+                && (this.flowId.equals(that.flowId))
+                && (this.version.equals(LATEST_VERSION) || this.version.equals(that.version));
     }
 
     @Override
@@ -82,23 +88,41 @@ public final class FlowRef {
     }
 
     private boolean equals(FlowRef that) {
-        return Objects.equals(this.agencyId, that.agencyId)
-                && Objects.equals(this.flowId, that.flowId)
-                && Objects.equals(this.version, that.version);
+        return this.agencyId.equals(that.agencyId)
+                && this.flowId.equals(that.flowId)
+                && this.version.equals(that.version);
     }
 
     @Nonnull
     public static FlowRef parse(@Nonnull String input) throws IllegalArgumentException {
-        String[] items = input.split(",");
+        String[] items = input.split(",", -1);
         switch (items.length) {
             case 3:
-                return new FlowRef(items[0], items[1], items[2]);
+                return new FlowRef(emptyToDefault(items[0], ALL_AGENCIES), items[1], emptyToDefault(items[2], LATEST_VERSION));
             case 2:
-                return new FlowRef(items[0], items[1], LATEST_VERSION);
+                return new FlowRef(emptyToDefault(items[0], ALL_AGENCIES), items[1], LATEST_VERSION);
             case 1:
                 return new FlowRef(ALL_AGENCIES, items[0], LATEST_VERSION);
             default:
                 throw new IllegalArgumentException(input);
         }
+    }
+
+    @Nonnull
+    public static FlowRef valueOf(@Nullable String agencyId, @Nonnull String flowId, @Nullable String version) throws IllegalArgumentException {
+        if (flowId.contains(",")) {
+            throw new IllegalArgumentException(flowId);
+        }
+        return new FlowRef(nullOrEmptyToDefault(agencyId, ALL_AGENCIES), flowId, nullOrEmptyToDefault(version, LATEST_VERSION));
+    }
+
+    @Nonnull
+    private static String emptyToDefault(@Nonnull String input, @Nonnull String defaultValue) {
+        return input.isEmpty() ? defaultValue : input;
+    }
+
+    @Nonnull
+    private static String nullOrEmptyToDefault(@Nullable String input, @Nonnull String defaultValue) {
+        return input == null || input.isEmpty() ? defaultValue : input;
     }
 }
