@@ -23,7 +23,9 @@ import be.nbb.sdmx.FlowRef;
 import be.nbb.sdmx.Key;
 import be.nbb.sdmx.SdmxConnection;
 import com.google.common.collect.ImmutableSet;
+import it.bancaditalia.oss.sdmx.api.DSDIdentifier;
 import it.bancaditalia.oss.sdmx.api.GenericSDMXClient;
+import it.bancaditalia.oss.sdmx.client.custom.DotStat;
 import it.bancaditalia.oss.sdmx.util.SdmxException;
 import java.io.IOException;
 import java.util.Map;
@@ -93,8 +95,10 @@ class SdmxConnectionAdapter extends SdmxConnection {
     @Nonnull
     protected it.bancaditalia.oss.sdmx.api.DataFlowStructure loadDataStructure(FlowRef flowRef) throws IOException {
         try {
-            it.bancaditalia.oss.sdmx.api.Dataflow dataflow = loadDataflow(flowRef);
-            return client.getDataFlowStructure(dataflow.getDsdIdentifier(), true);
+            it.bancaditalia.oss.sdmx.api.DSDIdentifier dsd = client instanceof DotStat
+                    ? new DSDIdentifier(flowRef.getFlowId(), flowRef.getAgencyId(), flowRef.getVersion())
+                    : loadDataflow(flowRef).getDsdIdentifier();
+            return client.getDataFlowStructure(dsd, true);
         } catch (SdmxException ex) {
             throw new IOException("While getting datastructure for '" + flowRef + "'", ex);
         }
