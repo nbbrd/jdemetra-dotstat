@@ -43,7 +43,7 @@ public class DotStatUtilTest {
 
     private final TestResource nbb = TestResource.nbb();
     private final TestResource ecb = TestResource.ecb();
-    private final FlowRef nbbFlow = new FlowRef("NBB", "TEST_DATASET", null);
+    private final FlowRef nbbFlow = FlowRef.valueOf("NBB", "TEST_DATASET", null);
     private final FlowRef ecbFlow = FlowRef.parse("ECB,AME,1.0");
 
     @Test

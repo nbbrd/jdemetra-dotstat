@@ -16,8 +16,8 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.bancaditalia.SdmxConnectionSupplierImpl;
-import be.nbb.sdmx.bancaditalia.WsEntryPoint;
+import be.nbb.sdmx.driver.SdmxDriverManager;
+import be.nbb.sdmx.driver.WsEntryPoint;
 import ec.nbdemetra.ui.completion.JAutoCompletionService;
 import ec.util.completion.AbstractAutoCompletionSource;
 import ec.util.completion.AutoCompletionSource;
@@ -54,7 +54,7 @@ public final class SdmxWsAutoCompletionService extends JAutoCompletionService {
 
         @Override
         protected Iterable<WsEntryPoint> getAllValues() throws Exception {
-            return SdmxConnectionSupplierImpl.INSTANCE.getEntryPoints();
+            return SdmxDriverManager.getDefault().getEntryPoints();
         }
 
         @Override
@@ -66,7 +66,7 @@ public final class SdmxWsAutoCompletionService extends JAutoCompletionService {
         protected boolean matches(AbstractAutoCompletionSource.TermMatcher termMatcher, WsEntryPoint input) {
             return termMatcher.matches(input.getName())
                     || termMatcher.matches(input.getDescription())
-                    || termMatcher.matches(input.getUrl().toString());
+                    || termMatcher.matches(input.getUrl());
         }
 
         @Override

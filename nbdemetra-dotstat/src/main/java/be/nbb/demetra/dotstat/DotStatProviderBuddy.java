@@ -21,7 +21,7 @@ import be.nbb.sdmx.Dimension;
 import ec.nbdemetra.db.DimensionsEditor;
 import be.nbb.sdmx.SdmxConnectionSupplier;
 import be.nbb.sdmx.SdmxConnection;
-import be.nbb.sdmx.bancaditalia.SdmxConnectionSupplierImpl;
+import be.nbb.sdmx.driver.SdmxDriverManager;
 import com.google.common.base.Converter;
 import com.google.common.base.Optional;
 import ec.nbdemetra.db.DbProviderBuddy;
@@ -61,7 +61,7 @@ public class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> implement
 
     public DotStatProviderBuddy() {
         this.configurator = createConfigurator();
-        this.supplier = SdmxConnectionSupplierImpl.INSTANCE;
+        this.supplier = SdmxDriverManager.getDefault();
         this.tableRenderer = new DataflowRenderer();
         this.columnRenderer = new DimensionRenderer();
     }
@@ -216,7 +216,8 @@ public class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> implement
 
         @Override
         protected boolean matches(TermMatcher termMatcher, Dataflow input) {
-            return termMatcher.matches(input.getName());
+            return termMatcher.matches(input.getName())
+                    || termMatcher.matches(input.getFlowRef().getFlowId());
         }
 
         @Override

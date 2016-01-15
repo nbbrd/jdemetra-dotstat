@@ -21,7 +21,7 @@ import be.nbb.sdmx.Dimension;
 import be.nbb.sdmx.FlowRef;
 import be.nbb.sdmx.SdmxConnection;
 import be.nbb.sdmx.SdmxConnectionSupplier;
-import be.nbb.sdmx.bancaditalia.SdmxConnectionSupplierImpl;
+import be.nbb.sdmx.driver.SdmxDriverManager;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import ec.tss.ITsProvider;
@@ -51,7 +51,7 @@ public class DotStatProvider extends FixedDbProvider<DotStatBean> {
 
     public DotStatProvider() {
         super(LoggerFactory.getLogger(DotStatProvider.class), NAME, TsAsyncMode.Once);
-        this.supplier = SdmxConnectionSupplierImpl.INSTANCE;
+        this.supplier = SdmxDriverManager.getDefault();
         this.displayCodes = false;
     }
 
@@ -127,7 +127,7 @@ public class DotStatProvider extends FixedDbProvider<DotStatBean> {
     }
 
     public void setConnectionSupplier(@Nullable SdmxConnectionSupplier supplier) {
-        this.supplier = supplier != null ? supplier : SdmxConnectionSupplierImpl.INSTANCE;
+        this.supplier = supplier != null ? supplier : SdmxDriverManager.getDefault();
     }
 
     @Nonnull

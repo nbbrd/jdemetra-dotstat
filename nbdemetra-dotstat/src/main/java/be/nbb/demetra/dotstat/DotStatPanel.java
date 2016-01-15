@@ -17,8 +17,8 @@
 package be.nbb.demetra.dotstat;
 
 import be.nbb.sdmx.SdmxConnectionSupplier;
-import be.nbb.sdmx.bancaditalia.SdmxConnectionSupplierImpl;
-import be.nbb.sdmx.bancaditalia.WsEntryPoint;
+import be.nbb.sdmx.driver.SdmxDriverManager;
+import be.nbb.sdmx.driver.WsEntryPoint;
 import com.google.common.base.Optional;
 import ec.nbdemetra.ui.completion.JAutoCompletionService;
 import ec.nbdemetra.ui.nodes.AbstractNodeBuilder;
@@ -33,7 +33,6 @@ import java.beans.BeanInfo;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
-import java.net.URL;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.netbeans.api.actions.Editable;
@@ -208,9 +207,9 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
             preferedLangTextBox.setText(provider.get().getPreferredLanguage());
             displayCodesCheckBox.setSelected(provider.get().isDisplayCodes());
             SdmxConnectionSupplier connectionSupplier = provider.get().getConnectionSupplier();
-            if (connectionSupplier instanceof SdmxConnectionSupplierImpl) {
+            if (connectionSupplier instanceof SdmxDriverManager) {
                 AbstractNodeBuilder b = new AbstractNodeBuilder();
-                for (WsEntryPoint o : ((SdmxConnectionSupplierImpl) connectionSupplier).getEntryPoints()) {
+                for (WsEntryPoint o : ((SdmxDriverManager) connectionSupplier).getEntryPoints()) {
                     b.add(new ConfigNode(o));
                 }
                 em.setRootContext(b.name("hello").build());
@@ -274,27 +273,9 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
                     .select(bean, "getDescription", null)
                     .display("Description")
                     .add();
-            b.with(URL.class)
+            b.with(String.class)
                     .select(bean, "getUrl", null)
                     .display("URL")
-                    .add();
-            b.withEnum(WsEntryPoint.Type.class)
-                    .select(bean, "getType", null)
-                    .display("Specification")
-                    .add();
-            result.put(b.build());
-            b.reset("Options");
-            b.withBoolean()
-                    .select(bean, "isNeedsCredentials", null)
-                    .display("Requires credentials")
-                    .add();
-            b.withBoolean()
-                    .select(bean, "isNeedsURLEncoding", null)
-                    .display("Requires URL encoding")
-                    .add();
-            b.withBoolean()
-                    .select(bean, "isSupportsCompression", null)
-                    .display("Supports compression")
                     .add();
             result.put(b.build());
             return result;

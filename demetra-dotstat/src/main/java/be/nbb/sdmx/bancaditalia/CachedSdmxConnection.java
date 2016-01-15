@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
  *
  * @author Philippe Charles
  */
-final class CachedSdmxConnection extends SdmxConnectionImpl {
+final class CachedSdmxConnection extends SdmxConnectionAdapter {
 
     private final Cache<String, Object> cache;
     private final String dataflowsKey;
