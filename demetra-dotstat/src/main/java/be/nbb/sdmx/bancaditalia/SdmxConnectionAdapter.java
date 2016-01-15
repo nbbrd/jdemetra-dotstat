@@ -23,7 +23,9 @@ import be.nbb.sdmx.FlowRef;
 import be.nbb.sdmx.Key;
 import be.nbb.sdmx.SdmxConnection;
 import com.google.common.collect.ImmutableSet;
+import it.bancaditalia.oss.sdmx.api.DSDIdentifier;
 import it.bancaditalia.oss.sdmx.api.GenericSDMXClient;
+import it.bancaditalia.oss.sdmx.client.custom.DotStat;
 import it.bancaditalia.oss.sdmx.util.SdmxException;
 import java.io.IOException;
 import java.util.Map;
@@ -34,11 +36,11 @@ import javax.annotation.Nonnull;
  *
  * @author Philippe Charles
  */
-class SdmxConnectionImpl extends SdmxConnection {
+class SdmxConnectionAdapter extends SdmxConnection {
 
     private final GenericSDMXClient client;
 
-    public SdmxConnectionImpl(GenericSDMXClient client) {
+    public SdmxConnectionAdapter(GenericSDMXClient client) {
         this.client = client;
     }
 
@@ -68,7 +70,8 @@ class SdmxConnectionImpl extends SdmxConnection {
 
     @Override
     public boolean isSeriesKeysOnlySupported() {
-        return client instanceof ExtRestSdmxClient;
+        return client instanceof RestSdmxClientWithCursor
+                && ((RestSdmxClientWithCursor) client).getConfig().isSeriesKeysOnlySupported();
     }
 
     @Nonnull
@@ -92,8 +95,10 @@ class SdmxConnectionImpl extends SdmxConnection {
     @Nonnull
     protected it.bancaditalia.oss.sdmx.api.DataFlowStructure loadDataStructure(FlowRef flowRef) throws IOException {
         try {
-            it.bancaditalia.oss.sdmx.api.Dataflow dataflow = loadDataflow(flowRef);
-            return client.getDataFlowStructure(dataflow.getDsdIdentifier(), true);
+            it.bancaditalia.oss.sdmx.api.DSDIdentifier dsd = client instanceof DotStat
+                    ? new DSDIdentifier(flowRef.getFlowId(), flowRef.getAgencyId(), flowRef.getVersion())
+                    : loadDataflow(flowRef).getDsdIdentifier();
+            return client.getDataFlowStructure(dsd, true);
         } catch (SdmxException ex) {
             throw new IOException("While getting datastructure for '" + flowRef + "'", ex);
         }
@@ -107,8 +112,8 @@ class SdmxConnectionImpl extends SdmxConnection {
         it.bancaditalia.oss.sdmx.api.Dataflow dataflow = loadDataflow(flowRef);
         it.bancaditalia.oss.sdmx.api.DataFlowStructure dfs = loadDataStructure(flowRef);
         try {
-            return client instanceof ExtRestSdmxClient
-                    ? ((ExtRestSdmxClient) client).getDataCursor(dataflow, dfs, key, serieskeysonly)
+            return client instanceof RestSdmxClientWithCursor
+                    ? ((RestSdmxClientWithCursor) client).getDataCursor(dataflow, dfs, key, serieskeysonly)
                     : new DataCursorAdapter(client.getTimeSeries(dataflow, dfs, key.toString(), null, null, serieskeysonly, null, false));
         } catch (SdmxException ex) {
             if (isNoResultMatchingQuery(ex)) {

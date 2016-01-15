@@ -157,7 +157,7 @@ public final class TestResource {
             @Override
             public Dataflow apply(DataFlowStructure input) {
                 return new Dataflow(
-                        new FlowRef(input.getAgency(), input.getId(), input.getVersion()),
+                        FlowRef.valueOf(input.getAgency(), input.getId(), input.getVersion()),
                         new ResourceRef(input.getAgency(), input.getId(), input.getVersion()),
                         input.getName()
                 );
