@@ -125,6 +125,11 @@
             <id>joinup-releases</id>
             <url>https://joinup.ec.europa.eu/nexus/content/repositories/releases/</url>
         </repository>
+        <repository> 
+            <id>netbeans</id> 
+            <name>NetBeans</name> 
+            <url>http://bits.netbeans.org/maven2/</url> 
+        </repository>
     </repositories>
   
     <build>
