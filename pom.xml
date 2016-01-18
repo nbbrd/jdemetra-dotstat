@@ -7,9 +7,11 @@
     <version>2.0.2-dev</version>
     <packaging>pom</packaging>
 
+    <name>Demetra - DotStat</name>
+
     <modules>
-        <module>demetra-dotstat</module>
-        <module>nbdemetra-dotstat</module>
+        <module>demetra-dotstat-core</module>
+        <module>demetra-dotstat-desktop</module>
     </modules>
     
     <build>

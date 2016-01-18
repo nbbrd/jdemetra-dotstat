@@ -3,10 +3,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>be.nbb.demetra</groupId>
-    <artifactId>demetra-dotstat</artifactId>
+    <artifactId>demetra-dotstat-core</artifactId>
     <version>2.0.2-dev</version>
     
-    <name>Demetra - DotStat</name>
+    <name>Demetra - DotStat - Core</name>
     <description>DotStat extension for JDemetra+</description>
 
     <url>https://github.com/nbbrd/jdemetra-dotstat</url>

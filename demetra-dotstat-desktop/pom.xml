@@ -3,11 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>be.nbb.demetra</groupId>
-    <artifactId>nbdemetra-dotstat</artifactId>
+    <artifactId>demetra-dotstat-desktop</artifactId>
     <version>2.0.2-dev</version>
     <packaging>nbm</packaging>
 
-    <name>NbDemetra - DotStat</name>
+    <name>Demetra - DotStat - Desktop</name>
     <description>DotStat extension for JDemetra+</description>
 
     <url>https://github.com/nbbrd/jdemetra-dotstat</url>
@@ -34,7 +34,7 @@
         <dependencies>
             <dependency>
                 <groupId>be.nbb.demetra</groupId>
-                <artifactId>demetra-dotstat</artifactId>
+                <artifactId>demetra-dotstat-core</artifactId>
                 <version>${project.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
@@ -109,7 +109,7 @@
         
         <dependency>
             <groupId>be.nbb.demetra</groupId>
-            <artifactId>demetra-dotstat</artifactId>
+            <artifactId>demetra-dotstat-core</artifactId>
             <version>${project.version}</version>
             <exclusions>
                 <exclusion>
