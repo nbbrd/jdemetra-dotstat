@@ -29,7 +29,8 @@ import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.ResourceRef;
-import be.nbb.sdmx.facade.util.SdmxParser;
+import be.nbb.sdmx.facade.util.XMLStreamGenericDataCursor20;
+import be.nbb.sdmx.facade.util.XMLStreamGenericDataCursor21;
 import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.google.common.io.ByteSource;
@@ -42,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nonnull;
+import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 
 /**
@@ -80,7 +82,7 @@ public final class TestResource {
             result.dataSupplier = new Callable<DataCursor>() {
                 @Override
                 public DataCursor call() throws Exception {
-                    return SdmxParser.getDefault().genericData20(open(NBB_DATA), dfs);
+                    return XMLStreamGenericDataCursor20.genericData20(XMLInputFactory.newInstance(), open(NBB_DATA), dfs);
                 }
             };
             result.seriesKeysOnlySupported = false;
@@ -110,7 +112,7 @@ public final class TestResource {
             result.dataSupplier = new Callable<DataCursor>() {
                 @Override
                 public DataCursor call() throws Exception {
-                    return SdmxParser.getDefault().genericData21(open(ECB_DATA), dfs);
+                    return XMLStreamGenericDataCursor21.genericData21(XMLInputFactory.newInstance(), open(ECB_DATA), dfs);
                 }
             };
             result.seriesKeysOnlySupported = true;
