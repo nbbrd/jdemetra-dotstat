@@ -13,5 +13,4 @@ Note that it also supports any server that complies with the [SDMX RESTful API v
 ## Build
 
 1. Download and build [this SMDX library](https://github.com/amattioc/SDMX/)
-2. Build demetra-dotstat
-3. Build nbdemetra-dotstat
+2. Build the dotstat extension for JDemetra+
