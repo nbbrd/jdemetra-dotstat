@@ -24,7 +24,6 @@
         <maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
         <!-- dependencies -->
         <demetra.version>2.0.0</demetra.version>
-        <bancaditalia.sdmx.version>1.5</bancaditalia.sdmx.version>
         <lombok.version>1.16.2</lombok.version>
         <netbeans.version>RELEASE801</netbeans.version>
     </properties>
@@ -43,9 +42,19 @@
 
     <dependencies>
         <dependency>
-            <groupId>it.bancaditalia.oss</groupId>
-            <artifactId>sdmx</artifactId>
-            <version>${bancaditalia.sdmx.version}</version>
+            <groupId>be.nbb.sdmx</groupId>
+            <artifactId>sdmx-facade-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>be.nbb.sdmx</groupId>
+            <artifactId>sdmx-facade-util</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>be.nbb.sdmx</groupId>
+            <artifactId>sdmx-facade-connectors</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

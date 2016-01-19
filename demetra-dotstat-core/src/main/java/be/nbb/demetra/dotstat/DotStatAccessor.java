@@ -16,12 +16,12 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.DataStructure;
-import be.nbb.sdmx.Dimension;
-import be.nbb.sdmx.FlowRef;
-import be.nbb.sdmx.Key;
-import be.nbb.sdmx.SdmxConnectionSupplier;
-import be.nbb.sdmx.SdmxConnection;
+import be.nbb.sdmx.facade.DataStructure;
+import be.nbb.sdmx.facade.Dimension;
+import be.nbb.sdmx.facade.FlowRef;
+import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.SdmxConnectionSupplier;
+import be.nbb.sdmx.facade.SdmxConnection;
 import com.google.common.base.Converter;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;

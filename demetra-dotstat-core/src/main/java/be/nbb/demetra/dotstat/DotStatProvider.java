@@ -16,12 +16,12 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.DataStructure;
-import be.nbb.sdmx.Dimension;
-import be.nbb.sdmx.FlowRef;
-import be.nbb.sdmx.SdmxConnection;
-import be.nbb.sdmx.SdmxConnectionSupplier;
-import be.nbb.sdmx.driver.SdmxDriverManager;
+import be.nbb.sdmx.facade.DataStructure;
+import be.nbb.sdmx.facade.Dimension;
+import be.nbb.sdmx.facade.FlowRef;
+import be.nbb.sdmx.facade.SdmxConnection;
+import be.nbb.sdmx.facade.SdmxConnectionSupplier;
+import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import ec.tss.ITsProvider;

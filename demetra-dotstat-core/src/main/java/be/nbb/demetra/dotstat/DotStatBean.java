@@ -16,7 +16,7 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.FlowRef;
+import be.nbb.sdmx.facade.FlowRef;
 import ec.tss.tsproviders.DataSource;
 
 /**

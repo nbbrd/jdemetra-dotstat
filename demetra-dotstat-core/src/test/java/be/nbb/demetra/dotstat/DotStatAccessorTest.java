@@ -16,14 +16,14 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.bancaditalia.FakeConnectionSupplier;
+import be.nbb.sdmx.facade.connectors.FakeConnectionSupplier;
 import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
-import be.nbb.sdmx.DataCursor;
-import be.nbb.sdmx.DataStructure;
-import be.nbb.sdmx.Dimension;
-import be.nbb.sdmx.FlowRef;
-import be.nbb.sdmx.Key;
-import be.nbb.sdmx.bancaditalia.TestResource;
+import be.nbb.sdmx.facade.DataCursor;
+import be.nbb.sdmx.facade.DataStructure;
+import be.nbb.sdmx.facade.Dimension;
+import be.nbb.sdmx.facade.FlowRef;
+import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.connectors.TestResource;
 import com.google.common.base.Joiner;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbSeries;

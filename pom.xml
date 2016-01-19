@@ -12,7 +12,12 @@
     <modules>
         <module>demetra-dotstat-core</module>
         <module>demetra-dotstat-desktop</module>
+        <module>sdmx-facade</module>
     </modules>
+    
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
     
     <build>
         <plugins>

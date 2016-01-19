@@ -16,14 +16,14 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.Codelist;
-import be.nbb.sdmx.DataCursor;
-import be.nbb.sdmx.DataStructure;
-import be.nbb.sdmx.Dimension;
-import be.nbb.sdmx.FlowRef;
-import be.nbb.sdmx.Key;
-import be.nbb.sdmx.SdmxConnection;
-import be.nbb.sdmx.TimeFormat;
+import be.nbb.sdmx.facade.Codelist;
+import be.nbb.sdmx.facade.DataCursor;
+import be.nbb.sdmx.facade.DataStructure;
+import be.nbb.sdmx.facade.Dimension;
+import be.nbb.sdmx.facade.FlowRef;
+import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.SdmxConnection;
+import be.nbb.sdmx.facade.TimeFormat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 import ec.tss.tsproviders.utils.OptionalTsData;

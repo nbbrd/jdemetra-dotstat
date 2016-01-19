@@ -16,12 +16,12 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.Dataflow;
-import be.nbb.sdmx.Dimension;
+import be.nbb.sdmx.facade.Dataflow;
+import be.nbb.sdmx.facade.Dimension;
 import ec.nbdemetra.db.DimensionsEditor;
-import be.nbb.sdmx.SdmxConnectionSupplier;
-import be.nbb.sdmx.SdmxConnection;
-import be.nbb.sdmx.driver.SdmxDriverManager;
+import be.nbb.sdmx.facade.SdmxConnectionSupplier;
+import be.nbb.sdmx.facade.SdmxConnection;
+import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import com.google.common.base.Converter;
 import com.google.common.base.Optional;
 import ec.nbdemetra.db.DbProviderBuddy;

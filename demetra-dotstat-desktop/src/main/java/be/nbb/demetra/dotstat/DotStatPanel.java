@@ -16,9 +16,9 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.SdmxConnectionSupplier;
-import be.nbb.sdmx.driver.SdmxDriverManager;
-import be.nbb.sdmx.driver.WsEntryPoint;
+import be.nbb.sdmx.facade.SdmxConnectionSupplier;
+import be.nbb.sdmx.facade.driver.SdmxDriverManager;
+import be.nbb.sdmx.facade.driver.WsEntryPoint;
 import com.google.common.base.Optional;
 import ec.nbdemetra.ui.completion.JAutoCompletionService;
 import ec.nbdemetra.ui.nodes.AbstractNodeBuilder;
