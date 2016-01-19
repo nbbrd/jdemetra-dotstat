@@ -8,4 +8,3 @@ before_install:
   - pushd ~/builds/sdmx/JAVA
   - mvn clean install -DskipTests=true
   - popd
-script: cd demetra-dotstat && mvn clean install && cd ../nbdemetra-dotstat && mvn clean install
