@@ -5,10 +5,14 @@
     <groupId>be.nbb.demetra</groupId>
     <artifactId>demetra-dotstat-core</artifactId>
     <version>2.0.2-SNAPSHOT</version>
+    <packaging>jar</packaging>
     
     <name>Demetra - DotStat - Core</name>
     <description>DotStat extension for JDemetra+</description>
 
+    <organization>
+        <name>National Bank of Belgium</name>
+    </organization>
     <url>https://github.com/nbbrd/jdemetra-dotstat</url>
     <licenses>
         <license>
