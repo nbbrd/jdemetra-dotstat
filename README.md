@@ -5,13 +5,21 @@ Note that it also supports any server that complies with the [SDMX RESTful API v
 
 [![Download](https://img.shields.io/github/release/nbbrd/jdemetra-dotstat.svg)](https://github.com/nbbrd/jdemetra-dotstat/releases/latest)
 
-## Build requirements
+## Quickstart
+
+This plugin requires [JDemetra+ 2.0.0 or later](https://github.com/jdemetra/jdemetra-app/releases).  
+
+To install, download the [latest version](https://github.com/nbbrd/jdemetra-dotstat/releases/latest), 
+launch JDemetra+ and go to `Tools>Plugins>Downloaded>Add Plugins...`.
+
+## Build
+
+### Requirements
 
 * JDK 7 or later
 * Maven 3
 
-## Build
+### Steps
 
 1. Download and build [this SMDX library](https://github.com/amattioc/SDMX/)
-2. Build demetra-dotstat
-3. Build nbdemetra-dotstat
+2. Build the dotstat extension for JDemetra+

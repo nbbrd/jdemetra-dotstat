@@ -1,2 +1,5 @@
-/demetra-dotstat/target/
-/nbdemetra-dotstat/target/
+/demetra-dotstat-core/target/
+/demetra-dotstat-desktop/target/
+/sdmx-facade/sdmx-facade-api/target/
+/sdmx-facade/sdmx-facade-connectors/target/
+/sdmx-facade/sdmx-facade-util/target/
