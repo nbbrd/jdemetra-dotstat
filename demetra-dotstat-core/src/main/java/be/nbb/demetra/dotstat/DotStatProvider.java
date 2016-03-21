@@ -18,7 +18,7 @@ package be.nbb.demetra.dotstat;
 
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.FlowRef;
+import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
@@ -89,8 +89,20 @@ public class DotStatProvider extends FixedDbProvider<DotStatBean> {
 
     @Override
     public String getDisplayName(DataSet dataSet) {
-        FlowRef flowRef = FlowRef.parse(DbBean.X_TABLENAME.get(dataSet.getDataSource()));
-        return flowRef.getFlowId() + "." + super.getDisplayName(dataSet).replace(", ", ".");
+        DotStatBean bean = decodeBean(dataSet.getDataSource());
+        try (SdmxConnection conn = supplier.getConnection(bean.getDbName())) {
+            DataStructure dfs = conn.getDataStructure(bean.getFlowRef());
+            Key.Builder b = Key.builder(dfs);
+            for (Dimension o : dfs.getDimensions()) {
+                String value = dataSet.get(o.getId());
+                if (value != null) {
+                    b.put(o.getId(), value);
+                }
+            }
+            return b.toString();
+        } catch (IOException ex) {
+        }
+        return super.getDisplayName(dataSet);
     }
 
     @Override
