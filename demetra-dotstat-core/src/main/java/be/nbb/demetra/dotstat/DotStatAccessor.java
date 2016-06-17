@@ -39,7 +39,7 @@ import javax.annotation.Nonnull;
  *
  * @author Philippe Charles
  */
-public final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
+final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
 
     private final SdmxConnectionSupplier supplier;
 
