@@ -52,7 +52,7 @@ import org.openide.util.lookup.ServiceProvider;
  * @author Philippe Charles
  */
 @ServiceProvider(service = IDataSourceProviderBuddy.class)
-public class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> implements IConfigurable {
+public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> implements IConfigurable {
 
     private final Configurator<DotStatProviderBuddy> configurator;
     private final SdmxConnectionSupplier supplier;
