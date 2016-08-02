@@ -52,7 +52,7 @@ public class DotStatAccessorTest {
     private static DotStatBean nbbBean() {
         DotStatBean result = new DotStatBean();
         result.setDbName(FakeConnectionSupplier.NBB);
-        result.setFlowRef(FlowRef.valueOf("NBB", "TEST_DATASET", null));
+        result.setFlowRef(FlowRef.of("NBB", "TEST_DATASET", null));
         result.setDimColumns(Joiner.on(',').join(new String[]{"SUBJECT", "LOCATION", "FREQUENCY"}));
         return result;
     }
@@ -79,7 +79,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKey() throws Exception {
-        DataStructure dfs = nbb.AsConnection().getDataStructure(FlowRef.valueOf("NBB", "TEST_DATASET", null));
+        DataStructure dfs = nbb.AsConnection().getDataStructure(FlowRef.of("NBB", "TEST_DATASET", null));
         Map<String, Dimension> dimensionById = DotStatAccessor.dimensionById(dfs);
 
         // default ordering of dimensions
@@ -99,7 +99,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKeyFromTs() throws Exception {
-        try (DataCursor cursor = nbb.AsConnection().getData(FlowRef.valueOf("NBB", "TEST_DATASET", null), Key.ALL, true)) {
+        try (DataCursor cursor = nbb.AsConnection().getData(FlowRef.of("NBB", "TEST_DATASET", null), Key.ALL, true)) {
             cursor.nextSeries();
             assertEquals(Key.parse("LOCSTL04.AUS.M"), cursor.getKey());
         }

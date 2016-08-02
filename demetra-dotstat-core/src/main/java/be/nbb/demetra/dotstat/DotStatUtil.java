@@ -37,13 +37,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import javax.annotation.Nonnull;
-import lombok.experimental.UtilityClass;
 
 /**
  *
  * @author Philippe Charles
  */
-@UtilityClass
+@lombok.experimental.UtilityClass
 class DotStatUtil {
 
     @Nonnull
@@ -243,7 +242,7 @@ class DotStatUtil {
         for (String code : data[idx]) {
             stack[idx] = code;
             if (idx == data.length - 1) {
-                result.add(Key.valueOf(stack));
+                result.add(Key.of(stack));
             } else {
                 computeAllPossibleSeries(data, idx + 1, stack, result);
             }
