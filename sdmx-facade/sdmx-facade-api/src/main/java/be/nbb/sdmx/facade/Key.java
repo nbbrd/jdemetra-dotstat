@@ -67,15 +67,7 @@ public final class Key {
 
     @Override
     public String toString() {
-        if (items.length == 1 && isWildcard(0)) {
-            return "all";
-        }
-        StringBuilder result = new StringBuilder();
-        result.append(items[0]);
-        for (int i = 1; i < items.length; i++) {
-            result.append('.').append(items[i]);
-        }
-        return result.toString();
+        return toString(items);
     }
 
     @Override
@@ -94,11 +86,11 @@ public final class Key {
 
     @Nonnull
     public static Key parse(@Nonnull String input) {
-        return "all".equals(input.trim()) ? ALL : valueOf(input.split("\\.", -1));
+        return "all".equals(input.trim()) ? ALL : of(input.split("\\.", -1));
     }
 
     @Nonnull
-    public static Key valueOf(@Nonnull String... input) {
+    public static Key of(@Nonnull String... input) {
         if (input.length == 0) {
             return ALL;
         }
@@ -126,7 +118,7 @@ public final class Key {
         for (Dimension o : dfs.getDimensions()) {
             index.put(o.getId(), o.getPosition() - 1);
         }
-        return new Builder(index);
+        return new BuilderImpl(index);
     }
 
     @Nonnull
@@ -135,21 +127,49 @@ public final class Key {
         for (int i = 0; i < dimensions.length; i++) {
             index.put(dimensions[i], i);
         }
-        return new Builder(index);
+        return new BuilderImpl(index);
     }
 
-    public static final class Builder {
+    public interface Builder {
+
+        @Nonnull
+        Key build();
+
+        @Nonnull
+        Builder clear();
+
+        @Nullable
+        String getItem(@Nonnegative int index) throws IndexOutOfBoundsException;
+
+        @Nonnull
+        Builder put(@Nullable String id, @Nullable String value);
+    }
+
+    //<editor-fold defaultstate="collapsed" desc="Implementation details">
+    private static String toString(String[] items) {
+        if (items.length == 1 && WILDCARD.equals(items[0])) {
+            return "all";
+        }
+        StringBuilder result = new StringBuilder();
+        result.append(items[0]);
+        for (int i = 1; i < items.length; i++) {
+            result.append('.').append(items[i]);
+        }
+        return result.toString();
+    }
+
+    private static final class BuilderImpl implements Builder {
 
         private final Map<String, Integer> index;
         private final String[] items;
 
-        private Builder(@Nonnull Map<String, Integer> index) {
+        private BuilderImpl(Map<String, Integer> index) {
             this.index = index;
             this.items = new String[index.size()];
         }
 
-        @Nonnull
-        public Builder put(@Nullable String id, @Nullable String value) {
+        @Override
+        public Builder put(String id, String value) {
             if (id != null) {
                 Integer position = index.get(id);
                 if (position != null) {
@@ -159,20 +179,26 @@ public final class Key {
             return this;
         }
 
-        @Nonnull
+        @Override
         public Builder clear() {
             Arrays.fill(items, null);
             return this;
         }
 
-        @Nullable
+        @Override
         public String getItem(int index) throws IndexOutOfBoundsException {
             return items[index];
         }
 
-        @Nonnull
+        @Override
         public Key build() {
-            return Key.valueOf(items);
+            return Key.of(items);
+        }
+
+        @Override
+        public String toString() {
+            return Key.toString(items);
         }
     }
+    //</editor-fold>
 }

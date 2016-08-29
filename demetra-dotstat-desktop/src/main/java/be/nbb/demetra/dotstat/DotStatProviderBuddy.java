@@ -42,7 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
-import lombok.Data;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.ServiceProvider;
@@ -52,7 +51,7 @@ import org.openide.util.lookup.ServiceProvider;
  * @author Philippe Charles
  */
 @ServiceProvider(service = IDataSourceProviderBuddy.class)
-public class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> implements IConfigurable {
+public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> implements IConfigurable {
 
     private final Configurator<DotStatProviderBuddy> configurator;
     private final SdmxConnectionSupplier supplier;
@@ -260,7 +259,7 @@ public class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> implement
         return new BuddyConfigHandler().toConfigurator(new BuddyConfigConverter());
     }
 
-    @Data
+    @lombok.Data
     public static final class BuddyConfig {
 
         private String preferredLanguage;

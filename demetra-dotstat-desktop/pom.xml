@@ -4,7 +4,7 @@
 
     <groupId>be.nbb.demetra</groupId>
     <artifactId>demetra-dotstat-desktop</artifactId>
-    <version>2.0.3</version>
+    <version>2.1.0</version>
     <packaging>nbm</packaging>
 
     <name>Demetra - DotStat - Desktop</name>
@@ -29,7 +29,7 @@
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
         <nbm-maven-plugin.version>3.14</nbm-maven-plugin.version>
         <!-- dependencies -->
-        <demetra.version>2.0.0</demetra.version>
+        <demetra.version>2.1.0</demetra.version>
         <lombok.version>1.16.2</lombok.version>
     </properties>
         

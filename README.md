@@ -7,7 +7,7 @@ Note that it also supports any server that complies with the [SDMX RESTful API v
 
 ## Quickstart
 
-This plugin requires [JDemetra+ 2.0.0 or later](https://github.com/jdemetra/jdemetra-app/releases).  
+This plugin requires [JDemetra+ 2.1.0 or later](https://github.com/jdemetra/jdemetra-app/releases).  
 
 To install, download the [latest version](https://github.com/nbbrd/jdemetra-dotstat/releases/latest), 
 launch JDemetra+ and go to `Tools>Plugins>Downloaded>Add Plugins...`.

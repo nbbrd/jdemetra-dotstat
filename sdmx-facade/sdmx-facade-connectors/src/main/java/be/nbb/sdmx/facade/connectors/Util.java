@@ -20,7 +20,6 @@ import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.ResourceRef;
 import be.nbb.sdmx.facade.FlowRef;
 import be.nbb.sdmx.facade.SdmxConnection;
-import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import it.bancaditalia.oss.sdmx.api.Codelist;
 import it.bancaditalia.oss.sdmx.api.DSDIdentifier;
@@ -35,35 +34,35 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
-import lombok.experimental.UtilityClass;
 
 /**
  *
  * @author Philippe Charles
  */
-@UtilityClass
-final class Util {
+@lombok.experimental.UtilityClass
+class Util {
 
     public static be.nbb.sdmx.facade.Dataflow toDataflow(Dataflow dataflow) {
-        return new be.nbb.sdmx.facade.Dataflow(FlowRef.parse(dataflow.getFullIdentifier()), toDataStructureRef(dataflow.getDsdIdentifier()), dataflow.getDescription());
+        return be.nbb.sdmx.facade.Dataflow.of(FlowRef.parse(dataflow.getFullIdentifier()), toDataStructureRef(dataflow.getDsdIdentifier()), dataflow.getDescription());
     }
 
     public static be.nbb.sdmx.facade.ResourceRef toDataStructureRef(DSDIdentifier input) {
-        return new ResourceRef(input.getAgency(), input.getId(), input.getVersion());
+        return ResourceRef.of(input.getAgency(), input.getId(), input.getVersion());
     }
 
     static be.nbb.sdmx.facade.Codelist toCodelist(Codelist input) {
-        return new be.nbb.sdmx.facade.Codelist(new ResourceRef(input.getAgency(), input.getId(), input.getVersion()), input.getCodes());
+        return be.nbb.sdmx.facade.Codelist.of(ResourceRef.of(input.getAgency(), input.getId(), input.getVersion()), input.getCodes());
     }
 
     public static DataStructure toDataStructure(DataFlowStructure dfs) {
         Set<be.nbb.sdmx.facade.Dimension> dimensions = new HashSet<>();
         for (Dimension o : dfs.getDimensions()) {
-            dimensions.add(new be.nbb.sdmx.facade.Dimension(o.getId(), o.getPosition(), toCodelist(o.getCodeList()), o.getName()));
+            dimensions.add(be.nbb.sdmx.facade.Dimension.of(o.getId(), o.getPosition(), toCodelist(o.getCodeList()), o.getName()));
         }
-        return new DataStructure(new ResourceRef(dfs.getAgency(), dfs.getId(), dfs.getVersion()), dimensions, dfs.getName(), dfs.getTimeDimension(), dfs.getMeasure());
+        return DataStructure.of(ResourceRef.of(dfs.getAgency(), dfs.getId(), dfs.getVersion()), dimensions, dfs.getName(), dfs.getTimeDimension(), dfs.getMeasure());
     }
 
     public interface ClientSupplier {
@@ -72,12 +71,12 @@ final class Util {
         GenericSDMXClient getClient(@Nonnull URL endpoint, @Nonnull Properties info) throws MalformedURLException;
     }
 
-    private final static Cache<String, Object> CACHE = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
+    private final static ConcurrentMap<String, Object> CACHE = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).<String, Object>build().asMap();
     private final static int DEFAULT_CONNECT_TIMEOUT = 1000 * 60 * 2; // 2 minutes
     private final static int DEFAULT_READ_TIMEOUT = 1000 * 60 * 2; // 2 minutes
 
     @Nonnull
-    public SdmxConnection getConnection(@Nonnull String url, @Nonnull Properties info, @Nonnull ClientSupplier supplier) throws IOException {
+    public static SdmxConnection getConnection(@Nonnull String url, @Nonnull Properties info, @Nonnull ClientSupplier supplier) throws IOException {
         try {
             URL endpoint = new URL(url);
             GenericSDMXClient client = supplier.getClient(endpoint, info);

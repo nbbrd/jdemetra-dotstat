@@ -39,7 +39,7 @@ import javax.annotation.Nonnull;
  *
  * @author Philippe Charles
  */
-public final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
+final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
 
     private final SdmxConnectionSupplier supplier;
 
@@ -143,7 +143,7 @@ public final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         for (int i = 0; i < result.length; i++) {
             result[dimensionById.get(ref.getColumn(i)).getPosition() - 1] = i < ref.getLevel() ? ref.getValue(i) : "";
         }
-        return Key.valueOf(result);
+        return Key.of(result);
     }
 
     static Converter<DbSetId, Key> getConverter(DataStructure ds, DbSetId ref) {

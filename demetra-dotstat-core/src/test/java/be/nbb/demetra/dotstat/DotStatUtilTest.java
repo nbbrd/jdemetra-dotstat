@@ -43,14 +43,14 @@ public class DotStatUtilTest {
 
     private final TestResource nbb = TestResource.nbb();
     private final TestResource ecb = TestResource.ecb();
-    private final FlowRef nbbFlow = FlowRef.valueOf("NBB", "TEST_DATASET", null);
+    private final FlowRef nbbFlow = FlowRef.of("NBB", "TEST_DATASET", null);
     private final FlowRef ecbFlow = FlowRef.parse("ECB,AME,1.0");
 
     @Test
     public void testGetAllSeries20() throws Exception {
         SdmxConnection conn = nbb.AsConnection();
 
-        Key single = Key.valueOf("LOCSTL04", "AUS", "M");
+        Key single = Key.of("LOCSTL04", "AUS", "M");
 
         try (TsCursor<Key, IOException> cursor = getAllSeries(conn, nbbFlow, Key.ALL)) {
             assertTrue(cursor.nextSeries());
@@ -58,13 +58,13 @@ public class DotStatUtilTest {
             assertFalse(cursor.nextSeries());
         }
 
-        try (TsCursor<Key, IOException> cursor = getAllSeries(conn, nbbFlow, Key.valueOf("LOCSTL04", "", ""))) {
+        try (TsCursor<Key, IOException> cursor = getAllSeries(conn, nbbFlow, Key.of("LOCSTL04", "", ""))) {
             assertTrue(cursor.nextSeries());
             assertEquals(single, cursor.getKey());
             assertFalse(cursor.nextSeries());
         }
 
-        try (TsCursor<Key, IOException> cursor = getAllSeries(conn, nbbFlow, Key.valueOf("LOCSTL04", "AUS", ""))) {
+        try (TsCursor<Key, IOException> cursor = getAllSeries(conn, nbbFlow, Key.of("LOCSTL04", "AUS", ""))) {
             assertTrue(cursor.nextSeries());
             assertEquals(single, cursor.getKey());
             assertFalse(cursor.nextSeries());
@@ -75,7 +75,7 @@ public class DotStatUtilTest {
     public void testGetAllSeriesWithData20() throws Exception {
         SdmxConnection conn = nbb.AsConnection();
 
-        Key single = Key.valueOf("LOCSTL04", "AUS", "M");
+        Key single = Key.of("LOCSTL04", "AUS", "M");
 
         try (TsCursor<Key, IOException> cursor = getAllSeriesWithData(conn, nbbFlow, Key.ALL)) {
             assertTrue(cursor.nextSeries());
@@ -84,14 +84,14 @@ public class DotStatUtilTest {
             assertFalse(cursor.nextSeries());
         }
 
-        try (TsCursor<Key, IOException> cursor = getAllSeriesWithData(conn, nbbFlow, Key.valueOf("LOCSTL04", "", ""))) {
+        try (TsCursor<Key, IOException> cursor = getAllSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "", ""))) {
             assertTrue(cursor.nextSeries());
             assertEquals(single, cursor.getKey());
             assertEquals(55, cursor.getData().get().getLength());
             assertFalse(cursor.nextSeries());
         }
 
-        try (TsCursor<Key, IOException> cursor = getAllSeriesWithData(conn, nbbFlow, Key.valueOf("LOCSTL04", "AUS", ""))) {
+        try (TsCursor<Key, IOException> cursor = getAllSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "AUS", ""))) {
             assertTrue(cursor.nextSeries());
             assertEquals(single, cursor.getKey());
             assertEquals(55, cursor.getData().get().getLength());
@@ -103,7 +103,7 @@ public class DotStatUtilTest {
     public void testGetSeriesWithData20() throws Exception {
         SdmxConnection conn = nbb.AsConnection();
 
-        TsData data = getSeriesWithData(conn, nbbFlow, Key.valueOf("LOCSTL04", "AUS", "M")).get();
+        TsData data = getSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "AUS", "M")).get();
         assertEquals(new TsPeriod(TsFrequency.Monthly, 1966, 1), data.getStart());
         assertEquals(new TsPeriod(TsFrequency.Monthly, 1970, 7), data.getLastPeriod());
         assertEquals(55, data.getLength());
@@ -118,9 +118,9 @@ public class DotStatUtilTest {
         SdmxConnection conn = nbb.AsConnection();
 
         assertArrayEquals(new String[]{"LOCSTL04"}, getChildren(conn, nbbFlow, Key.ALL, 1).toArray());
-        assertArrayEquals(new String[]{"AUS"}, getChildren(conn, nbbFlow, Key.valueOf("LOCSTL04", "", ""), 2).toArray());
-        assertArrayEquals(new String[]{"M"}, getChildren(conn, nbbFlow, Key.valueOf("LOCSTL04", "AUS", ""), 3).toArray());
-        assertArrayEquals(new String[]{"AUS"}, getChildren(conn, nbbFlow, Key.valueOf("LOCSTL04", "", "M"), 2).toArray());
+        assertArrayEquals(new String[]{"AUS"}, getChildren(conn, nbbFlow, Key.of("LOCSTL04", "", ""), 2).toArray());
+        assertArrayEquals(new String[]{"M"}, getChildren(conn, nbbFlow, Key.of("LOCSTL04", "AUS", ""), 3).toArray());
+        assertArrayEquals(new String[]{"AUS"}, getChildren(conn, nbbFlow, Key.of("LOCSTL04", "", "M"), 2).toArray());
     }
 
     @Test
@@ -134,10 +134,10 @@ public class DotStatUtilTest {
             while (cursor.nextSeries()) {
                 switch (index++) {
                     case 0:
-                        assertEquals(Key.valueOf("A", "DEU", "1", "0", "319", "0", "UBLGE"), cursor.getKey());
+                        assertEquals(Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE"), cursor.getKey());
                         break;
                     case 119:
-                        assertEquals(Key.valueOf("A", "HRV", "1", "0", "0", "0", "ZUTN"), cursor.getKey());
+                        assertEquals(Key.of("A", "HRV", "1", "0", "0", "0", "ZUTN"), cursor.getKey());
                         break;
                 }
                 assertTrue(key.contains(cursor.getKey()));
@@ -145,7 +145,7 @@ public class DotStatUtilTest {
             assertEquals(120, index);
         }
 
-        key = Key.valueOf("A", "", "", "", "", "", "");
+        key = Key.of("A", "", "", "", "", "", "");
         try (TsCursor<Key, IOException> cursor = getAllSeries(conn, ecbFlow, key)) {
             int index = 0;
             while (cursor.nextSeries()) {
@@ -155,7 +155,7 @@ public class DotStatUtilTest {
             assertEquals(120, index);
         }
 
-        key = Key.valueOf("A", "DEU", "", "", "", "", "");
+        key = Key.of("A", "DEU", "", "", "", "", "");
         try (TsCursor<Key, IOException> cursor = getAllSeries(conn, ecbFlow, key)) {
             int index = 0;
             while (cursor.nextSeries()) {
@@ -177,7 +177,7 @@ public class DotStatUtilTest {
             while (cursor.nextSeries()) {
                 switch (index++) {
                     case 0:
-                        assertEquals(Key.valueOf("A", "DEU", "1", "0", "319", "0", "UBLGE"), cursor.getKey());
+                        assertEquals(Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE"), cursor.getKey());
                         assertEquals(25, cursor.getData().get().getLength());
                         break;
                 }
@@ -186,13 +186,13 @@ public class DotStatUtilTest {
             assertEquals(120, index);
         }
 
-        key = Key.valueOf("A", "DEU", "", "", "", "", "");
+        key = Key.of("A", "DEU", "", "", "", "", "");
         try (TsCursor<Key, IOException> cursor = getAllSeriesWithData(conn, ecbFlow, key)) {
             int index = 0;
             while (cursor.nextSeries()) {
                 switch (index++) {
                     case 0:
-                        assertEquals(Key.valueOf("A", "DEU", "1", "0", "319", "0", "UBLGE"), cursor.getKey());
+                        assertEquals(Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE"), cursor.getKey());
                         assertEquals(25, cursor.getData().get().getLength());
                         break;
                 }
@@ -206,7 +206,7 @@ public class DotStatUtilTest {
     public void testGetSeriesWithData21() throws Exception {
         SdmxConnection conn = ecb.AsConnection();
 
-        Key key = Key.valueOf("A", "DEU", "1", "0", "319", "0", "UBLGE");
+        Key key = Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE");
 
         TsData data = getSeriesWithData(conn, ecbFlow, key).get();
         assertEquals(new TsPeriod(TsFrequency.Yearly, 1991, 0), data.getStart());
@@ -227,16 +227,16 @@ public class DotStatUtilTest {
         assertEquals(1, children.size());
         assertTrue(children.contains("A"));
 
-        children = getChildren(conn, ecbFlow, Key.valueOf("A", "", "", "", "", "", ""), 2);
+        children = getChildren(conn, ecbFlow, Key.of("A", "", "", "", "", "", ""), 2);
         assertEquals(30, children.size());
         assertTrue(children.contains("BEL"));
         assertTrue(children.contains("POL"));
 
-        children = getChildren(conn, ecbFlow, Key.valueOf("A", "BEL", "", "", "", "", ""), 3);
+        children = getChildren(conn, ecbFlow, Key.of("A", "BEL", "", "", "", "", ""), 3);
         assertEquals(1, children.size());
         assertTrue(children.contains("1"));
 
-        children = getChildren(conn, ecbFlow, Key.valueOf("hello", "", "", "", "", "", ""), 2);
+        children = getChildren(conn, ecbFlow, Key.of("hello", "", "", "", "", "", ""), 2);
         assertTrue(children.isEmpty());
     }
 }
