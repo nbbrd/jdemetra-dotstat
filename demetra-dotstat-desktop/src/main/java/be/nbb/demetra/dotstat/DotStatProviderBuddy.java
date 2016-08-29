@@ -42,7 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
-import lombok.Data;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.ServiceProvider;
@@ -260,7 +259,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
         return new BuddyConfigHandler().toConfigurator(new BuddyConfigConverter());
     }
 
-    @Data
+    @lombok.Data
     public static final class BuddyConfig {
 
         private String preferredLanguage;

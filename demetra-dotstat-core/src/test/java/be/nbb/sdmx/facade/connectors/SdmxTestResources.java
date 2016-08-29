@@ -19,13 +19,12 @@ package be.nbb.sdmx.facade.connectors;
 import com.google.common.io.ByteSource;
 import java.io.IOException;
 import java.io.InputStream;
-import lombok.experimental.UtilityClass;
 
 /**
  *
  * @author Philippe Charles
  */
-@UtilityClass
+@lombok.experimental.UtilityClass
 public class SdmxTestResources {
 
     public static final ByteSource NBB_DATAFLOWS = onResource("/be/nbb/sdmx/Dataflows.xml");

@@ -78,7 +78,7 @@ public final class TestResource {
                         .transform(toDataStructure())
                         .uniqueIndex(toResourceRef());
             }
-            final DataStructure dfs = result.dataStructureByRef.get(new ResourceRef("NBB", "TEST_DATASET", null));
+            final DataStructure dfs = result.dataStructureByRef.get(ResourceRef.of("NBB", "TEST_DATASET", null));
             result.dataSupplier = new Callable<DataCursor>() {
                 @Override
                 public DataCursor call() throws Exception {
@@ -108,7 +108,7 @@ public final class TestResource {
                         .transform(toDataStructure())
                         .uniqueIndex(toResourceRef());
             }
-            final DataStructure dfs = result.dataStructureByRef.get(new ResourceRef("ECB", "ECB_AME1", "1.0"));
+            final DataStructure dfs = result.dataStructureByRef.get(ResourceRef.of("ECB", "ECB_AME1", "1.0"));
             result.dataSupplier = new Callable<DataCursor>() {
                 @Override
                 public DataCursor call() throws Exception {
@@ -158,9 +158,9 @@ public final class TestResource {
         return new Function<DataFlowStructure, Dataflow>() {
             @Override
             public Dataflow apply(DataFlowStructure input) {
-                return new Dataflow(
-                        FlowRef.valueOf(input.getAgency(), input.getId(), input.getVersion()),
-                        new ResourceRef(input.getAgency(), input.getId(), input.getVersion()),
+                return Dataflow.of(
+                        FlowRef.of(input.getAgency(), input.getId(), input.getVersion()),
+                        ResourceRef.of(input.getAgency(), input.getId(), input.getVersion()),
                         input.getName()
                 );
             }
