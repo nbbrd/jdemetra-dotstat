@@ -41,14 +41,14 @@ import org.junit.Test;
  */
 public class DotStatUtilTest {
 
-    private final TestResource nbb = TestResource.nbb();
-    private final TestResource ecb = TestResource.ecb();
+    private final SdmxConnection nbb = TestResource.nbb();
+    private final SdmxConnection ecb = TestResource.ecb();
     private final FlowRef nbbFlow = FlowRef.of("NBB", "TEST_DATASET", null);
     private final FlowRef ecbFlow = FlowRef.parse("ECB,AME,1.0");
 
     @Test
     public void testGetAllSeries20() throws Exception {
-        SdmxConnection conn = nbb.AsConnection();
+        SdmxConnection conn = nbb;
 
         Key single = Key.of("LOCSTL04", "AUS", "M");
 
@@ -73,7 +73,7 @@ public class DotStatUtilTest {
 
     @Test
     public void testGetAllSeriesWithData20() throws Exception {
-        SdmxConnection conn = nbb.AsConnection();
+        SdmxConnection conn = nbb;
 
         Key single = Key.of("LOCSTL04", "AUS", "M");
 
@@ -101,7 +101,7 @@ public class DotStatUtilTest {
 
     @Test
     public void testGetSeriesWithData20() throws Exception {
-        SdmxConnection conn = nbb.AsConnection();
+        SdmxConnection conn = nbb;
 
         TsData data = getSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "AUS", "M")).get();
         assertEquals(new TsPeriod(TsFrequency.Monthly, 1966, 1), data.getStart());
@@ -115,7 +115,7 @@ public class DotStatUtilTest {
 
     @Test
     public void testGetChildren20() throws Exception {
-        SdmxConnection conn = nbb.AsConnection();
+        SdmxConnection conn = nbb;
 
         assertArrayEquals(new String[]{"LOCSTL04"}, getChildren(conn, nbbFlow, Key.ALL, 1).toArray());
         assertArrayEquals(new String[]{"AUS"}, getChildren(conn, nbbFlow, Key.of("LOCSTL04", "", ""), 2).toArray());
@@ -125,7 +125,7 @@ public class DotStatUtilTest {
 
     @Test
     public void testGetAllSeries21() throws Exception {
-        SdmxConnection conn = ecb.AsConnection();
+        SdmxConnection conn = ecb;
         Key key;
 
         key = Key.ALL;
@@ -168,7 +168,7 @@ public class DotStatUtilTest {
 
     @Test
     public void testGetAllSeriesWithData21() throws Exception {
-        SdmxConnection conn = ecb.AsConnection();
+        SdmxConnection conn = ecb;
         Key key;
 
         key = Key.ALL;
@@ -204,7 +204,7 @@ public class DotStatUtilTest {
 
     @Test
     public void testGetSeriesWithData21() throws Exception {
-        SdmxConnection conn = ecb.AsConnection();
+        SdmxConnection conn = ecb;
 
         Key key = Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE");
 
@@ -219,7 +219,7 @@ public class DotStatUtilTest {
 
     @Test
     public void testGetChildren21() throws Exception {
-        SdmxConnection conn = ecb.AsConnection();
+        SdmxConnection conn = ecb;
 
         List<String> children;
 
