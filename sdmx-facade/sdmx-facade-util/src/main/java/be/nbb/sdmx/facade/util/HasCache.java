@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 National Bank of Belgium
+ * Copyright 2016 National Bank of Belgium
  * 
  * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
@@ -14,30 +14,20 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.sdmx.facade.driver;
+package be.nbb.sdmx.facade.util;
 
-import be.nbb.sdmx.facade.SdmxConnection;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nonnull;
-import javax.annotation.concurrent.ThreadSafe;
+import javax.annotation.Nullable;
 
 /**
  *
  * @author Philippe Charles
  */
-@ThreadSafe
-public abstract class SdmxDriver {
+public interface HasCache {
 
     @Nonnull
-    abstract public SdmxConnection connect(@Nonnull String url, @Nonnull Properties info) throws IOException;
+    ConcurrentMap getCache();
 
-    abstract public boolean acceptsURL(@Nonnull String url) throws IOException;
-
-    @Nonnull
-    public List<WsEntryPoint> getDefaultEntryPoints() {
-        return Collections.emptyList();
-    }
+    void setCache(@Nullable ConcurrentMap cache);
 }

@@ -18,12 +18,10 @@ package be.nbb.sdmx.facade.connectors;
 
 import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.SdmxConnection;
-import static be.nbb.sdmx.facade.connectors.Util.NEEDS_CREDENTIALS_PROPERTY;
-import static be.nbb.sdmx.facade.connectors.Util.NEEDS_URL_ENCODING_PROPERTY;
-import static be.nbb.sdmx.facade.connectors.Util.SERIES_KEYS_ONLY_SUPPORTED_PROPERTY;
-import static be.nbb.sdmx.facade.connectors.Util.SUPPORTS_COMPRESSION_PROPERTY;
-import static be.nbb.sdmx.facade.connectors.Util.get;
+import static be.nbb.sdmx.facade.connectors.Util.NEEDS_CREDENTIALS;
+import static be.nbb.sdmx.facade.connectors.Util.NEEDS_URL_ENCODING;
+import static be.nbb.sdmx.facade.connectors.Util.SERIES_KEYS_ONLY_SUPPORTED;
+import static be.nbb.sdmx.facade.connectors.Util.SUPPORTS_COMPRESSION;
 import be.nbb.sdmx.facade.driver.SdmxDriver;
 import be.nbb.sdmx.facade.driver.WsEntryPoint;
 import be.nbb.sdmx.facade.util.SdmxMediaType;
@@ -42,32 +40,24 @@ import java.util.List;
 import java.util.Properties;
 import javax.xml.stream.XMLInputFactory;
 import org.openide.util.lookup.ServiceProvider;
+import be.nbb.sdmx.facade.util.HasCache;
 
 /**
  *
  * @author Philippe Charles
  */
 @ServiceProvider(service = SdmxDriver.class)
-public final class Sdmx21Driver extends SdmxDriver {
+public final class Sdmx21Driver extends SdmxDriver implements HasCache {
 
     private static final String PREFIX = "sdmx:sdmx21:";
 
-    private final Util.ClientSupplier supplier = new Util.ClientSupplier() {
+    @lombok.experimental.Delegate
+    private final SdmxDriverSupport support = SdmxDriverSupport.of(PREFIX, new SdmxDriverSupport.ClientSupplier() {
         @Override
         public GenericSDMXClient getClient(URL endpoint, Properties info) throws MalformedURLException {
             return new ExtRestSdmxClient("", endpoint, load(info));
         }
-    };
-
-    @Override
-    public SdmxConnection connect(String url, Properties info) throws IOException {
-        return Util.getConnection(url.substring(PREFIX.length()), info, supplier);
-    }
-
-    @Override
-    public boolean acceptsURL(String url) throws IOException {
-        return url.startsWith(PREFIX);
-    }
+    });
 
     @Override
     public List<WsEntryPoint> getDefaultEntryPoints() {
@@ -89,17 +79,17 @@ public final class Sdmx21Driver extends SdmxDriver {
 
     private static Config load(Properties p) {
         return new Config(
-                get(p, NEEDS_CREDENTIALS_PROPERTY, false),
-                get(p, NEEDS_URL_ENCODING_PROPERTY, false),
-                get(p, SUPPORTS_COMPRESSION_PROPERTY, false),
-                get(p, SERIES_KEYS_ONLY_SUPPORTED_PROPERTY, false));
+                NEEDS_CREDENTIALS.get(p, false),
+                NEEDS_URL_ENCODING.get(p, false),
+                SUPPORTS_COMPRESSION.get(p, false),
+                SERIES_KEYS_ONLY_SUPPORTED.get(p, false));
     }
 
     private static void store(Properties p, Config c) {
-        p.setProperty(NEEDS_CREDENTIALS_PROPERTY, String.valueOf(c.isNeedsCredentials()));
-        p.setProperty(NEEDS_URL_ENCODING_PROPERTY, String.valueOf(c.isNeedsURLEncoding()));
-        p.setProperty(SUPPORTS_COMPRESSION_PROPERTY, String.valueOf(c.isSupportsCompression()));
-        p.setProperty(SERIES_KEYS_ONLY_SUPPORTED_PROPERTY, String.valueOf(c.isSeriesKeysOnlySupported()));
+        NEEDS_CREDENTIALS.set(p, c.isNeedsCredentials());
+        NEEDS_URL_ENCODING.set(p, c.isNeedsURLEncoding());
+        SUPPORTS_COMPRESSION.set(p, c.isSupportsCompression());
+        SERIES_KEYS_ONLY_SUPPORTED.set(p, c.isSeriesKeysOnlySupported());
     }
 
     @lombok.Value

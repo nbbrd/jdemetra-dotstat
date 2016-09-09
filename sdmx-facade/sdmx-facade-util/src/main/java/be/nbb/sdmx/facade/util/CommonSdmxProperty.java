@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 National Bank of Belgium
+ * Copyright 2016 National Bank of Belgium
  * 
  * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
@@ -14,30 +14,20 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.sdmx.facade.driver;
+package be.nbb.sdmx.facade.util;
 
-import be.nbb.sdmx.facade.SdmxConnection;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-import javax.annotation.Nonnull;
-import javax.annotation.concurrent.ThreadSafe;
+import be.nbb.sdmx.facade.util.Property.IntProperty;
+import be.nbb.sdmx.facade.util.Property.LongProperty;
 
 /**
  *
  * @author Philippe Charles
  */
-@ThreadSafe
-public abstract class SdmxDriver {
+@lombok.experimental.UtilityClass
+public class CommonSdmxProperty {
 
-    @Nonnull
-    abstract public SdmxConnection connect(@Nonnull String url, @Nonnull Properties info) throws IOException;
+    public static final IntProperty CONNECT_TIMEOUT = new IntProperty("connectTimeout");
+    public static final IntProperty READ_TIMEOUT = new IntProperty("readTimeout");
+    public static final LongProperty CACHE_TTL = new LongProperty("cacheTtl");
 
-    abstract public boolean acceptsURL(@Nonnull String url) throws IOException;
-
-    @Nonnull
-    public List<WsEntryPoint> getDefaultEntryPoints() {
-        return Collections.emptyList();
-    }
 }
