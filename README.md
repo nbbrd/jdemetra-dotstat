@@ -12,14 +12,7 @@ This plugin requires [JDemetra+ 2.1.0 or later](https://github.com/jdemetra/jdem
 To install, download the [latest version](https://github.com/nbbrd/jdemetra-dotstat/releases/latest), 
 launch JDemetra+ and go to `Tools>Plugins>Downloaded>Add Plugins...`.
 
-## Build
-
-### Requirements
+## Build requirements
 
 * JDK 7 or later
 * Maven 3
-
-### Steps
-
-1. Download and build [this SMDX library](https://github.com/amattioc/SDMX/)
-2. Build the dotstat extension for JDemetra+
