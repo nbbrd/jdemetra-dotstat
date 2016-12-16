@@ -66,7 +66,7 @@ public final class SdmxWsAutoCompletionService extends JAutoCompletionService {
         protected boolean matches(AbstractAutoCompletionSource.TermMatcher termMatcher, WsEntryPoint input) {
             return termMatcher.matches(input.getName())
                     || termMatcher.matches(input.getDescription())
-                    || termMatcher.matches(input.getUrl());
+                    || termMatcher.matches(input.getUri().toString());
         }
 
         @Override
