@@ -274,8 +274,8 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
                     .display("Description")
                     .add();
             b.with(String.class)
-                    .select(bean, "getUrl", null)
-                    .display("URL")
+                    .select("uri", bean.getUri().toString())
+                    .display("URI")
                     .add();
             result.put(b.build());
             return result;

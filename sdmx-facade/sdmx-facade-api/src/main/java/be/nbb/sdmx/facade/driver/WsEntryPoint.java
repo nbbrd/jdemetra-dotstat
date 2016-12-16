@@ -16,48 +16,41 @@
  */
 package be.nbb.sdmx.facade.driver;
 
-import java.util.Properties;
+import java.net.URI;
+import java.util.Map;
 import javax.annotation.Nonnull;
 
 /**
  *
  * @author Philippe Charles
  */
-@lombok.Data
+@lombok.Value
+@lombok.Builder(builderClassName = "Builder")
 public final class WsEntryPoint {
 
-    private String name;
-    private String description;
-    private String url;
-    private Properties properties;
+    @Nonnull
+    String name;
 
     @Nonnull
-    public WsEntryPoint copy() {
-        WsEntryPoint result = new WsEntryPoint();
-        result.setName(name);
-        result.setDescription(description);
-        result.setUrl(url);
-        result.setProperties(properties);
-        return result;
-    }
+    String description;
 
     @Nonnull
-    public static WsEntryPoint of(@Nonnull String name, @Nonnull String description, @Nonnull String url) {
-        WsEntryPoint result = new WsEntryPoint();
-        result.setName(name);
-        result.setDescription(description);
-        result.setUrl(url);
-        result.setProperties(new Properties());
-        return result;
-    }
+    URI uri;
 
-    @Nonnull
-    public static WsEntryPoint of(@Nonnull String name, @Nonnull String description, @Nonnull String url, @Nonnull Properties p) {
-        WsEntryPoint result = new WsEntryPoint();
-        result.setName(name);
-        result.setDescription(description);
-        result.setUrl(url);
-        result.setProperties(p);
-        return result;
+    @lombok.Singular
+    Map<String, String> properties;
+
+    public static class Builder {
+
+        @Nonnull
+        public Builder uri(@Nonnull URI uri) {
+            this.uri = uri;
+            return this;
+        }
+
+        @Nonnull
+        public Builder uri(@Nonnull String uri) {
+            return uri(URI.create(uri));
+        }
     }
 }

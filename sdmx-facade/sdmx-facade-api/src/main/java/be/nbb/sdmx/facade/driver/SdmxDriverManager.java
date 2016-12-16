@@ -19,6 +19,7 @@ package be.nbb.sdmx.facade.driver;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,11 +49,11 @@ public final class SdmxDriverManager extends SdmxConnectionSupplier {
     public SdmxConnection getConnection(String name) {
         WsEntryPoint wsEntryPoint = entryPointByName.get(name);
         if (wsEntryPoint != null) {
-            String url = wsEntryPoint.getUrl();
+            URI uri = wsEntryPoint.getUri();
             for (SdmxDriver o : drivers) {
                 try {
-                    if (o.acceptsURL(url)) {
-                        return o.connect(url, wsEntryPoint.getProperties());
+                    if (o.acceptsURI(uri)) {
+                        return o.connect(uri, wsEntryPoint.getProperties());
                     }
                 } catch (IOException ex) {
                     Logger.getLogger(SdmxDriverManager.class.getName()).log(Level.SEVERE, null, ex);
@@ -74,17 +75,13 @@ public final class SdmxDriverManager extends SdmxConnectionSupplier {
 
     @Nonnull
     public List<WsEntryPoint> getEntryPoints() {
-        List<WsEntryPoint> result = new ArrayList<>();
-        for (WsEntryPoint o : entryPointByName.values()) {
-            result.add(o.copy());
-        }
-        return result;
+        return new ArrayList<>(entryPointByName.values());
     }
 
     public void setEntryPoints(@Nonnull List<WsEntryPoint> list) {
         entryPointByName.clear();
         for (WsEntryPoint o : list) {
-            entryPointByName.put(o.getName(), o.copy());
+            entryPointByName.put(o.getName(), o);
         }
     }
 

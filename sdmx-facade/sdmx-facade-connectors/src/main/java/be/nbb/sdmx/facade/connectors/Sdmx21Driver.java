@@ -33,8 +33,9 @@ import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 import javax.xml.stream.XMLInputFactory;
 import org.openide.util.lookup.ServiceProvider;
 
@@ -50,7 +51,7 @@ public final class Sdmx21Driver extends SdmxDriver implements HasCache {
     @lombok.experimental.Delegate
     private final SdmxDriverSupport support = SdmxDriverSupport.of(PREFIX, new SdmxDriverSupport.ClientSupplier() {
         @Override
-        public GenericSDMXClient getClient(URL endpoint, Properties info) throws MalformedURLException {
+        public GenericSDMXClient getClient(URL endpoint, Map<?, ?> info) throws MalformedURLException {
             return new ExtRestSdmxClient(endpoint, Sdmx21Config.load(info));
         }
     });
@@ -94,6 +95,13 @@ public final class Sdmx21Driver extends SdmxDriver implements HasCache {
                 .name("INEGI")
                 .description("Instituto Nacional de Estadistica y Geografia")
                 .endpoint("http://sdmx.snieg.mx/service/Rest")
+                .build());
+        result.add(b.clear()
+                .name("IMF_SDMX_CENTRAL")
+                .description("International Monetary Fund SDMX Central")
+                .endpoint("https://sdmxcentral.imf.org/ws/public/sdmxapi/rest")
+                .supportsCompression(true)
+                .seriesKeysOnlySupported(true)
                 .build());
         return result;
     }
@@ -149,19 +157,19 @@ public final class Sdmx21Driver extends SdmxDriver implements HasCache {
             return this;
         }
 
-        private Properties toProperties() {
-            Properties result = new Properties();
+        private Map<String, String> toProperties() {
+            Map<String, String> result = new HashMap<>();
             Sdmx21Config.store(result, config.build());
             return result;
         }
 
         public WsEntryPoint build() {
-            WsEntryPoint result = new WsEntryPoint();
-            result.setName(name);
-            result.setDescription(description);
-            result.setUrl(PREFIX + endpoint);
-            result.setProperties(toProperties());
-            return result;
+            return WsEntryPoint.builder()
+                    .name(name)
+                    .description(description)
+                    .uri(PREFIX + endpoint)
+                    .properties(toProperties())
+                    .build();
         }
     }
 
