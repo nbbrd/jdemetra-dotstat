@@ -138,7 +138,7 @@ public final class TestResource {
         return new Function<DataStructure, ResourceRef>() {
             @Override
             public ResourceRef apply(DataStructure input) {
-                return input.getDataStructureRef();
+                return input.getRef();
             }
         };
     }
