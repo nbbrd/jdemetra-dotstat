@@ -117,7 +117,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
                     DataStructure dfs = conn.getDataStructure(bean.getFlowRef());
                     for (Dimension o : dfs.getDimensions()) {
                         if (o.getId().equals(nodeDim.getKey())) {
-                            return o.getCodelist().getCodes().get(nodeDim.getValue());
+                            return o.getCodes().get(nodeDim.getValue());
                         }
                     }
                     return nodeDim.getValue();

@@ -16,7 +16,6 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.facade.Codelist;
 import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
@@ -228,7 +227,7 @@ class DotStatUtil {
         String[][] codeLists = new String[dimensionByIndex.length][];
         for (int i = 0; i < codeLists.length; i++) {
             codeLists[i] = Key.ALL.equals(ref) || ref.isWildcard(i)
-                    ? dimensionByIndex[i].getCodelist().getCodes().keySet().toArray(new String[0])
+                    ? dimensionByIndex[i].getCodes().keySet().toArray(new String[0])
                     : new String[]{ref.getItem(i)};
         }
 
@@ -250,8 +249,8 @@ class DotStatUtil {
     }
 
     private static List<String> computeAllPossibleChildren(Dimension[] dimensionByPosition, int dimensionPosition) {
-        Codelist codeList = dimensionByPosition[dimensionPosition - 1].getCodelist();
-        return Ordering.natural().sortedCopy(codeList.getCodes().keySet());
+        Dimension dimension = dimensionByPosition[dimensionPosition - 1];
+        return Ordering.natural().sortedCopy(dimension.getCodes().keySet());
     }
     //</editor-fold>
 }
