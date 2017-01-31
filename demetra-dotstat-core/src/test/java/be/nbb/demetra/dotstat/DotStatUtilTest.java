@@ -20,7 +20,7 @@ import static be.nbb.demetra.dotstat.DotStatUtil.getAllSeries;
 import static be.nbb.demetra.dotstat.DotStatUtil.getAllSeriesWithData;
 import static be.nbb.demetra.dotstat.DotStatUtil.getChildren;
 import static be.nbb.demetra.dotstat.DotStatUtil.getSeriesWithData;
-import be.nbb.sdmx.facade.FlowRef;
+import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.connectors.TestResource;
@@ -43,8 +43,8 @@ public class DotStatUtilTest {
 
     private final SdmxConnection nbb = TestResource.nbb();
     private final SdmxConnection ecb = TestResource.ecb();
-    private final FlowRef nbbFlow = FlowRef.of("NBB", "TEST_DATASET", null);
-    private final FlowRef ecbFlow = FlowRef.parse("ECB,AME,1.0");
+    private final DataflowRef nbbFlow = DataflowRef.of("NBB", "TEST_DATASET", null);
+    private final DataflowRef ecbFlow = DataflowRef.parse("ECB,AME,1.0");
 
     @Test
     public void testGetAllSeries20() throws Exception {

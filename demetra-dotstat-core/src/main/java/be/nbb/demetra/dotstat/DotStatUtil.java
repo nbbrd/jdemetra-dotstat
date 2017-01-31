@@ -20,7 +20,7 @@ import be.nbb.sdmx.facade.Codelist;
 import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.FlowRef;
+import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.TimeFormat;
@@ -46,28 +46,28 @@ import javax.annotation.Nonnull;
 class DotStatUtil {
 
     @Nonnull
-    public static TsCursor<Key, IOException> getAllSeries(SdmxConnection conn, FlowRef flowRef, Key ref) throws IOException {
+    public static TsCursor<Key, IOException> getAllSeries(SdmxConnection conn, DataflowRef flowRef, Key ref) throws IOException {
         return conn.isSeriesKeysOnlySupported()
                 ? request(conn, flowRef, ref, true)
                 : computeKeys(conn, flowRef, ref);
     }
 
     @Nonnull
-    public static TsCursor<Key, IOException> getAllSeriesWithData(SdmxConnection conn, FlowRef flowRef, Key ref) throws IOException {
+    public static TsCursor<Key, IOException> getAllSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref) throws IOException {
         return conn.isSeriesKeysOnlySupported()
                 ? request(conn, flowRef, ref, false)
                 : computeKeysAndRequestData(conn, flowRef, ref);
     }
 
     @Nonnull
-    public static OptionalTsData getSeriesWithData(SdmxConnection conn, FlowRef flowRef, Key ref) throws IOException {
+    public static OptionalTsData getSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref) throws IOException {
         try (TsCursor<Key, IOException> cursor = request(conn, flowRef, ref, false)) {
             return cursor.nextSeries() ? cursor.getData() : MISSING_DATA;
         }
     }
 
     @Nonnull
-    public static List<String> getChildren(SdmxConnection conn, FlowRef flowRef, Key ref, int dimensionPosition) throws IOException {
+    public static List<String> getChildren(SdmxConnection conn, DataflowRef flowRef, Key ref, int dimensionPosition) throws IOException {
         if (conn.isSeriesKeysOnlySupported()) {
             try (TsCursor<Key, IOException> cursor = request(conn, flowRef, ref, true)) {
                 int index = dimensionPosition - 1;
@@ -159,11 +159,11 @@ class DotStatUtil {
         }
     }
 
-    private static TsCursor<Key, IOException> request(SdmxConnection conn, FlowRef flowRef, Key key, boolean seriesKeysOnly) throws IOException {
+    private static TsCursor<Key, IOException> request(SdmxConnection conn, DataflowRef flowRef, Key key, boolean seriesKeysOnly) throws IOException {
         return new Adapter(key, conn.getData(flowRef, key, seriesKeysOnly));
     }
 
-    private static TsCursor<Key, IOException> computeKeys(SdmxConnection conn, FlowRef flowRef, Key key) throws IOException {
+    private static TsCursor<Key, IOException> computeKeys(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
         final List<Key> list = computeAllPossibleSeries(dimensionByIndex(conn.getDataStructure(flowRef)), key);
         return new TsCursor<Key, IOException>() {
             private int index = -1;
@@ -186,7 +186,7 @@ class DotStatUtil {
         };
     }
 
-    private static TsCursor<Key, IOException> computeKeysAndRequestData(SdmxConnection conn, FlowRef flowRef, Key key) throws IOException {
+    private static TsCursor<Key, IOException> computeKeysAndRequestData(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
         final List<Key> list = computeAllPossibleSeries(dimensionByIndex(conn.getDataStructure(flowRef)), key);
         final Map<Key, OptionalTsData> dataByKey = new HashMap<>();
         try (TsCursor<Key, IOException> cursor = request(conn, flowRef, key, false)) {

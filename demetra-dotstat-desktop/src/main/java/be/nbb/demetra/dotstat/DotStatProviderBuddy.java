@@ -230,7 +230,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
         @Override
         protected boolean matches(TermMatcher termMatcher, Dataflow input) {
             return termMatcher.matches(input.getName())
-                    || termMatcher.matches(input.getFlowRef().getFlowId());
+                    || termMatcher.matches(input.getFlowRef().getId());
         }
 
         @Override

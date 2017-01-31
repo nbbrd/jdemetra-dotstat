@@ -18,7 +18,7 @@ package be.nbb.demetra.dotstat;
 
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.FlowRef;
+import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.SdmxConnection;
@@ -95,7 +95,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         return DbAccessor.BulkAccessor.from(this, dbBean.getCacheDepth(), DbAccessor.BulkAccessor.newTtlCache(dbBean.getCacheTtl()));
     }
 
-    private static List<DbSetId> getAllSeries(SdmxConnection conn, FlowRef flowRef, DbSetId ref) throws IOException {
+    private static List<DbSetId> getAllSeries(SdmxConnection conn, DataflowRef flowRef, DbSetId ref) throws IOException {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
 
         Key colKey = converter.convert(ref);
@@ -108,7 +108,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         }
     }
 
-    private static List<DbSeries> getAllSeriesWithData(SdmxConnection conn, FlowRef flowRef, DbSetId ref) throws IOException {
+    private static List<DbSeries> getAllSeriesWithData(SdmxConnection conn, DataflowRef flowRef, DbSetId ref) throws IOException {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
 
         Key colKey = converter.convert(ref);
@@ -121,14 +121,14 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         }
     }
 
-    private static DbSeries getSeriesWithData(SdmxConnection conn, FlowRef flowRef, DbSetId ref) throws IOException {
+    private static DbSeries getSeriesWithData(SdmxConnection conn, DataflowRef flowRef, DbSetId ref) throws IOException {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
 
         Key seriesKey = converter.convert(ref);
         return new DbSeries(ref, DotStatUtil.getSeriesWithData(conn, flowRef, seriesKey));
     }
 
-    private static List<String> getChildren(SdmxConnection conn, FlowRef flowRef, DbSetId ref) throws IOException {
+    private static List<String> getChildren(SdmxConnection conn, DataflowRef flowRef, DbSetId ref) throws IOException {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
         int dimensionPosition = dimensionById(conn.getDataStructure(flowRef)).get(ref.getColumn(ref.getLevel())).getPosition();
         return DotStatUtil.getChildren(conn, flowRef, converter.convert(ref), dimensionPosition);

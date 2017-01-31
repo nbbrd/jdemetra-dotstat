@@ -20,7 +20,7 @@ import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
 import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.FlowRef;
+import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.connectors.TestResource;
@@ -55,7 +55,7 @@ public class DotStatAccessorTest {
     private static DotStatBean nbbBean() {
         DotStatBean result = new DotStatBean();
         result.setDbName("NBB");
-        result.setFlowRef(FlowRef.of("NBB", "TEST_DATASET", null));
+        result.setFlowRef(DataflowRef.of("NBB", "TEST_DATASET", null));
         result.setDimColumns(Joiner.on(',').join(new String[]{"SUBJECT", "LOCATION", "FREQUENCY"}));
         return result;
     }
@@ -70,7 +70,7 @@ public class DotStatAccessorTest {
 
         DotStatBean result = new DotStatBean();
         result.setDbName("ECB");
-        result.setFlowRef(FlowRef.parse("ECB,AME,1.0"));
+        result.setFlowRef(DataflowRef.parse("ECB,AME,1.0"));
         result.setDimColumns(Joiner.on(',').join(dimensions));
         return result;
     }
@@ -82,7 +82,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKey() throws Exception {
-        DataStructure dfs = supplier.getConnection("NBB").getDataStructure(FlowRef.of("NBB", "TEST_DATASET", null));
+        DataStructure dfs = supplier.getConnection("NBB").getDataStructure(DataflowRef.of("NBB", "TEST_DATASET", null));
         Map<String, Dimension> dimensionById = DotStatAccessor.dimensionById(dfs);
 
         // default ordering of dimensions
@@ -102,7 +102,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKeyFromTs() throws Exception {
-        try (DataCursor cursor = supplier.getConnection("NBB").getData(FlowRef.of("NBB", "TEST_DATASET", null), Key.ALL, true)) {
+        try (DataCursor cursor = supplier.getConnection("NBB").getData(DataflowRef.of("NBB", "TEST_DATASET", null), Key.ALL, true)) {
             cursor.nextSeries();
             assertEquals(Key.parse("LOCSTL04.AUS.M"), cursor.getKey());
         }
