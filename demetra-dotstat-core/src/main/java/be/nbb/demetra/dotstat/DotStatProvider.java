@@ -81,7 +81,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
         DotStatBean bean = decodeBean(dataSource);
         if (!displayCodes) {
             try (SdmxConnection conn = supplier.getConnection(bean.getDbName())) {
-                return String.format("%s ~ %s", bean.getDbName(), conn.getDataflow(bean.getFlowRef()).getName());
+                return String.format("%s ~ %s", bean.getDbName(), conn.getDataflow(bean.getFlowRef()).getLabel());
             } catch (IOException ex) {
             }
         }
