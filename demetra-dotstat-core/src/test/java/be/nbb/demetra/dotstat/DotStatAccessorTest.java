@@ -48,8 +48,8 @@ import org.junit.Test;
 public class DotStatAccessorTest {
 
     private final SdmxConnectionSupplier supplier = MemSdmxConnectionSupplier.builder()
-            .add("NBB", TestResource.nbb())
-            .add("ECB", TestResource.ecb())
+            .repository(TestResource.nbb())
+            .repository(TestResource.ecb())
             .build();
 
     private static DotStatBean nbbBean() {
