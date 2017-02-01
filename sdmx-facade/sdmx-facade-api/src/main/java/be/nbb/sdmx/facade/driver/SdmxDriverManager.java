@@ -35,7 +35,7 @@ import javax.annotation.Nonnull;
  *
  * @author Philippe Charles
  */
-public final class SdmxDriverManager extends SdmxConnectionSupplier {
+public final class SdmxDriverManager implements SdmxConnectionSupplier {
 
     private final List<SdmxDriver> drivers;
     private final Map<String, WsEntryPoint> entryPointByName;
@@ -46,7 +46,7 @@ public final class SdmxDriverManager extends SdmxConnectionSupplier {
     }
 
     @Override
-    public SdmxConnection getConnection(String name) {
+    public SdmxConnection getConnection(String name) throws IOException {
         WsEntryPoint wsEntryPoint = entryPointByName.get(name);
         if (wsEntryPoint != null) {
             URI uri = wsEntryPoint.getUri();
@@ -60,7 +60,7 @@ public final class SdmxDriverManager extends SdmxConnectionSupplier {
                 }
             }
         }
-        return SdmxConnection.failing();
+        throw new IOException(name);
     }
 
     @Nonnull

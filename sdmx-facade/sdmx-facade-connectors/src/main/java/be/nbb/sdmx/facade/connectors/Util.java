@@ -17,16 +17,14 @@
 package be.nbb.sdmx.facade.connectors;
 
 import be.nbb.sdmx.facade.DataStructure;
-import be.nbb.sdmx.facade.FlowRef;
-import be.nbb.sdmx.facade.ResourceRef;
+import be.nbb.sdmx.facade.DataStructureRef;
+import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.util.Property.BoolProperty;
-import it.bancaditalia.oss.sdmx.api.Codelist;
 import it.bancaditalia.oss.sdmx.api.DSDIdentifier;
 import it.bancaditalia.oss.sdmx.api.DataFlowStructure;
 import it.bancaditalia.oss.sdmx.api.Dataflow;
 import it.bancaditalia.oss.sdmx.api.Dimension;
-import java.util.HashSet;
-import java.util.Set;
+import javax.annotation.Nonnull;
 
 /**
  *
@@ -35,28 +33,44 @@ import java.util.Set;
 @lombok.experimental.UtilityClass
 class Util {
 
-    public static be.nbb.sdmx.facade.Dataflow toDataflow(Dataflow dataflow) {
-        return be.nbb.sdmx.facade.Dataflow.of(FlowRef.parse(dataflow.getFullIdentifier()), toDataStructureRef(dataflow.getDsdIdentifier()), dataflow.getDescription());
+    be.nbb.sdmx.facade.Dataflow toDataflow(Dataflow dataflow) {
+        return be.nbb.sdmx.facade.Dataflow.of(DataflowRef.parse(dataflow.getFullIdentifier()), toDataStructureRef(dataflow.getDsdIdentifier()), dataflow.getDescription());
     }
 
-    public static be.nbb.sdmx.facade.ResourceRef toDataStructureRef(DSDIdentifier input) {
-        return ResourceRef.of(input.getAgency(), input.getId(), input.getVersion());
+    be.nbb.sdmx.facade.DataStructureRef toDataStructureRef(DSDIdentifier input) {
+        return DataStructureRef.of(input.getAgency(), input.getId(), input.getVersion());
     }
 
-    static be.nbb.sdmx.facade.Codelist toCodelist(Codelist input) {
-        return be.nbb.sdmx.facade.Codelist.of(ResourceRef.of(input.getAgency(), input.getId(), input.getVersion()), input.getCodes());
+    be.nbb.sdmx.facade.Dimension toDimension(Dimension o) {
+        return be.nbb.sdmx.facade.Dimension.builder()
+                .id(o.getId())
+                .position(o.getPosition())
+                .label(o.getName())
+                .codes(o.getCodeList().getCodes())
+                .build();
     }
 
-    public static DataStructure toDataStructure(DataFlowStructure dfs) {
-        Set<be.nbb.sdmx.facade.Dimension> dimensions = new HashSet<>();
+    DataStructure toDataStructure(DataFlowStructure dfs) {
+        DataStructure.Builder result = DataStructure.builder()
+                .ref(DataStructureRef.of(dfs.getAgency(), dfs.getId(), dfs.getVersion()))
+                .label(getNonNullName(dfs))
+                .timeDimensionId(dfs.getTimeDimension())
+                .primaryMeasureId(dfs.getMeasure());
         for (Dimension o : dfs.getDimensions()) {
-            dimensions.add(be.nbb.sdmx.facade.Dimension.of(o.getId(), o.getPosition(), toCodelist(o.getCodeList()), o.getName()));
+            result.dimension(toDimension(o));
         }
-        return DataStructure.of(ResourceRef.of(dfs.getAgency(), dfs.getId(), dfs.getVersion()), dimensions, dfs.getName(), dfs.getTimeDimension(), dfs.getMeasure());
+        return result.build();
     }
 
-    public static final BoolProperty SUPPORTS_COMPRESSION = new BoolProperty("supportsCompression");
-    public static final BoolProperty NEEDS_CREDENTIALS = new BoolProperty("needsCredentials");
-    public static final BoolProperty NEEDS_URL_ENCODING = new BoolProperty("needsURLEncoding");
-    public static final BoolProperty SERIES_KEYS_ONLY_SUPPORTED = new BoolProperty("seriesKeysOnlySupported");
+    @Nonnull
+    private String getNonNullName(DataFlowStructure dfs) {
+        // FIXME: PR parsing code for name of data structure v2.1 in connectors 
+        String result = dfs.getName();
+        return result != null ? result : dfs.getId();
+    }
+
+    static final BoolProperty SUPPORTS_COMPRESSION = new BoolProperty("supportsCompression");
+    static final BoolProperty NEEDS_CREDENTIALS = new BoolProperty("needsCredentials");
+    static final BoolProperty NEEDS_URL_ENCODING = new BoolProperty("needsURLEncoding");
+    static final BoolProperty SERIES_KEYS_ONLY_SUPPORTED = new BoolProperty("seriesKeysOnlySupported");
 }

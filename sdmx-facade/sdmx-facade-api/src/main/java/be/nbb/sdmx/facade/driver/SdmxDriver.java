@@ -19,7 +19,6 @@ package be.nbb.sdmx.facade.driver;
 import be.nbb.sdmx.facade.SdmxConnection;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -30,15 +29,13 @@ import javax.annotation.concurrent.ThreadSafe;
  * @author Philippe Charles
  */
 @ThreadSafe
-public abstract class SdmxDriver {
+public interface SdmxDriver {
 
     @Nonnull
-    abstract public SdmxConnection connect(@Nonnull URI uri, @Nonnull Map<?, ?> info) throws IOException;
+    SdmxConnection connect(@Nonnull URI uri, @Nonnull Map<?, ?> info) throws IOException;
 
-    abstract public boolean acceptsURI(@Nonnull URI uri) throws IOException;
+    boolean acceptsURI(@Nonnull URI uri) throws IOException;
 
     @Nonnull
-    public List<WsEntryPoint> getDefaultEntryPoints() {
-        return Collections.emptyList();
-    }
+    List<WsEntryPoint> getDefaultEntryPoints();
 }

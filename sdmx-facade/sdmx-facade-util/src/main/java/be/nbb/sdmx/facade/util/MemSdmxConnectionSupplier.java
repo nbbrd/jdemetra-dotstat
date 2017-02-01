@@ -18,56 +18,28 @@ package be.nbb.sdmx.facade.util;
 
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
-import java.util.HashMap;
-import java.util.Map;
-import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.util.List;
 
 /**
  *
  * @author Philippe Charles
  */
-public final class MemSdmxConnectionSupplier extends SdmxConnectionSupplier {
+@lombok.Value
+@lombok.Builder(builderClassName = "Builder")
+public class MemSdmxConnectionSupplier implements SdmxConnectionSupplier {
 
-    private final Map<String, SdmxConnection> connections;
-
-    private MemSdmxConnectionSupplier(Map<String, SdmxConnection> connections) {
-        this.connections = connections;
-    }
+    @lombok.NonNull
+    @lombok.Singular
+    List<MemSdmxRepository> repositories;
 
     @Override
-    public SdmxConnection getConnection(String name) {
-        SdmxConnection result = connections.get(name);
-        return result != null ? result : SdmxConnection.failing();
-    }
-
-    public static Builder builder() {
-        return new BuilderImpl();
-    }
-
-    public interface Builder {
-
-        @Nonnull
-        MemSdmxConnectionSupplier build();
-
-        @Nonnull
-        Builder add(@Nonnull String name, @Nonnull MemSdmxConnection connection);
-    }
-
-    //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private static final class BuilderImpl implements Builder {
-
-        private final Map<String, SdmxConnection> connections = new HashMap<>();
-
-        @Override
-        public Builder add(String name, MemSdmxConnection connection) {
-            connections.put(name, connection);
-            return this;
+    public SdmxConnection getConnection(String name) throws IOException {
+        for (MemSdmxRepository o : repositories) {
+            if (o.getName().equals(name)) {
+                return o.asConnection();
+            }
         }
-
-        @Override
-        public MemSdmxConnectionSupplier build() {
-            return new MemSdmxConnectionSupplier(new HashMap<>(connections));
-        }
+        throw new IOException(name);
     }
-    //</editor-fold>
 }

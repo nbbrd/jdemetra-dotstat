@@ -16,7 +16,7 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.facade.FlowRef;
+import be.nbb.sdmx.facade.DataflowRef;
 import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.db.DbBean;
 
@@ -33,11 +33,11 @@ public final class DotStatBean extends DbBean.BulkBean {
         super(id);
     }
 
-    public FlowRef getFlowRef() throws IllegalArgumentException {
-        return FlowRef.parse(getTableName());
+    public DataflowRef getFlowRef() throws IllegalArgumentException {
+        return DataflowRef.parse(getTableName());
     }
 
-    public void setFlowRef(FlowRef flowRef) {
+    public void setFlowRef(DataflowRef flowRef) {
         setTableName(flowRef.toString());
     }
 }

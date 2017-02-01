@@ -172,7 +172,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
         @Override
         protected String getValueAsString(Dataflow value) {
-            return value.getName();
+            return value.getLabel();
         }
 
         @Override
@@ -229,8 +229,8 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
         @Override
         protected boolean matches(TermMatcher termMatcher, Dataflow input) {
-            return termMatcher.matches(input.getName())
-                    || termMatcher.matches(input.getFlowRef().getFlowId());
+            return termMatcher.matches(input.getLabel())
+                    || termMatcher.matches(input.getFlowRef().getId());
         }
 
         @Override

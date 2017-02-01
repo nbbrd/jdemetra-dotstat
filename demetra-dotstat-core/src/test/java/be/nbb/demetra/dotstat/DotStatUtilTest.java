@@ -20,10 +20,11 @@ import static be.nbb.demetra.dotstat.DotStatUtil.getAllSeries;
 import static be.nbb.demetra.dotstat.DotStatUtil.getAllSeriesWithData;
 import static be.nbb.demetra.dotstat.DotStatUtil.getChildren;
 import static be.nbb.demetra.dotstat.DotStatUtil.getSeriesWithData;
-import be.nbb.sdmx.facade.FlowRef;
+import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.connectors.TestResource;
+import be.nbb.sdmx.facade.util.MemSdmxRepository;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import ec.tstoolkit.timeseries.simplets.TsPeriod;
@@ -41,14 +42,14 @@ import org.junit.Test;
  */
 public class DotStatUtilTest {
 
-    private final SdmxConnection nbb = TestResource.nbb();
-    private final SdmxConnection ecb = TestResource.ecb();
-    private final FlowRef nbbFlow = FlowRef.of("NBB", "TEST_DATASET", null);
-    private final FlowRef ecbFlow = FlowRef.parse("ECB,AME,1.0");
+    private final MemSdmxRepository nbb = TestResource.nbb();
+    private final MemSdmxRepository ecb = TestResource.ecb();
+    private final DataflowRef nbbFlow = DataflowRef.of("NBB", "TEST_DATASET", null);
+    private final DataflowRef ecbFlow = DataflowRef.parse("ECB,AME,1.0");
 
     @Test
     public void testGetAllSeries20() throws Exception {
-        SdmxConnection conn = nbb;
+        SdmxConnection conn = nbb.asConnection();
 
         Key single = Key.of("LOCSTL04", "AUS", "M");
 
@@ -73,7 +74,7 @@ public class DotStatUtilTest {
 
     @Test
     public void testGetAllSeriesWithData20() throws Exception {
-        SdmxConnection conn = nbb;
+        SdmxConnection conn = nbb.asConnection();
 
         Key single = Key.of("LOCSTL04", "AUS", "M");
 
@@ -101,7 +102,7 @@ public class DotStatUtilTest {
 
     @Test
     public void testGetSeriesWithData20() throws Exception {
-        SdmxConnection conn = nbb;
+        SdmxConnection conn = nbb.asConnection();
 
         TsData data = getSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "AUS", "M")).get();
         assertEquals(new TsPeriod(TsFrequency.Monthly, 1966, 1), data.getStart());
@@ -115,7 +116,7 @@ public class DotStatUtilTest {
 
     @Test
     public void testGetChildren20() throws Exception {
-        SdmxConnection conn = nbb;
+        SdmxConnection conn = nbb.asConnection();
 
         assertArrayEquals(new String[]{"LOCSTL04"}, getChildren(conn, nbbFlow, Key.ALL, 1).toArray());
         assertArrayEquals(new String[]{"AUS"}, getChildren(conn, nbbFlow, Key.of("LOCSTL04", "", ""), 2).toArray());
@@ -125,7 +126,7 @@ public class DotStatUtilTest {
 
     @Test
     public void testGetAllSeries21() throws Exception {
-        SdmxConnection conn = ecb;
+        SdmxConnection conn = ecb.asConnection();
         Key key;
 
         key = Key.ALL;
@@ -168,7 +169,7 @@ public class DotStatUtilTest {
 
     @Test
     public void testGetAllSeriesWithData21() throws Exception {
-        SdmxConnection conn = ecb;
+        SdmxConnection conn = ecb.asConnection();
         Key key;
 
         key = Key.ALL;
@@ -204,7 +205,7 @@ public class DotStatUtilTest {
 
     @Test
     public void testGetSeriesWithData21() throws Exception {
-        SdmxConnection conn = ecb;
+        SdmxConnection conn = ecb.asConnection();
 
         Key key = Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE");
 
@@ -219,7 +220,7 @@ public class DotStatUtilTest {
 
     @Test
     public void testGetChildren21() throws Exception {
-        SdmxConnection conn = ecb;
+        SdmxConnection conn = ecb.asConnection();
 
         List<String> children;
 

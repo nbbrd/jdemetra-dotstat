@@ -81,7 +81,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
         DotStatBean bean = decodeBean(dataSource);
         if (!displayCodes) {
             try (SdmxConnection conn = supplier.getConnection(bean.getDbName())) {
-                return String.format("%s ~ %s", bean.getDbName(), conn.getDataflow(bean.getFlowRef()).getName());
+                return String.format("%s ~ %s", bean.getDbName(), conn.getDataflow(bean.getFlowRef()).getLabel());
             } catch (IOException ex) {
             }
         }
@@ -117,7 +117,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
                     DataStructure dfs = conn.getDataStructure(bean.getFlowRef());
                     for (Dimension o : dfs.getDimensions()) {
                         if (o.getId().equals(nodeDim.getKey())) {
-                            return o.getCodelist().getCodes().get(nodeDim.getValue());
+                            return o.getCodes().get(nodeDim.getValue());
                         }
                     }
                     return nodeDim.getValue();
