@@ -21,7 +21,7 @@ import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.TimeFormat;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.Date;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,10 +33,10 @@ import javax.xml.stream.XMLStreamReader;
  *
  * @author Philippe Charles
  */
-public final class XMLStreamGenericDataCursor21 extends DataCursor {
+public final class XMLStreamGenericDataCursor21 implements DataCursor {
 
     @Nullable
-    public static DataCursor genericData21(@Nonnull XMLInputFactory factory, @Nonnull InputStreamReader stream, @Nonnull DataStructure dsd) throws IOException {
+    public static DataCursor genericData21(@Nonnull XMLInputFactory factory, @Nonnull Reader stream, @Nonnull DataStructure dsd) throws IOException {
         try {
             return new XMLStreamGenericDataCursor21(factory.createXMLStreamReader(stream), Key.builder(dsd), Util.getFrequencyCodeIdIndex(dsd));
         } catch (XMLStreamException ex) {
@@ -190,7 +190,7 @@ public final class XMLStreamGenericDataCursor21 extends DataCursor {
     private static TimeFormat parseTimeFormat(Key.Builder keyBuilder, int frequencyCodeIdIndex) {
         if (frequencyCodeIdIndex != Util.NO_FREQUENCY_CODE_ID_INDEX) {
             String frequencyCodeId = keyBuilder.getItem(frequencyCodeIdIndex);
-            if (frequencyCodeId != null) {
+            if (!frequencyCodeId.isEmpty()) {
                 return TimeFormat.parseByFrequencyCodeId(frequencyCodeId);
             }
         }

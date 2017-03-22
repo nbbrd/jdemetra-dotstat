@@ -28,14 +28,14 @@ import javax.annotation.Nonnull;
 @lombok.experimental.UtilityClass
 class Util {
 
-    public static final int NO_FREQUENCY_CODE_ID_INDEX = -1;
+    final int NO_FREQUENCY_CODE_ID_INDEX = -1;
 
-    public static int getFrequencyCodeIdIndex(@Nonnull DataStructure dfs) {
+    int getFrequencyCodeIdIndex(@Nonnull DataStructure dfs) {
         Dimension dimension = tryFindFreq(dfs.getDimensions());
         return dimension != null ? (dimension.getPosition() - 1) : NO_FREQUENCY_CODE_ID_INDEX;
     }
 
-    private static Dimension tryFindFreq(Set<Dimension> list) {
+    private Dimension tryFindFreq(Set<Dimension> list) {
         for (Dimension o : list) {
             switch (o.getId()) {
                 case "FREQ":

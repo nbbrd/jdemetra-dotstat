@@ -21,9 +21,11 @@ import be.nbb.sdmx.facade.Dimension;
 import ec.nbdemetra.db.DimensionsEditor;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.SdmxConnection;
+import be.nbb.sdmx.facade.driver.SdmxDriver;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import com.google.common.base.Converter;
 import com.google.common.base.Optional;
+import com.google.common.cache.CacheBuilder;
 import ec.nbdemetra.db.DbProviderBuddy;
 import ec.nbdemetra.ui.BeanHandler;
 import ec.nbdemetra.ui.Config;
@@ -40,11 +42,13 @@ import ec.util.completion.ext.QuickAutoCompletionSource;
 import ec.util.completion.swing.CustomListCellRenderer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.ServiceProvider;
+import be.nbb.sdmx.facade.util.HasCache;
 
 /**
  *
@@ -63,6 +67,16 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
         this.supplier = SdmxDriverManager.getDefault();
         this.tableRenderer = new DataflowRenderer();
         this.columnRenderer = new DimensionRenderer();
+        initDriverCache();
+    }
+
+    private static void initDriverCache() {
+        ConcurrentMap cache = CacheBuilder.newBuilder().softValues().build().asMap();
+        for (SdmxDriver o : SdmxDriverManager.getDefault().getDrivers()) {
+            if (o instanceof HasCache) {
+                ((HasCache) o).setCache(cache);
+            }
+        }
     }
 
     @Override
@@ -158,7 +172,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
         @Override
         protected String getValueAsString(Dataflow value) {
-            return value.getName();
+            return value.getLabel();
         }
 
         @Override
@@ -215,8 +229,8 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
         @Override
         protected boolean matches(TermMatcher termMatcher, Dataflow input) {
-            return termMatcher.matches(input.getName())
-                    || termMatcher.matches(input.getFlowRef().getFlowId());
+            return termMatcher.matches(input.getLabel())
+                    || termMatcher.matches(input.getFlowRef().getId());
         }
 
         @Override

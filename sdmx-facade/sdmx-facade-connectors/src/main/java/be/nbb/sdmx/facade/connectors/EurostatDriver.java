@@ -16,18 +16,11 @@
  */
 package be.nbb.sdmx.facade.connectors;
 
-import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.driver.SdmxDriver;
 import be.nbb.sdmx.facade.driver.WsEntryPoint;
-import static be.nbb.sdmx.facade.driver.WsEntryPoint.of;
-import it.bancaditalia.oss.sdmx.api.GenericSDMXClient;
+import be.nbb.sdmx.facade.util.HasCache;
 import it.bancaditalia.oss.sdmx.client.custom.EUROSTAT;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import static java.util.Collections.singletonList;
 import java.util.List;
-import java.util.Properties;
 import org.openide.util.lookup.ServiceProvider;
 
 /**
@@ -35,31 +28,15 @@ import org.openide.util.lookup.ServiceProvider;
  * @author Philippe Charles
  */
 @ServiceProvider(service = SdmxDriver.class)
-public final class EurostatDriver extends SdmxDriver {
+public final class EurostatDriver implements SdmxDriver, HasCache {
 
     private static final String PREFIX = "sdmx:eurostat:";
 
-    private final Util.ClientSupplier supplier = new Util.ClientSupplier() {
-        @Override
-        public GenericSDMXClient getClient(URL endpoint, Properties info) throws MalformedURLException {
-            GenericSDMXClient result = new EUROSTAT();
-            result.setEndpoint(endpoint);
-            return result;
-        }
-    };
-
-    @Override
-    public SdmxConnection connect(String url, Properties info) throws IOException {
-        return Util.getConnection(url.substring(PREFIX.length()), info, supplier);
-    }
-
-    @Override
-    public boolean acceptsURL(String url) throws IOException {
-        return url.startsWith(PREFIX);
-    }
+    @lombok.experimental.Delegate
+    private final SdmxDriverSupport support = SdmxDriverSupport.of(PREFIX, EUROSTAT.class);
 
     @Override
     public List<WsEntryPoint> getDefaultEntryPoints() {
-        return singletonList(of("EUROSTAT", "Eurostat", "sdmx:eurostat:http://ec.europa.eu/eurostat/SDMX/diss-web/rest"));
+        return SdmxDriverSupport.singletonOf("EUROSTAT", "Eurostat", "sdmx:eurostat:http://ec.europa.eu/eurostat/SDMX/diss-web/rest");
     }
 }

@@ -27,25 +27,28 @@ import java.util.Set;
  *
  * @author Philippe Charles
  */
-@lombok.Value(staticConstructor = "of")
-public class DataStructure {
+@lombok.Value
+@lombok.Builder(builderClassName = "Builder")
+public class DataStructure implements HasLabel {
 
     /**
      * Non-null unique reference to this data structure.
      */
     @lombok.NonNull
-    ResourceRef dataStructureRef;
+    DataStructureRef ref;
 
     /**
      * Non-null list of statistical concepts used to identify a statistical
      * series or individual observations.
      */
     @lombok.NonNull
+    @lombok.Singular
     Set<Dimension> dimensions;
-
-    String name;
 
     String timeDimensionId;
 
     String primaryMeasureId;
+
+    @lombok.NonNull
+    String label;
 }

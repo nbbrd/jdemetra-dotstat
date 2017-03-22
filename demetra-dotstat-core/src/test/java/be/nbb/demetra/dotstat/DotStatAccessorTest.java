@@ -16,14 +16,15 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.facade.connectors.FakeConnectionSupplier;
 import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
 import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.FlowRef;
+import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.connectors.TestResource;
+import be.nbb.sdmx.facade.util.MemSdmxConnectionSupplier;
 import com.google.common.base.Joiner;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbSeries;
@@ -46,13 +47,15 @@ import org.junit.Test;
  */
 public class DotStatAccessorTest {
 
-    private final TestResource nbb = TestResource.nbb();
-    private final FakeConnectionSupplier supplier = new FakeConnectionSupplier();
+    private final SdmxConnectionSupplier supplier = MemSdmxConnectionSupplier.builder()
+            .repository(TestResource.nbb())
+            .repository(TestResource.ecb())
+            .build();
 
     private static DotStatBean nbbBean() {
         DotStatBean result = new DotStatBean();
-        result.setDbName(FakeConnectionSupplier.NBB);
-        result.setFlowRef(FlowRef.of("NBB", "TEST_DATASET", null));
+        result.setDbName("NBB");
+        result.setFlowRef(DataflowRef.of("NBB", "TEST_DATASET", null));
         result.setDimColumns(Joiner.on(',').join(new String[]{"SUBJECT", "LOCATION", "FREQUENCY"}));
         return result;
     }
@@ -66,8 +69,8 @@ public class DotStatAccessorTest {
             "AME_AGG_METHOD", "AME_UNIT", "AME_REFERENCE", "AME_ITEM"};
 
         DotStatBean result = new DotStatBean();
-        result.setDbName(FakeConnectionSupplier.ECB);
-        result.setFlowRef(FlowRef.parse("ECB,AME,1.0"));
+        result.setDbName("ECB");
+        result.setFlowRef(DataflowRef.parse("ECB,AME,1.0"));
         result.setDimColumns(Joiner.on(',').join(dimensions));
         return result;
     }
@@ -79,7 +82,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKey() throws Exception {
-        DataStructure dfs = nbb.AsConnection().getDataStructure(FlowRef.of("NBB", "TEST_DATASET", null));
+        DataStructure dfs = supplier.getConnection("NBB").getDataStructure(DataflowRef.of("NBB", "TEST_DATASET", null));
         Map<String, Dimension> dimensionById = DotStatAccessor.dimensionById(dfs);
 
         // default ordering of dimensions
@@ -99,7 +102,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKeyFromTs() throws Exception {
-        try (DataCursor cursor = nbb.AsConnection().getData(FlowRef.of("NBB", "TEST_DATASET", null), Key.ALL, true)) {
+        try (DataCursor cursor = supplier.getConnection("NBB").getData(DataflowRef.of("NBB", "TEST_DATASET", null), Key.ALL, true)) {
             cursor.nextSeries();
             assertEquals(Key.parse("LOCSTL04.AUS.M"), cursor.getKey());
         }

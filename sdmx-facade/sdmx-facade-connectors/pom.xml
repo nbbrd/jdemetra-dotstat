@@ -5,7 +5,7 @@
     <parent>
         <groupId>be.nbb.sdmx</groupId>
         <artifactId>sdmx-facade-parent</artifactId>
-        <version>2.1.0</version>
+        <version>2.1.1</version>
     </parent>
 
     <artifactId>sdmx-facade-connectors</artifactId>
@@ -13,8 +13,7 @@
     
     <properties>
         <!-- dependencies -->
-        <sdmx-connectors.version>1.6.2</sdmx-connectors.version>
-        <guava.version>18.0</guava.version>
+        <sdmx-connectors.version>5465617cb9</sdmx-connectors.version>
         <netbeans.version>RELEASE802</netbeans.version>
     </properties>
 
@@ -23,36 +22,56 @@
             <id>netbeans</id>
             <url>http://bits.netbeans.org/maven2/</url>
         </repository>        
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.github.amattioc</groupId>
+                <artifactId>SDMX</artifactId>
+                <version>${sdmx-connectors.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.netbeans.api</groupId>
+                <artifactId>org-openide-util-lookup</artifactId>
+                <version>${netbeans.version}</version>
+            </dependency>
+        </dependencies>        
+    </dependencyManagement>
 
     <dependencies>
         <!-- compile only -->
         <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-openide-util-lookup</artifactId>
-            <version>${netbeans.version}</version>
             <scope>provided</scope>
         </dependency>
         <!-- compile and runtime -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>sdmx-facade-api</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>sdmx-facade-util</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>it.bancaditalia.oss</groupId>
-            <artifactId>sdmx</artifactId>
-            <version>${sdmx-connectors.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
+            <groupId>com.github.amattioc</groupId>
+            <artifactId>SDMX</artifactId>
         </dependency>
     </dependencies>
 </project>
