@@ -30,6 +30,7 @@ import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbSeries;
 import ec.tss.tsproviders.db.DbSetId;
 import ec.tstoolkit.design.VisibleForTesting;
+import internal.sdmx.SdmxQueryUtil;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -99,7 +100,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
 
         Key colKey = converter.convert(ref);
-        try (TsCursor<Key> cursor = DotStatUtil.getAllSeries(conn, flowRef, colKey)) {
+        try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeries(conn, flowRef, colKey)) {
             ImmutableList.Builder<DbSetId> result = ImmutableList.builder();
             while (cursor.nextSeries()) {
                 result.add(converter.reverse().convert(cursor.getSeriesId()));
@@ -112,7 +113,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
 
         Key colKey = converter.convert(ref);
-        try (TsCursor<Key> cursor = DotStatUtil.getAllSeriesWithData(conn, flowRef, colKey)) {
+        try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeriesWithData(conn, flowRef, colKey)) {
             ImmutableList.Builder<DbSeries> result = ImmutableList.builder();
             while (cursor.nextSeries()) {
                 result.add(new DbSeries(converter.reverse().convert(cursor.getSeriesId()), cursor.getSeriesData()));
@@ -125,13 +126,13 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
 
         Key seriesKey = converter.convert(ref);
-        return new DbSeries(ref, DotStatUtil.getSeriesWithData(conn, flowRef, seriesKey));
+        return new DbSeries(ref, SdmxQueryUtil.getSeriesWithData(conn, flowRef, seriesKey));
     }
 
     private static List<String> getChildren(SdmxConnection conn, DataflowRef flowRef, DbSetId ref) throws IOException {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
         int dimensionPosition = dimensionById(conn.getDataStructure(flowRef)).get(ref.getColumn(ref.getLevel())).getPosition();
-        return DotStatUtil.getChildren(conn, flowRef, converter.convert(ref), dimensionPosition);
+        return SdmxQueryUtil.getChildren(conn, flowRef, converter.convert(ref), dimensionPosition);
     }
 
     @VisibleForTesting

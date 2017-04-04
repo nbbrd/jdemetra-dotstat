@@ -14,12 +14,8 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.dotstat;
+package internal.sdmx;
 
-import static be.nbb.demetra.dotstat.DotStatUtil.getAllSeries;
-import static be.nbb.demetra.dotstat.DotStatUtil.getAllSeriesWithData;
-import static be.nbb.demetra.dotstat.DotStatUtil.getChildren;
-import static be.nbb.demetra.dotstat.DotStatUtil.getSeriesWithData;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnection;
@@ -29,18 +25,22 @@ import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import ec.tstoolkit.timeseries.simplets.TsPeriod;
+import static internal.sdmx.SdmxQueryUtil.getAllSeries;
+import static internal.sdmx.SdmxQueryUtil.getAllSeriesWithData;
+import static internal.sdmx.SdmxQueryUtil.getChildren;
+import static internal.sdmx.SdmxQueryUtil.getSeriesWithData;
 import java.util.List;
+import org.junit.Test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import org.junit.Test;
 
 /**
  *
  * @author Philippe Charles
  */
-public class DotStatUtilTest {
+public class SdmxQueryUtilTest {
 
     private final MemSdmxRepository nbb = TestResource.nbb();
     private final MemSdmxRepository ecb = TestResource.ecb();
