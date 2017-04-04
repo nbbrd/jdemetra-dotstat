@@ -25,10 +25,10 @@ import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.connectors.TestResource;
 import be.nbb.sdmx.facade.util.MemSdmxRepository;
+import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import ec.tstoolkit.timeseries.simplets.TsPeriod;
-import java.io.IOException;
 import java.util.List;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -53,21 +53,21 @@ public class DotStatUtilTest {
 
         Key single = Key.of("LOCSTL04", "AUS", "M");
 
-        try (TsCursor<Key, IOException> cursor = getAllSeries(conn, nbbFlow, Key.ALL)) {
+        try (TsCursor<Key> cursor = getAllSeries(conn, nbbFlow, Key.ALL)) {
             assertTrue(cursor.nextSeries());
-            assertEquals(single, cursor.getKey());
+            assertEquals(single, cursor.getSeriesId());
             assertFalse(cursor.nextSeries());
         }
 
-        try (TsCursor<Key, IOException> cursor = getAllSeries(conn, nbbFlow, Key.of("LOCSTL04", "", ""))) {
+        try (TsCursor<Key> cursor = getAllSeries(conn, nbbFlow, Key.of("LOCSTL04", "", ""))) {
             assertTrue(cursor.nextSeries());
-            assertEquals(single, cursor.getKey());
+            assertEquals(single, cursor.getSeriesId());
             assertFalse(cursor.nextSeries());
         }
 
-        try (TsCursor<Key, IOException> cursor = getAllSeries(conn, nbbFlow, Key.of("LOCSTL04", "AUS", ""))) {
+        try (TsCursor<Key> cursor = getAllSeries(conn, nbbFlow, Key.of("LOCSTL04", "AUS", ""))) {
             assertTrue(cursor.nextSeries());
-            assertEquals(single, cursor.getKey());
+            assertEquals(single, cursor.getSeriesId());
             assertFalse(cursor.nextSeries());
         }
     }
@@ -78,24 +78,24 @@ public class DotStatUtilTest {
 
         Key single = Key.of("LOCSTL04", "AUS", "M");
 
-        try (TsCursor<Key, IOException> cursor = getAllSeriesWithData(conn, nbbFlow, Key.ALL)) {
+        try (TsCursor<Key> cursor = getAllSeriesWithData(conn, nbbFlow, Key.ALL)) {
             assertTrue(cursor.nextSeries());
-            assertEquals(single, cursor.getKey());
-            assertEquals(55, cursor.getData().get().getLength());
+            assertEquals(single, cursor.getSeriesId());
+            assertEquals(55, cursor.getSeriesData().get().getLength());
             assertFalse(cursor.nextSeries());
         }
 
-        try (TsCursor<Key, IOException> cursor = getAllSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "", ""))) {
+        try (TsCursor<Key> cursor = getAllSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "", ""))) {
             assertTrue(cursor.nextSeries());
-            assertEquals(single, cursor.getKey());
-            assertEquals(55, cursor.getData().get().getLength());
+            assertEquals(single, cursor.getSeriesId());
+            assertEquals(55, cursor.getSeriesData().get().getLength());
             assertFalse(cursor.nextSeries());
         }
 
-        try (TsCursor<Key, IOException> cursor = getAllSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "AUS", ""))) {
+        try (TsCursor<Key> cursor = getAllSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "AUS", ""))) {
             assertTrue(cursor.nextSeries());
-            assertEquals(single, cursor.getKey());
-            assertEquals(55, cursor.getData().get().getLength());
+            assertEquals(single, cursor.getSeriesId());
+            assertEquals(55, cursor.getSeriesData().get().getLength());
             assertFalse(cursor.nextSeries());
         }
     }
@@ -130,38 +130,38 @@ public class DotStatUtilTest {
         Key key;
 
         key = Key.ALL;
-        try (TsCursor<Key, IOException> cursor = getAllSeries(conn, ecbFlow, key)) {
+        try (TsCursor<Key> cursor = getAllSeries(conn, ecbFlow, key)) {
             int index = 0;
             while (cursor.nextSeries()) {
                 switch (index++) {
                     case 0:
-                        assertEquals(Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE"), cursor.getKey());
+                        assertEquals(Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE"), cursor.getSeriesId());
                         break;
                     case 119:
-                        assertEquals(Key.of("A", "HRV", "1", "0", "0", "0", "ZUTN"), cursor.getKey());
+                        assertEquals(Key.of("A", "HRV", "1", "0", "0", "0", "ZUTN"), cursor.getSeriesId());
                         break;
                 }
-                assertTrue(key.contains(cursor.getKey()));
+                assertTrue(key.contains(cursor.getSeriesId()));
             }
             assertEquals(120, index);
         }
 
         key = Key.of("A", "", "", "", "", "", "");
-        try (TsCursor<Key, IOException> cursor = getAllSeries(conn, ecbFlow, key)) {
+        try (TsCursor<Key> cursor = getAllSeries(conn, ecbFlow, key)) {
             int index = 0;
             while (cursor.nextSeries()) {
                 index++;
-                assertTrue(key.contains(cursor.getKey()));
+                assertTrue(key.contains(cursor.getSeriesId()));
             }
             assertEquals(120, index);
         }
 
         key = Key.of("A", "DEU", "", "", "", "", "");
-        try (TsCursor<Key, IOException> cursor = getAllSeries(conn, ecbFlow, key)) {
+        try (TsCursor<Key> cursor = getAllSeries(conn, ecbFlow, key)) {
             int index = 0;
             while (cursor.nextSeries()) {
                 index++;
-                assertTrue(key.contains(cursor.getKey()));
+                assertTrue(key.contains(cursor.getSeriesId()));
             }
             assertEquals(4, index);
         }
@@ -173,31 +173,31 @@ public class DotStatUtilTest {
         Key key;
 
         key = Key.ALL;
-        try (TsCursor<Key, IOException> cursor = getAllSeriesWithData(conn, ecbFlow, key)) {
+        try (TsCursor<Key> cursor = getAllSeriesWithData(conn, ecbFlow, key)) {
             int index = 0;
             while (cursor.nextSeries()) {
                 switch (index++) {
                     case 0:
-                        assertEquals(Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE"), cursor.getKey());
-                        assertEquals(25, cursor.getData().get().getLength());
+                        assertEquals(Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE"), cursor.getSeriesId());
+                        assertEquals(25, cursor.getSeriesData().get().getLength());
                         break;
                 }
-                assertTrue(key.contains(cursor.getKey()));
+                assertTrue(key.contains(cursor.getSeriesId()));
             }
             assertEquals(120, index);
         }
 
         key = Key.of("A", "DEU", "", "", "", "", "");
-        try (TsCursor<Key, IOException> cursor = getAllSeriesWithData(conn, ecbFlow, key)) {
+        try (TsCursor<Key> cursor = getAllSeriesWithData(conn, ecbFlow, key)) {
             int index = 0;
             while (cursor.nextSeries()) {
                 switch (index++) {
                     case 0:
-                        assertEquals(Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE"), cursor.getKey());
-                        assertEquals(25, cursor.getData().get().getLength());
+                        assertEquals(Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE"), cursor.getSeriesId());
+                        assertEquals(25, cursor.getSeriesData().get().getLength());
                         break;
                 }
-                assertTrue(key.contains(cursor.getKey()));
+                assertTrue(key.contains(cursor.getSeriesId()));
             }
             assertEquals(4, index);
         }

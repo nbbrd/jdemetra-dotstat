@@ -25,11 +25,13 @@ import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.TimeFormat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
+import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tss.tsproviders.utils.OptionalTsData;
 import ec.tstoolkit.timeseries.TsAggregationType;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -45,14 +47,14 @@ import javax.annotation.Nonnull;
 class DotStatUtil {
 
     @Nonnull
-    public static TsCursor<Key, IOException> getAllSeries(SdmxConnection conn, DataflowRef flowRef, Key ref) throws IOException {
+    public static TsCursor<Key> getAllSeries(SdmxConnection conn, DataflowRef flowRef, Key ref) throws IOException {
         return conn.isSeriesKeysOnlySupported()
                 ? request(conn, flowRef, ref, true)
                 : computeKeys(conn, flowRef, ref);
     }
 
     @Nonnull
-    public static TsCursor<Key, IOException> getAllSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref) throws IOException {
+    public static TsCursor<Key> getAllSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref) throws IOException {
         return conn.isSeriesKeysOnlySupported()
                 ? request(conn, flowRef, ref, false)
                 : computeKeysAndRequestData(conn, flowRef, ref);
@@ -60,19 +62,19 @@ class DotStatUtil {
 
     @Nonnull
     public static OptionalTsData getSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref) throws IOException {
-        try (TsCursor<Key, IOException> cursor = request(conn, flowRef, ref, false)) {
-            return cursor.nextSeries() ? cursor.getData() : MISSING_DATA;
+        try (TsCursor<Key> cursor = request(conn, flowRef, ref, false)) {
+            return cursor.nextSeries() ? cursor.getSeriesData() : MISSING_DATA;
         }
     }
 
     @Nonnull
     public static List<String> getChildren(SdmxConnection conn, DataflowRef flowRef, Key ref, int dimensionPosition) throws IOException {
         if (conn.isSeriesKeysOnlySupported()) {
-            try (TsCursor<Key, IOException> cursor = request(conn, flowRef, ref, true)) {
+            try (TsCursor<Key> cursor = request(conn, flowRef, ref, true)) {
                 int index = dimensionPosition - 1;
                 TreeSet<String> result = new TreeSet<>();
                 while (cursor.nextSeries()) {
-                    result.add(cursor.getKey().getItem(index));
+                    result.add(cursor.getSeriesId().getItem(index));
                 }
                 return ImmutableList.copyOf(result);
             }
@@ -82,9 +84,9 @@ class DotStatUtil {
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private static final OptionalTsData MISSING_DATA = OptionalTsData.absent(0, 0, "No results matching the query");
+    private static final OptionalTsData MISSING_DATA = OptionalTsData.absent("No results matching the query");
 
-    private static final class Adapter extends TsCursor<Key, IOException> {
+    private static final class Adapter implements TsCursor<Key> {
 
         private final Key group;
         private final DataCursor cursor;
@@ -108,18 +110,33 @@ class DotStatUtil {
         }
 
         @Override
-        public Key getKey() throws IOException {
+        public Key getSeriesId() throws IOException {
             return currentKey;
         }
 
         @Override
-        public OptionalTsData getData() throws IOException {
+        public OptionalTsData getSeriesData() throws IOException {
             return toData(cursor);
         }
 
         @Override
         public void close() throws IOException {
             cursor.close();
+        }
+
+        @Override
+        public Map<String, String> getSeriesMetaData() throws IOException, IllegalStateException {
+            return Collections.emptyMap();
+        }
+
+        @Override
+        public Map<String, String> getMetaData() throws IOException, IllegalStateException {
+            return Collections.emptyMap();
+        }
+
+        @Override
+        public boolean isClosed() throws IOException {
+            return false;
         }
 
         private static OptionalTsData toData(DataCursor cursor) throws IOException {
@@ -158,13 +175,13 @@ class DotStatUtil {
         }
     }
 
-    private static TsCursor<Key, IOException> request(SdmxConnection conn, DataflowRef flowRef, Key key, boolean seriesKeysOnly) throws IOException {
+    private static TsCursor<Key> request(SdmxConnection conn, DataflowRef flowRef, Key key, boolean seriesKeysOnly) throws IOException {
         return new Adapter(key, conn.getData(flowRef, key, seriesKeysOnly));
     }
 
-    private static TsCursor<Key, IOException> computeKeys(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
+    private static TsCursor<Key> computeKeys(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
         final List<Key> list = computeAllPossibleSeries(dimensionByIndex(conn.getDataStructure(flowRef)), key);
-        return new TsCursor<Key, IOException>() {
+        return new TsCursor<Key>() {
             private int index = -1;
 
             @Override
@@ -174,26 +191,45 @@ class DotStatUtil {
             }
 
             @Override
-            public Key getKey() throws IOException {
+            public Key getSeriesId() throws IOException {
                 return list.get(index);
             }
 
             @Override
-            public OptionalTsData getData() throws IOException {
+            public OptionalTsData getSeriesData() throws IOException {
                 throw new RuntimeException();
+            }
+
+            @Override
+            public void close() throws IOException {
+            }
+
+            @Override
+            public Map<String, String> getSeriesMetaData() throws IOException, IllegalStateException {
+                return Collections.emptyMap();
+            }
+
+            @Override
+            public Map<String, String> getMetaData() throws IOException, IllegalStateException {
+                return Collections.emptyMap();
+            }
+
+            @Override
+            public boolean isClosed() throws IOException {
+                return false;
             }
         };
     }
 
-    private static TsCursor<Key, IOException> computeKeysAndRequestData(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
+    private static TsCursor<Key> computeKeysAndRequestData(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
         final List<Key> list = computeAllPossibleSeries(dimensionByIndex(conn.getDataStructure(flowRef)), key);
         final Map<Key, OptionalTsData> dataByKey = new HashMap<>();
-        try (TsCursor<Key, IOException> cursor = request(conn, flowRef, key, false)) {
+        try (TsCursor<Key> cursor = request(conn, flowRef, key, false)) {
             while (cursor.nextSeries()) {
-                dataByKey.put(cursor.getKey(), cursor.getData());
+                dataByKey.put(cursor.getSeriesId(), cursor.getSeriesData());
             }
         }
-        return new TsCursor<Key, IOException>() {
+        return new TsCursor<Key>() {
             private int index = -1;
 
             @Override
@@ -203,14 +239,33 @@ class DotStatUtil {
             }
 
             @Override
-            public Key getKey() throws IOException {
+            public Key getSeriesId() throws IOException {
                 return list.get(index);
             }
 
             @Override
-            public OptionalTsData getData() throws IOException {
-                OptionalTsData data = dataByKey.get(getKey());
+            public OptionalTsData getSeriesData() throws IOException {
+                OptionalTsData data = dataByKey.get(getSeriesId());
                 return data != null ? data : MISSING_DATA;
+            }
+
+            @Override
+            public void close() throws IOException {
+            }
+
+            @Override
+            public Map<String, String> getSeriesMetaData() throws IOException, IllegalStateException {
+                return Collections.emptyMap();
+            }
+
+            @Override
+            public Map<String, String> getMetaData() throws IOException, IllegalStateException {
+                return Collections.emptyMap();
+            }
+
+            @Override
+            public boolean isClosed() throws IOException {
+                return false;
             }
         };
     }

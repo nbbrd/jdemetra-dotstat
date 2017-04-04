@@ -23,9 +23,9 @@ import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.SdmxConnection;
 import com.google.common.base.Converter;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbSeries;
 import ec.tss.tsproviders.db.DbSetId;
@@ -99,10 +99,10 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
 
         Key colKey = converter.convert(ref);
-        try (TsCursor<Key, IOException> cursor = DotStatUtil.getAllSeries(conn, flowRef, colKey)) {
+        try (TsCursor<Key> cursor = DotStatUtil.getAllSeries(conn, flowRef, colKey)) {
             ImmutableList.Builder<DbSetId> result = ImmutableList.builder();
             while (cursor.nextSeries()) {
-                result.add(converter.reverse().convert(cursor.getKey()));
+                result.add(converter.reverse().convert(cursor.getSeriesId()));
             }
             return result.build();
         }
@@ -112,10 +112,10 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
 
         Key colKey = converter.convert(ref);
-        try (TsCursor<Key, IOException> cursor = DotStatUtil.getAllSeriesWithData(conn, flowRef, colKey)) {
+        try (TsCursor<Key> cursor = DotStatUtil.getAllSeriesWithData(conn, flowRef, colKey)) {
             ImmutableList.Builder<DbSeries> result = ImmutableList.builder();
             while (cursor.nextSeries()) {
-                result.add(new DbSeries(converter.reverse().convert(cursor.getKey()), cursor.getData()));
+                result.add(new DbSeries(converter.reverse().convert(cursor.getSeriesId()), cursor.getSeriesData()));
             }
             return result.build();
         }
@@ -188,11 +188,6 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
 
     @VisibleForTesting
     static Map<String, Dimension> dimensionById(DataStructure ds) {
-        return Maps.uniqueIndex(ds.getDimensions(), new Function<Dimension, String>() {
-            @Override
-            public String apply(Dimension input) {
-                return input.getId();
-            }
-        });
+        return Maps.uniqueIndex(ds.getDimensions(), Dimension::getId);
     }
 }

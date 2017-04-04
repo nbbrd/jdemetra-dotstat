@@ -19,11 +19,14 @@ package be.nbb.demetra.dotstat;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import be.nbb.sdmx.facade.driver.WsEntryPoint;
 import ec.nbdemetra.ui.completion.JAutoCompletionService;
-import ec.util.completion.AbstractAutoCompletionSource;
 import ec.util.completion.AutoCompletionSource;
-import ec.util.completion.ext.QuickAutoCompletionSource;
+import ec.util.completion.ExtAutoCompletionSource;
 import ec.util.completion.swing.CustomListCellRenderer;
 import ec.util.completion.swing.JAutoCompletion;
+import java.util.Comparator;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import javax.swing.text.JTextComponent;
@@ -38,7 +41,7 @@ public final class SdmxWsAutoCompletionService extends JAutoCompletionService {
 
     public static final String PATH = "JAutoCompletionService/SdmxWs";
 
-    private final AutoCompletionSource source = new ConnectionSource();
+    private final AutoCompletionSource source = entryPointSource();
     private final ListCellRenderer renderer = new ConnectionRenderer();
 
     @Override
@@ -50,34 +53,21 @@ public final class SdmxWsAutoCompletionService extends JAutoCompletionService {
         return result;
     }
 
-    private static final class ConnectionSource extends QuickAutoCompletionSource<WsEntryPoint> {
+    private static AutoCompletionSource entryPointSource() {
+        return ExtAutoCompletionSource
+                .builder(o -> SdmxDriverManager.getDefault().getEntryPoints())
+                .behavior(AutoCompletionSource.Behavior.SYNC)
+                .postProcessor(SdmxWsAutoCompletionService::getEntryPoints)
+                .valueToString(WsEntryPoint::getName)
+                .build();
+    }
 
-        @Override
-        protected Iterable<WsEntryPoint> getAllValues() throws Exception {
-            return SdmxDriverManager.getDefault().getEntryPoints();
-        }
-
-        @Override
-        public AutoCompletionSource.Behavior getBehavior(String term) {
-            return AutoCompletionSource.Behavior.SYNC;
-        }
-
-        @Override
-        protected boolean matches(AbstractAutoCompletionSource.TermMatcher termMatcher, WsEntryPoint input) {
-            return termMatcher.matches(input.getName())
-                    || termMatcher.matches(input.getDescription())
-                    || termMatcher.matches(input.getUri().toString());
-        }
-
-        @Override
-        protected String valueToString(WsEntryPoint value) {
-            return value.getName();
-        }
-
-        @Override
-        public int compare(WsEntryPoint left, WsEntryPoint right) {
-            return left.getDescription().compareTo(right.getDescription());
-        }
+    private static List<WsEntryPoint> getEntryPoints(List<WsEntryPoint> allValues, String term) {
+        Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
+        return allValues.stream()
+                .filter(o -> filter.test(o.getDescription()) || filter.test(o.getUri().toString()))
+                .sorted(Comparator.comparing(WsEntryPoint::getDescription))
+                .collect(Collectors.toList());
     }
 
     private static final class ConnectionRenderer extends CustomListCellRenderer<WsEntryPoint> {
