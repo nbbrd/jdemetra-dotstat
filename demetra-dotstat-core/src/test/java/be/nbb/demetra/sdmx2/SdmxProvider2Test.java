@@ -19,11 +19,11 @@ package be.nbb.demetra.sdmx2;
 import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.IDataSourceLoaderAssert;
 import static ec.tss.tsproviders.IDataSourceLoaderAssert.assertThat;
+import ec.tss.tsproviders.IFileLoaderAssert;
 import ec.tss.tsproviders.sdmx.SdmxBean;
 import ec.tss.tsproviders.sdmx.SdmxProvider;
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -34,11 +34,7 @@ import org.junit.Test;
 public class SdmxProvider2Test {
 
     private static File getSampleFile() {
-        try {
-            return new File(SdmxProvider2Test.class.getResource("/be/nbb/sdmx/TimeSeries.xml").toURI());
-        } catch (URISyntaxException ex) {
-            throw new RuntimeException(ex);
-        }
+        return IFileLoaderAssert.urlAsFile(SdmxProvider2Test.class.getResource("/be/nbb/sdmx/TimeSeries.xml"));
     }
 
     @Test
