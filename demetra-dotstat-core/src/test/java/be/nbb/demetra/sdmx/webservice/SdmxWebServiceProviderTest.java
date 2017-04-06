@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.dotstat2;
+package be.nbb.demetra.sdmx.webservice;
 
 import be.nbb.demetra.dotstat.DotStatProvider;
 import be.nbb.sdmx.facade.DataStructure;
@@ -29,7 +29,6 @@ import be.nbb.sdmx.facade.util.MemSdmxRepository;
 import be.nbb.sdmx.facade.util.MemSdmxRepository.Obs;
 import be.nbb.sdmx.facade.util.MemSdmxRepository.Series;
 import ec.tss.TsMoniker;
-import static ec.tss.tsproviders.Assertions.assertThat;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.IDataSourceLoaderAssert;
@@ -41,22 +40,23 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Test;
+import static ec.tss.tsproviders.Assertions.assertThat;
 
 /**
  *
  * @author Philippe Charles
  */
-public class DotStatProvider2Test {
+public class SdmxWebServiceProviderTest {
 
     @Test
     public void testEquivalence() throws IOException {
         IDataSourceLoaderAssert.assertThat(getProvider())
-                .isEquivalentTo(getPreviousProvider(), DotStatProvider2Test::getSampleDataSource);
+                .isEquivalentTo(getPreviousProvider(), SdmxWebServiceProviderTest::getSampleDataSource);
     }
 
     @Test
     public void testTspCompliance() {
-        IDataSourceLoaderAssert.assertCompliance(DotStatProvider2Test::getProvider, o -> {
+        IDataSourceLoaderAssert.assertCompliance(SdmxWebServiceProviderTest::getProvider, o -> {
             return o.newBean();
         });
     }
@@ -65,15 +65,15 @@ public class DotStatProvider2Test {
     public void testMonikerUri() {
         String uri = "demetra://tsprovider/DOTSTAT/20150203/SERIES?cacheDepth=2&cacheTtl=360000&dbName=ECB&dimColumns=CURRENCY%2CCURRENCY_DENOM%2CEXR_SUFFIX%2CEXR_TYPE%2CFREQ&tableName=ECB%2CEXR%2C1.0#CURRENCY=CHF&CURRENCY_DENOM=EUR&EXR_SUFFIX=A&EXR_TYPE=SP00&FREQ=M";
 
-        DotStatBean2 bean = new DotStatBean2();
-        bean.setDbName("ECB");
-        bean.setDimensionIds(Arrays.asList("CURRENCY", "CURRENCY_DENOM", "EXR_SUFFIX", "EXR_TYPE", "FREQ"));
-        bean.setFlowRef("ECB,EXR,1.0");
+        SdmxWebServiceBean bean = new SdmxWebServiceBean();
+        bean.setSource("ECB");
+        bean.setFlow("ECB,EXR,1.0");
+        bean.setDimensions(Arrays.asList("CURRENCY", "CURRENCY_DENOM", "EXR_SUFFIX", "EXR_TYPE", "FREQ"));
         bean.setCacheDepth(2);
         bean.setCacheTtl(Duration.ofMinutes(6));
 
         DataSource.Builder dataSource = DataSource.builder("DOTSTAT", "20150203");
-        new DotStatParam.V1().set(dataSource, bean);
+        new SdmxWebServiceParam.V1().set(dataSource, bean);
         DataSet expected = DataSet.builder(dataSource.build(), DataSet.Kind.SERIES)
                 .put("CURRENCY", "CHF")
                 .put("CURRENCY_DENOM", "EUR")
@@ -82,13 +82,13 @@ public class DotStatProvider2Test {
                 .put("FREQ", "M")
                 .build();
 
-        try (DotStatProvider2 p = new DotStatProvider2()) {
+        try (SdmxWebServiceProvider p = new SdmxWebServiceProvider()) {
             assertThat(p.toDataSet(new TsMoniker("DOTSTAT", uri))).isEqualTo(expected);
         }
     }
 
-    private static DotStatProvider2 getProvider() {
-        DotStatProvider2 result = new DotStatProvider2();
+    private static SdmxWebServiceProvider getProvider() {
+        SdmxWebServiceProvider result = new SdmxWebServiceProvider();
         result.setConnectionSupplier(getCustomSupplier());
         return result;
     }

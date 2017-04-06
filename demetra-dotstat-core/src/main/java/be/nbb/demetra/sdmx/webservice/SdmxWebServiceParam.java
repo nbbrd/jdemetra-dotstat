@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.dotstat2;
+package be.nbb.demetra.sdmx.webservice;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -38,14 +38,14 @@ import javax.annotation.Nonnull;
  *
  * @author Philippe Charles
  */
-interface DotStatParam extends IParam<DataSource, DotStatBean2> {
+interface SdmxWebServiceParam extends IParam<DataSource, SdmxWebServiceBean> {
 
     String getVersion();
 
     @Nonnull
     IParam<DataSet, CubeId> getCubeIdParam(@Nonnull DataSource dataSource);
 
-    static final class V1 implements DotStatParam {
+    static final class V1 implements SdmxWebServiceParam {
 
         private final Splitter dimensionSplitter = Splitter.on(',').trimResults().omitEmptyStrings();
         private final Joiner dimensionJoiner = Joiner.on(',');
@@ -62,32 +62,32 @@ interface DotStatParam extends IParam<DataSource, DotStatBean2> {
         }
 
         @Override
-        public DotStatBean2 defaultValue() {
-            DotStatBean2 result = new DotStatBean2();
-            result.setDbName(dbName.defaultValue());
-            result.setFlowRef(flowRef.defaultValue());
-            result.setDimensionIds(dimensionIds.defaultValue());
+        public SdmxWebServiceBean defaultValue() {
+            SdmxWebServiceBean result = new SdmxWebServiceBean();
+            result.setSource(dbName.defaultValue());
+            result.setFlow(flowRef.defaultValue());
+            result.setDimensions(dimensionIds.defaultValue());
             result.setCacheTtl(Duration.ofMillis(cacheTtl.defaultValue()));
             result.setCacheDepth(cacheDepth.defaultValue());
             return result;
         }
 
         @Override
-        public DotStatBean2 get(DataSource dataSource) {
-            DotStatBean2 result = new DotStatBean2();
-            result.setDbName(dbName.get(dataSource));
-            result.setFlowRef(flowRef.get(dataSource));
-            result.setDimensionIds(dimensionIds.get(dataSource));
+        public SdmxWebServiceBean get(DataSource dataSource) {
+            SdmxWebServiceBean result = new SdmxWebServiceBean();
+            result.setSource(dbName.get(dataSource));
+            result.setFlow(flowRef.get(dataSource));
+            result.setDimensions(dimensionIds.get(dataSource));
             result.setCacheTtl(Duration.ofMillis(cacheTtl.get(dataSource)));
             result.setCacheDepth(cacheDepth.get(dataSource));
             return result;
         }
 
         @Override
-        public void set(IConfig.Builder<?, DataSource> builder, DotStatBean2 value) {
-            dbName.set(builder, value.getDbName());
-            flowRef.set(builder, value.getFlowRef());
-            dimensionIds.set(builder, value.getDimensionIds());
+        public void set(IConfig.Builder<?, DataSource> builder, SdmxWebServiceBean value) {
+            dbName.set(builder, value.getSource());
+            flowRef.set(builder, value.getFlow());
+            dimensionIds.set(builder, value.getDimensions());
             cacheTtl.set(builder, value.getCacheTtl().toMillis());
             cacheDepth.set(builder, value.getCacheDepth());
         }

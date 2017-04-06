@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.sdmx2;
+package be.nbb.demetra.sdmx.file;
 
 import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.utils.IConfig;
@@ -26,43 +26,39 @@ import java.io.File;
  *
  * @author Philippe Charles
  */
-interface SdmxParam extends IParam<DataSource, SdmxBean2> {
+interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
 
     String getVersion();
 
-    static final class V1 implements SdmxParam {
+    static final class V1 implements SdmxFileParam {
 
-        private final IParam<DataSource, File> file = Params.onFile(new File(""), "url");
-        private final IParam<DataSource, String> factory = Params.onString("Cunning plan", "factory");
-        private final IParam<DataSource, String> titleAttribute = Params.onString("", "titleAttribute");
+        private final IParam<DataSource, File> file = Params.onFile(new File(""), "f");
+        private final IParam<DataSource, String> titleAttribute = Params.onString("", "t");
 
         @Override
         public String getVersion() {
-            return "20150909";
+            return "v1";
         }
 
         @Override
-        public SdmxBean2 defaultValue() {
-            SdmxBean2 result = new SdmxBean2();
+        public SdmxFileBean defaultValue() {
+            SdmxFileBean result = new SdmxFileBean();
             result.setFile(file.defaultValue());
-            result.setFactory(factory.defaultValue());
             result.setTitleAttribute(titleAttribute.defaultValue());
             return result;
         }
 
         @Override
-        public SdmxBean2 get(DataSource dataSource) {
-            SdmxBean2 result = new SdmxBean2();
+        public SdmxFileBean get(DataSource dataSource) {
+            SdmxFileBean result = new SdmxFileBean();
             result.setFile(file.get(dataSource));
-            result.setFactory(factory.get(dataSource));
             result.setTitleAttribute(titleAttribute.get(dataSource));
             return result;
         }
 
         @Override
-        public void set(IConfig.Builder<?, DataSource> builder, SdmxBean2 value) {
+        public void set(IConfig.Builder<?, DataSource> builder, SdmxFileBean value) {
             file.set(builder, value.getFile());
-            factory.set(builder, value.getFactory());
             titleAttribute.set(builder, value.getTitleAttribute());
         }
     }

@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.dotstat2;
+package be.nbb.demetra.sdmx.webservice;
 
 import internal.sdmx.SdmxCubeAccessor;
 import be.nbb.sdmx.facade.DataflowRef;
@@ -37,6 +37,7 @@ import ec.tss.tsproviders.utils.IParam;
 import ec.tstoolkit.utilities.GuavaCaches;
 import it.bancaditalia.oss.sdmx.util.Configuration;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
@@ -50,7 +51,7 @@ import org.slf4j.LoggerFactory;
  * @since 2.2.0
  */
 //@ServiceProvider(service = ITsProvider.class, supersedes = "be.nbb.demetra.dotstat.DotStatProvider")
-public final class DotStatProvider2 implements IDataSourceLoader {
+public final class SdmxWebServiceProvider implements IDataSourceLoader {
 
     private static final String NAME = "DOTSTAT";
 
@@ -64,7 +65,7 @@ public final class DotStatProvider2 implements IDataSourceLoader {
     private final HasDataMoniker monikerSupport;
 
     @lombok.experimental.Delegate
-    private final HasDataSourceBean<DotStatBean2> beanSupport;
+    private final HasDataSourceBean<SdmxWebServiceBean> beanSupport;
 
     @lombok.experimental.Delegate(excludes = HasTsCursor.class)
     private final CubeSupport cubeSupport;
@@ -72,13 +73,13 @@ public final class DotStatProvider2 implements IDataSourceLoader {
     @lombok.experimental.Delegate
     private final ITsProvider tsSupport;
 
-    public DotStatProvider2() {
+    public SdmxWebServiceProvider() {
         this.connectionSupplier = new AtomicReference(SdmxDriverManager.getDefault());
         this.displayCodes = new AtomicBoolean(false);
 
         Cache<DataSource, CubeAccessor> cache = GuavaCaches.softValuesCache();
         Logger logger = LoggerFactory.getLogger(NAME);
-        DotStatParam beanParam = new DotStatParam.V1();
+        SdmxWebServiceParam beanParam = new SdmxWebServiceParam.V1();
 
         this.mutableListSupport = HasDataSourceMutableList.of(NAME, logger, cache::invalidate);
         this.monikerSupport = HasDataMoniker.usingUri(NAME);
@@ -128,29 +129,30 @@ public final class DotStatProvider2 implements IDataSourceLoader {
 
         private final Cache<DataSource, CubeAccessor> cache;
         private final AtomicReference<SdmxConnectionSupplier> supplier;
-        private final DotStatParam beanParam;
+        private final SdmxWebServiceParam param;
 
-        public DotStatCubeResource(Cache<DataSource, CubeAccessor> cache, AtomicReference<SdmxConnectionSupplier> supplier, DotStatParam beanParam) {
+        public DotStatCubeResource(Cache<DataSource, CubeAccessor> cache, AtomicReference<SdmxConnectionSupplier> supplier, SdmxWebServiceParam param) {
             this.cache = cache;
             this.supplier = supplier;
-            this.beanParam = beanParam;
+            this.param = param;
         }
 
         @Override
         public CubeAccessor getAccessor(DataSource dataSource) throws IOException {
             DataSourcePreconditions.checkProvider(NAME, dataSource);
-            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> load(supplier.get(), dataSource));
+            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(supplier.get(), param.get(dataSource)));
         }
 
         @Override
         public IParam<DataSet, CubeId> getIdParam(DataSource dataSource) throws IOException {
-            return beanParam.getCubeIdParam(dataSource);
+            return param.getCubeIdParam(dataSource);
         }
 
-        private CubeAccessor load(SdmxConnectionSupplier supplier, DataSource key) throws IllegalArgumentException {
-            DotStatBean2 bean = beanParam.get(key);
-            CubeAccessor accessor = SdmxCubeAccessor.create(supplier, bean.getDbName(), DataflowRef.parse(bean.getFlowRef()), bean.getDimensionIds());
-            return accessor.bulk(bean.getCacheDepth(), GuavaCaches.ttlCacheAsMap(bean.getCacheTtl()));
+        private static CubeAccessor of(SdmxConnectionSupplier supplier, SdmxWebServiceBean bean) throws IllegalArgumentException {
+            DataflowRef flow = DataflowRef.parse(bean.getFlow());
+            List<String> dimensions = bean.getDimensions();
+            return SdmxCubeAccessor.create(supplier, bean.getSource(), flow, dimensions)
+                    .bulk(bean.getCacheDepth(), GuavaCaches.ttlCacheAsMap(bean.getCacheTtl()));
         }
     }
 }

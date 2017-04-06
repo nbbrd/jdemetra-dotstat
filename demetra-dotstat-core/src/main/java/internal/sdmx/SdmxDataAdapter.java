@@ -78,6 +78,11 @@ final class SdmxDataAdapter implements TsCursor<Key> {
     }
 
     @Override
+    public String getSeriesLabel() throws IOException, IllegalStateException {
+        return currentKey.toString();
+    }
+
+    @Override
     public OptionalTsData getSeriesData() throws IOException {
         return toData(cursor);
     }

@@ -14,8 +14,9 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.sdmx2;
+package be.nbb.demetra.sdmx.file;
 
+import be.nbb.sdmx.facade.DataStructure;
 import internal.sdmx.SdmxCubeAccessor;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
@@ -35,17 +36,17 @@ import ec.tss.tsproviders.cube.CubeAccessor;
 import ec.tss.tsproviders.cube.CubeId;
 import ec.tss.tsproviders.cube.CubeSupport;
 import ec.tss.tsproviders.cursor.HasTsCursor;
+import ec.tss.tsproviders.utils.DataSourcePreconditions;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tstoolkit.utilities.GuavaCaches;
-import it.bancaditalia.oss.sdmx.util.Configuration;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
-import java.util.function.Function;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -58,9 +59,11 @@ import org.slf4j.LoggerFactory;
  * @since 2.2.0
  */
 //@ServiceProvider(service = ITsProvider.class)
-public final class SdmxProvider2 implements IFileLoader {
+public final class SdmxFileProvider implements IFileLoader {
 
-    private static final String NAME = "TSProviders.Sdmx.SdmxProvider";
+    private static final String NAME = "sdmx-file";
+
+    private final AtomicReference<String> preferredLanguage;
 
     @lombok.experimental.Delegate
     private final HasDataSourceMutableList mutableListSupport;
@@ -69,7 +72,7 @@ public final class SdmxProvider2 implements IFileLoader {
     private final HasDataMoniker monikerSupport;
 
     @lombok.experimental.Delegate
-    private final HasDataSourceBean<SdmxBean2> beanSupport;
+    private final HasDataSourceBean<SdmxFileBean> beanSupport;
 
     @lombok.experimental.Delegate
     private final HasFilePaths filePathSupport;
@@ -80,16 +83,18 @@ public final class SdmxProvider2 implements IFileLoader {
     @lombok.experimental.Delegate
     private final ITsProvider tsSupport;
 
-    public SdmxProvider2() {
+    public SdmxFileProvider() {
+        this.preferredLanguage = new AtomicReference<>("en");
+
         Logger logger = LoggerFactory.getLogger(NAME);
         Cache<DataSource, CubeAccessor> cache = GuavaCaches.softValuesCache();
-        SdmxParam sdmxParam = new SdmxParam.V1();
+        SdmxFileParam sdmxParam = new SdmxFileParam.V1();
 
         this.mutableListSupport = HasDataSourceMutableList.of(NAME, logger, cache::invalidate);
         this.monikerSupport = HasDataMoniker.usingUri(NAME);
         this.beanSupport = HasDataSourceBean.of(NAME, sdmxParam, sdmxParam.getVersion());
         this.filePathSupport = HasFilePaths.of(cache::invalidateAll);
-        this.cubeSupport = CubeSupport.of(new SdmxCubeResource(cache, beanSupport::decodeBean));
+        this.cubeSupport = CubeSupport.of(new SdmxCubeResource(cache, sdmxParam, filePathSupport));
         this.tsSupport = CubeSupport.asTsProvider(NAME, logger, cubeSupport, monikerSupport, cache::invalidateAll);
     }
 
@@ -105,47 +110,56 @@ public final class SdmxProvider2 implements IFileLoader {
 
     @Nonnull
     public String getPreferredLanguage() {
-        return Configuration.getLang();
+        return preferredLanguage.get();
     }
 
     public void setPreferredLanguage(@Nullable String lang) {
-        Configuration.setLang(lang != null ? lang : "en");
+        preferredLanguage.set(lang != null ? lang : "en");
     }
 
     private static final class SdmxCubeResource implements CubeSupport.Resource {
 
         private final Cache<DataSource, CubeAccessor> cache;
-        private final Function<DataSource, SdmxBean2> decoder;
+        private final SdmxFileParam sdmxParam;
+        private final HasFilePaths paths;
 
-        public SdmxCubeResource(Cache<DataSource, CubeAccessor> cache, Function<DataSource, SdmxBean2> decoder) {
+        SdmxCubeResource(Cache<DataSource, CubeAccessor> cache, SdmxFileParam param, HasFilePaths paths) {
             this.cache = cache;
-            this.decoder = decoder;
+            this.sdmxParam = param;
+            this.paths = paths;
         }
 
         @Override
         public CubeAccessor getAccessor(DataSource dataSource) throws IOException {
-            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> load(dataSource));
+            DataSourcePreconditions.checkProvider(NAME, dataSource);
+            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(paths, sdmxParam.get(dataSource)));
         }
 
         @Override
         public IParam<DataSet, CubeId> getIdParam(DataSource dataSource) throws IOException {
             CubeId root = getAccessor(dataSource).getRoot();
-            // FIXME: compatibility with previous code
-            return CubeSupport.idByName(root);
+            return CubeSupport.idBySeparator(root, ".", "k");
         }
 
         private static final FileSdmxDriver DRIVER = new FileSdmxDriver();
 
-        private CubeAccessor load(DataSource key) throws IOException {
-            SdmxBean2 bean = decoder.apply(key);
-            SdmxConnection conn = DRIVER.connect(URI.create("sdmx:" + bean.getFile().toURI().toString()), new Properties());
-            DataflowRef flowRef = conn.getDataflows().iterator().next().getFlowRef();
-            Set<Dimension> dimensions = conn.getDataStructure(flowRef).getDimensions();
-            List<String> dimensionIds = dimensions.stream()
+        private static CubeAccessor of(HasFilePaths paths, SdmxFileBean bean) throws IOException {
+            SdmxConnection conn = DRIVER.connect(getUri(paths, bean), new Properties());
+            DataflowRef flow = conn.getDataflows().iterator().next().getFlowRef();
+            List<String> dimensions = getDimensionIds(conn.getDataStructure(flow));
+            return SdmxCubeAccessor.create(new Stuff(conn), "???", flow, dimensions);
+        }
+
+        private static URI getUri(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {
+            File target = paths.resolveFilePath(bean.getFile());
+            return URI.create("sdmx:" + target.toURI().toString());
+        }
+
+        private static List<String> getDimensionIds(DataStructure dataStructure) {
+            return dataStructure.getDimensions().stream()
                     .sorted(Comparator.comparing(Dimension::getPosition))
                     .map(Dimension::getId)
                     .collect(Collectors.toList());
-            return SdmxCubeAccessor.create(new Stuff(conn), "???", flowRef, dimensionIds);
         }
     }
 

@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.sdmx2;
+package be.nbb.demetra.sdmx.file;
 
 import ec.tss.tsproviders.IFileBean;
 import java.io.File;
@@ -25,9 +25,8 @@ import java.io.File;
  * @since 2.2.0
  */
 @lombok.Data
-public final class SdmxBean2 implements IFileBean {
+public final class SdmxFileBean implements IFileBean {
 
     private File file;
-    private String factory;
     private String titleAttribute;
 }

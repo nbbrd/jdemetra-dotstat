@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.dotstat2;
+package be.nbb.demetra.sdmx.webservice;
 
 import java.time.Duration;
 import java.util.List;
@@ -25,11 +25,11 @@ import java.util.List;
  * @since 2.2.0
  */
 @lombok.Data
-public final class DotStatBean2 {
+public final class SdmxWebServiceBean {
 
-    private String dbName;
-    private String flowRef;
-    private List<String> dimensionIds;
+    private String source;
+    private String flow;
+    private List<String> dimensions;
     private Duration cacheTtl;
     private int cacheDepth;
 
