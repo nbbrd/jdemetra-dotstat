@@ -28,12 +28,7 @@ import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.util.MemSdmxRepository;
-import be.nbb.sdmx.facade.util.XMLStreamGenericDataCursor20;
-import be.nbb.sdmx.facade.util.XMLStreamGenericDataCursor21;
-import com.google.common.base.Function;
-import com.google.common.base.Predicates;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.Iterables;
+import be.nbb.sdmx.facade.util.XMLStreamCursors;
 import com.google.common.io.ByteSource;
 import it.bancaditalia.oss.sdmx.api.DataFlowStructure;
 import it.bancaditalia.oss.sdmx.exceptions.SdmxException;
@@ -42,6 +37,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -63,14 +60,13 @@ public final class TestResource {
             }
             DataflowRef flowRef = DataflowRef.of("NBB", "TEST_DATASET", null);
             try (InputStreamReader r = open(NBB_DATAFLOWS)) {
-                result.dataflows(FluentIterable
-                        .from(it.bancaditalia.oss.sdmx.parser.v20.DataStructureParser.parse(r))
-                        .transform(convertToDataflow())
-                        .filter(Predicates.compose(Predicates.equalTo(flowRef), toFlowRef()))
-                        .toList());
+                result.dataflows(it.bancaditalia.oss.sdmx.parser.v20.DataStructureParser.parse(r).stream()
+                        .map(TestResource::toDataFlow)
+                        .filter(o -> o.getFlowRef().equals(flowRef))
+                        .collect(Collectors.toList()));
             }
             DataStructure dfs = dataStructures.get(DataStructureRef.of("NBB", "TEST_DATASET", null));
-            try (DataCursor cursor = XMLStreamGenericDataCursor20.genericData20(XMLInputFactory.newInstance(), open(NBB_DATA), dfs)) {
+            try (DataCursor cursor = XMLStreamCursors.genericData20(XMLInputFactory.newInstance(), open(NBB_DATA), dfs)) {
                 result.copyOf(flowRef, cursor);
             }
             return result
@@ -93,14 +89,13 @@ public final class TestResource {
             }
             DataflowRef flowRef = DataflowRef.of("ECB", "AME", "1.0");
             try (InputStreamReader r = open(ECB_DATAFLOWS)) {
-                result.dataflows(FluentIterable
-                        .from(it.bancaditalia.oss.sdmx.parser.v21.DataflowParser.parse(r))
-                        .transform(toflow())
-                        .filter(Predicates.compose(Predicates.equalTo(flowRef), toFlowRef()))
-                        .toList());
+                result.dataflows(it.bancaditalia.oss.sdmx.parser.v21.DataflowParser.parse(r).stream()
+                        .map(Util::toDataflow)
+                        .filter(o -> o.getFlowRef().equals(flowRef))
+                        .collect(Collectors.toList()));
             }
             DataStructure dfs = dataStructures.get(DataStructureRef.of("ECB", "ECB_AME1", "1.0"));
-            try (DataCursor cursor = XMLStreamGenericDataCursor21.genericData21(XMLInputFactory.newInstance(), open(ECB_DATA), dfs)) {
+            try (DataCursor cursor = XMLStreamCursors.genericData21(XMLInputFactory.newInstance(), open(ECB_DATA), dfs)) {
                 result.copyOf(flowRef, cursor);
             }
             return result
@@ -117,63 +112,16 @@ public final class TestResource {
         return new InputStreamReader(byteSource.openStream(), StandardCharsets.UTF_8);
     }
 
-    private static Function<it.bancaditalia.oss.sdmx.api.Dataflow, Dataflow> toflow() {
-        return new Function<it.bancaditalia.oss.sdmx.api.Dataflow, Dataflow>() {
-            @Override
-            public Dataflow apply(it.bancaditalia.oss.sdmx.api.Dataflow input) {
-                return Util.toDataflow(input);
-            }
-        };
-    }
-
     private static Map<DataStructureRef, DataStructure> toDataStructures(List<DataFlowStructure> input) {
-        return FluentIterable
-                .from(input)
-                .transform(toDataStructure())
-                .uniqueIndex(toResourceRef());
+        return input.stream()
+                .map(Util::toDataStructure)
+                .collect(Collectors.toMap(DataStructure::getRef, Function.identity()));
     }
 
-    private static Function<it.bancaditalia.oss.sdmx.api.DataFlowStructure, DataStructure> toDataStructure() {
-        return new Function<it.bancaditalia.oss.sdmx.api.DataFlowStructure, DataStructure>() {
-            @Override
-            public DataStructure apply(it.bancaditalia.oss.sdmx.api.DataFlowStructure input) {
-                return Util.toDataStructure(input);
-            }
-        };
+    private static Dataflow toDataFlow(DataFlowStructure input) {
+        return Dataflow.of(DataflowRef.of(input.getAgency(), input.getId(), input.getVersion()),
+                DataStructureRef.of(input.getAgency(), input.getId(), input.getVersion()),
+                input.getName()
+        );
     }
-
-    private static DataStructure find(List<DataStructure> list, DataStructureRef ref) {
-        return Iterables.find(list, Predicates.compose(Predicates.equalTo(ref), toResourceRef()));
-    }
-
-    private static Function<DataStructure, DataStructureRef> toResourceRef() {
-        return new Function<DataStructure, DataStructureRef>() {
-            @Override
-            public DataStructureRef apply(DataStructure input) {
-                return input.getRef();
-            }
-        };
-    }
-
-    private static Function<DataFlowStructure, Dataflow> convertToDataflow() {
-        return new Function<DataFlowStructure, Dataflow>() {
-            @Override
-            public Dataflow apply(DataFlowStructure input) {
-                return Dataflow.of(DataflowRef.of(input.getAgency(), input.getId(), input.getVersion()),
-                        DataStructureRef.of(input.getAgency(), input.getId(), input.getVersion()),
-                        input.getName()
-                );
-            }
-        };
-    }
-
-    private static Function<Dataflow, DataflowRef> toFlowRef() {
-        return new Function<Dataflow, DataflowRef>() {
-            @Override
-            public DataflowRef apply(Dataflow input) {
-                return input.getFlowRef();
-            }
-        };
-    }
-    //</editor-fold>
 }

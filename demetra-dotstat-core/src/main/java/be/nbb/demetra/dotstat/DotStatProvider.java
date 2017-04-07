@@ -22,7 +22,6 @@ import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
-import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import ec.tss.ITsProvider;
 import ec.tss.TsAsyncMode;
@@ -108,9 +107,8 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
 
     @Override
     public String getDisplayNodeName(DataSet dataSet) {
-        Optional<Map.Entry<String, String>> optionalNodeDim = getNodeDimension(dataSet);
-        if (optionalNodeDim.isPresent()) {
-            Map.Entry<String, String> nodeDim = optionalNodeDim.get();
+        Map.Entry<String, String> nodeDim = getNodeDimension(dataSet);
+        if (nodeDim != null) {
             if (!displayCodes) {
                 DotStatBean bean = decodeBean(dataSet.getDataSource());
                 try (SdmxConnection conn = supplier.getConnection(bean.getDbName())) {
@@ -160,7 +158,8 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
         this.displayCodes = displayCodes;
     }
 
-    private static Optional<Map.Entry<String, String>> getNodeDimension(DataSet dataSet) {
+    @Nullable
+    private static Map.Entry<String, String> getNodeDimension(DataSet dataSet) {
         String[] dimColumns = DbBean.getDimArray(dataSet.getDataSource());
         int length = dimColumns.length;
         while (length > 0 && dataSet.get(dimColumns[length - 1]) == null) {
@@ -171,7 +170,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
             dimValues[i] = dataSet.get(dimColumns[i]);
         }
         return length > 0
-                ? Optional.<Map.Entry<String, String>>of(Maps.immutableEntry(dimColumns[length - 1], dimValues[length - 1]))
-                : Optional.<Map.Entry<String, String>>absent();
+                ? Maps.immutableEntry(dimColumns[length - 1], dimValues[length - 1])
+                : null;
     }
 }
