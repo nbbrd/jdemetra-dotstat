@@ -89,7 +89,7 @@ final class SdmxDataAdapter implements TsCursor<Key> {
 
     @Override
     public Map<String, String> getSeriesMetaData() throws IOException {
-        return Collections.emptyMap();
+        return cursor.getSeriesAttributes();
     }
 
     @Override
