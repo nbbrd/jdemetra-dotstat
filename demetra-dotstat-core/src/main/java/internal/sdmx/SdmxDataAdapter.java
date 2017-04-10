@@ -64,7 +64,7 @@ final class SdmxDataAdapter implements TsCursor<Key> {
     @Override
     public boolean nextSeries() throws IOException {
         while (cursor.nextSeries()) {
-            currentKey = cursor.getKey();
+            currentKey = cursor.getSeriesKey();
             if (group.contains(currentKey)) {
                 return true;
             }
@@ -99,13 +99,13 @@ final class SdmxDataAdapter implements TsCursor<Key> {
     }
 
     private OptionalTsData toData(DataCursor cursor) throws IOException {
-        OptionalTsData.Builder2 data = OptionalTsData.builderByDate(calendar, getObsGathering(cursor.getTimeFormat()));
+        OptionalTsData.Builder2 result = OptionalTsData.builderByDate(calendar, getObsGathering(cursor.getSeriesTimeFormat()));
         while (cursor.nextObs()) {
-            Date period = cursor.getPeriod();
-            Number value = period != null ? cursor.getValue() : null;
-            data.add(period, value);
+            Date period = cursor.getObsPeriod();
+            Number value = period != null ? cursor.getObsValue() : null;
+            result.add(period, value);
         }
-        return data.build();
+        return result.build();
     }
 
     private ObsGathering getObsGathering(TimeFormat format) {

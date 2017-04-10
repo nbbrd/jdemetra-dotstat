@@ -104,7 +104,7 @@ public class DotStatAccessorTest {
     public void testGetKeyFromTs() throws Exception {
         try (DataCursor cursor = supplier.getConnection("NBB").getData(DataflowRef.of("NBB", "TEST_DATASET", null), Key.ALL, true)) {
             cursor.nextSeries();
-            assertEquals(Key.parse("LOCSTL04.AUS.M"), cursor.getKey());
+            assertEquals(Key.parse("LOCSTL04.AUS.M"), cursor.getSeriesKey());
         }
     }
 
