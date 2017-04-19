@@ -16,13 +16,15 @@
  */
 package be.nbb.demetra.sdmx.file;
 
+import be.nbb.sdmx.facade.samples.SdmxSource;
 import ec.tss.TsMoniker;
 import static ec.tss.tsproviders.Assertions.assertThat;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.IDataSourceLoaderAssert;
-import ec.tss.tsproviders.IFileLoaderAssert;
 import java.io.File;
+import java.io.IOException;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -31,11 +33,20 @@ import org.junit.Test;
  */
 public class SdmxFileProviderTest {
 
+    private static File sampleFile;
+
+    @BeforeClass
+    public static void beforeClass() throws IOException {
+        sampleFile = File.createTempFile("sdmx", ".xml");
+        sampleFile.deleteOnExit();
+        SdmxSource.NBB_DATA.copyTo(sampleFile.toPath());
+    }
+
     @Test
     public void testTspCompliance() {
         IDataSourceLoaderAssert.assertCompliance(SdmxFileProviderTest::getProvider, o -> {
             SdmxFileBean result = o.newBean();
-            result.setFile(getSampleFile());
+            result.setFile(sampleFile);
             return result;
         });
     }
@@ -62,9 +73,5 @@ public class SdmxFileProviderTest {
     private static SdmxFileProvider getProvider() {
         SdmxFileProvider result = new SdmxFileProvider();
         return result;
-    }
-
-    private static File getSampleFile() {
-        return IFileLoaderAssert.urlAsFile(SdmxFileProviderTest.class.getResource("/be/nbb/sdmx/TimeSeries.xml"));
     }
 }

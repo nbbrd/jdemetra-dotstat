@@ -93,12 +93,17 @@
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>demetra-tck</artifactId>
-            <version>${demetra.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>demetra-sdmx</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>be.nbb.sdmx</groupId>
+            <artifactId>sdmx-facade-samples</artifactId>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

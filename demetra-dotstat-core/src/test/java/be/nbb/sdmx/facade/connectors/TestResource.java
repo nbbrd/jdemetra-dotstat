@@ -16,25 +16,18 @@
  */
 package be.nbb.sdmx.facade.connectors;
 
-import static be.nbb.sdmx.facade.connectors.SdmxTestResources.ECB_DATA;
-import static be.nbb.sdmx.facade.connectors.SdmxTestResources.ECB_DATAFLOWS;
-import static be.nbb.sdmx.facade.connectors.SdmxTestResources.ECB_DATA_STRUCTURE;
-import static be.nbb.sdmx.facade.connectors.SdmxTestResources.NBB_DATA;
-import static be.nbb.sdmx.facade.connectors.SdmxTestResources.NBB_DATAFLOWS;
-import static be.nbb.sdmx.facade.connectors.SdmxTestResources.NBB_DATA_STRUCTURE;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.Dataflow;
+import be.nbb.sdmx.facade.samples.SdmxSource;
 import be.nbb.sdmx.facade.util.MemSdmxRepository;
 import be.nbb.sdmx.facade.util.XMLStreamCursors;
-import com.google.common.io.ByteSource;
 import it.bancaditalia.oss.sdmx.api.DataFlowStructure;
 import it.bancaditalia.oss.sdmx.exceptions.SdmxException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -54,19 +47,19 @@ public final class TestResource {
         try {
             MemSdmxRepository.Builder result = MemSdmxRepository.builder();
             Map<DataStructureRef, DataStructure> dataStructures;
-            try (InputStreamReader r = open(NBB_DATA_STRUCTURE)) {
+            try (InputStreamReader r = SdmxSource.NBB_DATA_STRUCTURE.openReader()) {
                 dataStructures = toDataStructures(it.bancaditalia.oss.sdmx.parser.v20.DataStructureParser.parse(r));
                 result.dataStructures(dataStructures.values());
             }
             DataflowRef flowRef = DataflowRef.of("NBB", "TEST_DATASET", null);
-            try (InputStreamReader r = open(NBB_DATAFLOWS)) {
+            try (InputStreamReader r = SdmxSource.NBB_DATAFLOWS.openReader()) {
                 result.dataflows(it.bancaditalia.oss.sdmx.parser.v20.DataStructureParser.parse(r).stream()
                         .map(TestResource::toDataFlow)
                         .filter(o -> o.getFlowRef().equals(flowRef))
                         .collect(Collectors.toList()));
             }
             DataStructure dfs = dataStructures.get(DataStructureRef.of("NBB", "TEST_DATASET", null));
-            try (DataCursor cursor = XMLStreamCursors.genericData20(XMLInputFactory.newInstance(), open(NBB_DATA), dfs)) {
+            try (DataCursor cursor = XMLStreamCursors.genericData20(XMLInputFactory.newInstance(), SdmxSource.NBB_DATA.openReader(), dfs)) {
                 result.copyOf(flowRef, cursor);
             }
             return result
@@ -83,19 +76,19 @@ public final class TestResource {
         try {
             MemSdmxRepository.Builder result = MemSdmxRepository.builder();
             Map<DataStructureRef, DataStructure> dataStructures;
-            try (InputStreamReader r = open(ECB_DATA_STRUCTURE)) {
+            try (InputStreamReader r = SdmxSource.ECB_DATA_STRUCTURE.openReader()) {
                 dataStructures = toDataStructures(it.bancaditalia.oss.sdmx.parser.v21.DataStructureParser.parse(r));
                 result.dataStructures(dataStructures.values());
             }
             DataflowRef flowRef = DataflowRef.of("ECB", "AME", "1.0");
-            try (InputStreamReader r = open(ECB_DATAFLOWS)) {
+            try (InputStreamReader r = SdmxSource.ECB_DATAFLOWS.openReader()) {
                 result.dataflows(it.bancaditalia.oss.sdmx.parser.v21.DataflowParser.parse(r).stream()
                         .map(Util::toDataflow)
                         .filter(o -> o.getFlowRef().equals(flowRef))
                         .collect(Collectors.toList()));
             }
             DataStructure dfs = dataStructures.get(DataStructureRef.of("ECB", "ECB_AME1", "1.0"));
-            try (DataCursor cursor = XMLStreamCursors.genericData21(XMLInputFactory.newInstance(), open(ECB_DATA), dfs)) {
+            try (DataCursor cursor = XMLStreamCursors.genericData21(XMLInputFactory.newInstance(), SdmxSource.ECB_DATA.openReader(), dfs)) {
                 result.copyOf(flowRef, cursor);
             }
             return result
@@ -108,10 +101,6 @@ public final class TestResource {
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private static InputStreamReader open(ByteSource byteSource) throws IOException {
-        return new InputStreamReader(byteSource.openStream(), StandardCharsets.UTF_8);
-    }
-
     private static Map<DataStructureRef, DataStructure> toDataStructures(List<DataFlowStructure> input) {
         return input.stream()
                 .map(Util::toDataStructure)
