@@ -23,7 +23,7 @@ import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.samples.SdmxSource;
 import be.nbb.sdmx.facade.util.MemSdmxRepository;
-import be.nbb.sdmx.facade.util.XMLStreamCursors;
+import be.nbb.sdmx.facade.xml.stream.XMLStreamCursors;
 import it.bancaditalia.oss.sdmx.api.DataFlowStructure;
 import it.bancaditalia.oss.sdmx.exceptions.SdmxException;
 import java.io.IOException;
