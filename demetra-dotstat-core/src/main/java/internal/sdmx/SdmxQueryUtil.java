@@ -35,6 +35,7 @@ import java.util.TreeSet;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -43,23 +44,25 @@ import javax.annotation.Nonnull;
 @lombok.experimental.UtilityClass
 public class SdmxQueryUtil {
 
+    public final String NO_LABEL = null;
+
     @Nonnull
-    public TsCursor<Key> getAllSeries(SdmxConnection conn, DataflowRef flowRef, Key ref) throws IOException {
+    public TsCursor<Key> getAllSeries(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
         return conn.isSeriesKeysOnlySupported()
-                ? request(conn, flowRef, ref, true)
+                ? request(conn, flowRef, ref, labelAttribute, true)
                 : computeKeys(conn, flowRef, ref);
     }
 
     @Nonnull
-    public TsCursor<Key> getAllSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref) throws IOException {
+    public TsCursor<Key> getAllSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
         return conn.isSeriesKeysOnlySupported()
-                ? request(conn, flowRef, ref, false)
+                ? request(conn, flowRef, ref, labelAttribute, false)
                 : computeKeysAndRequestData(conn, flowRef, ref);
     }
 
     @Nonnull
     public OptionalTsData getSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref) throws IOException {
-        try (TsCursor<Key> cursor = request(conn, flowRef, ref, false)) {
+        try (TsCursor<Key> cursor = request(conn, flowRef, ref, NO_LABEL, false)) {
             return cursor.nextSeries() ? cursor.getSeriesData() : MISSING_DATA;
         }
     }
@@ -67,7 +70,7 @@ public class SdmxQueryUtil {
     @Nonnull
     public List<String> getChildren(SdmxConnection conn, DataflowRef flowRef, Key ref, int dimensionPosition) throws IOException {
         if (conn.isSeriesKeysOnlySupported()) {
-            try (TsCursor<Key> cursor = request(conn, flowRef, ref, true)) {
+            try (TsCursor<Key> cursor = request(conn, flowRef, ref, NO_LABEL, true)) {
                 int index = dimensionPosition - 1;
                 TreeSet<String> result = new TreeSet<>();
                 while (cursor.nextSeries()) {
@@ -83,8 +86,8 @@ public class SdmxQueryUtil {
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private final OptionalTsData MISSING_DATA = OptionalTsData.absent("No results matching the query");
 
-    private TsCursor<Key> request(SdmxConnection conn, DataflowRef flowRef, Key key, boolean seriesKeysOnly) throws IOException {
-        return new SdmxDataAdapter(key, conn.getData(flowRef, key, seriesKeysOnly));
+    private TsCursor<Key> request(SdmxConnection conn, DataflowRef flowRef, Key key, String labelAttribute, boolean seriesKeysOnly) throws IOException {
+        return new SdmxDataAdapter(key, conn.getData(flowRef, key, seriesKeysOnly), labelAttribute);
     }
 
     private TsCursor<Key> computeKeys(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
@@ -100,7 +103,7 @@ public class SdmxQueryUtil {
 
     private Map<Key, OptionalTsData> dataByKey(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
         Map<Key, OptionalTsData> dataByKey = new HashMap<>();
-        try (TsCursor<Key> cursor = request(conn, flowRef, key, false)) {
+        try (TsCursor<Key> cursor = request(conn, flowRef, key, NO_LABEL, false)) {
             while (cursor.nextSeries()) {
                 dataByKey.put(cursor.getSeriesId(), cursor.getSeriesData());
             }

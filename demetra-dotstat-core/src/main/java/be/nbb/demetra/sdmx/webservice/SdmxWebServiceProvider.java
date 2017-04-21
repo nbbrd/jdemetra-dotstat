@@ -151,7 +151,7 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader {
         private static CubeAccessor of(SdmxConnectionSupplier supplier, SdmxWebServiceBean bean) throws IllegalArgumentException {
             DataflowRef flow = DataflowRef.parse(bean.getFlow());
             List<String> dimensions = bean.getDimensions();
-            return SdmxCubeAccessor.create(supplier, bean.getSource(), flow, dimensions)
+            return SdmxCubeAccessor.create(supplier, bean.getSource(), flow, dimensions, bean.getLabelAttribute())
                     .bulk(bean.getCacheDepth(), GuavaCaches.ttlCacheAsMap(bean.getCacheTtl()));
         }
     }

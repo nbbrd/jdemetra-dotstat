@@ -30,6 +30,7 @@ public final class SdmxWebServiceBean {
     private String source;
     private String flow;
     private List<String> dimensions;
+    private String labelAttribute;
     private Duration cacheTtl;
     private int cacheDepth;
 

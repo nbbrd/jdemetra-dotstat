@@ -39,20 +39,22 @@ import java.util.Map;
  */
 public final class SdmxCubeAccessor implements CubeAccessor {
 
-    public static SdmxCubeAccessor create(SdmxConnectionSupplier supplier, String source, DataflowRef flow, List<String> dimensions) {
-        return new SdmxCubeAccessor(supplier, source, flow, CubeId.root(dimensions));
+    public static SdmxCubeAccessor create(SdmxConnectionSupplier supplier, String source, DataflowRef flow, List<String> dimensions, String labelAttribute) {
+        return new SdmxCubeAccessor(supplier, source, flow, CubeId.root(dimensions), labelAttribute);
     }
 
     private final SdmxConnectionSupplier supplier;
     private final String source;
     private final DataflowRef flowRef;
     private final CubeId root;
+    private final String labelAttribute;
 
-    private SdmxCubeAccessor(SdmxConnectionSupplier supplier, String source, DataflowRef flowRef, CubeId root) {
+    private SdmxCubeAccessor(SdmxConnectionSupplier supplier, String source, DataflowRef flowRef, CubeId root, String labelAttribute) {
         this.supplier = supplier;
         this.source = source;
         this.flowRef = flowRef;
         this.root = root;
+        this.labelAttribute = labelAttribute;
     }
 
     @Override
@@ -69,7 +71,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     public TsCursor<CubeId> getAllSeries(CubeId ref) throws IOException {
         SdmxConnection conn = supplier.getConnection(source);
         try {
-            return getAllSeriesCursor(conn, flowRef, ref).onClose(conn);
+            return getAllSeriesCursor(conn, flowRef, ref, labelAttribute).onClose(conn);
         } catch (IOException ex) {
             throw close(conn, ex);
         }
@@ -79,7 +81,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     public TsCursor<CubeId> getAllSeriesWithData(CubeId ref) throws IOException {
         SdmxConnection conn = supplier.getConnection(source);
         try {
-            return getAllSeriesWithDataCursor(conn, flowRef, ref).onClose(conn);
+            return getAllSeriesWithDataCursor(conn, flowRef, ref, labelAttribute).onClose(conn);
         } catch (IOException ex) {
             throw close(conn, ex);
         }
@@ -135,20 +137,20 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private static TsCursor<CubeId> getAllSeriesCursor(SdmxConnection conn, DataflowRef flowRef, CubeId ref) throws IOException {
+    private static TsCursor<CubeId> getAllSeriesCursor(SdmxConnection conn, DataflowRef flowRef, CubeId ref, String labelAttribute) throws IOException {
         Converter<CubeId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
 
         Key colKey = converter.convert(ref);
-        TsCursor<Key> cursor = SdmxQueryUtil.getAllSeries(conn, flowRef, colKey);
+        TsCursor<Key> cursor = SdmxQueryUtil.getAllSeries(conn, flowRef, colKey, labelAttribute);
 
         return cursor.transform(converter.reverse()::convert);
     }
 
-    private static TsCursor<CubeId> getAllSeriesWithDataCursor(SdmxConnection conn, DataflowRef flowRef, CubeId ref) throws IOException {
+    private static TsCursor<CubeId> getAllSeriesWithDataCursor(SdmxConnection conn, DataflowRef flowRef, CubeId ref, String labelAttribute) throws IOException {
         Converter<CubeId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
 
         Key colKey = converter.convert(ref);
-        TsCursor<Key> cursor = SdmxQueryUtil.getAllSeriesWithData(conn, flowRef, colKey);
+        TsCursor<Key> cursor = SdmxQueryUtil.getAllSeriesWithData(conn, flowRef, colKey, labelAttribute);
 
         return cursor.transform(converter.reverse()::convert);
     }

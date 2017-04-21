@@ -53,11 +53,11 @@ public class SdmxFileProviderTest {
 
     @Test
     public void testMonikerUri() {
-        String uri = "demetra://tsprovider/sdmx-file/v1/SERIES?f=BLS.xml&t=TITLE#k=Q.AT.ALL.BC.E.LE.B3.ST.S.DINX";
+        String uri = "demetra://tsprovider/sdmx-file/v1/SERIES?f=BLS.xml&l=TITLE#k=Q.AT.ALL.BC.E.LE.B3.ST.S.DINX";
 
         SdmxFileBean bean = new SdmxFileBean();
         bean.setFile(new File("BLS.xml"));
-        bean.setTitleAttribute("TITLE");
+        bean.setLabelAttribute("TITLE");
 
         DataSource.Builder dataSource = DataSource.builder("sdmx-file", "v1");
         new SdmxFileParam.V1().set(dataSource, bean);

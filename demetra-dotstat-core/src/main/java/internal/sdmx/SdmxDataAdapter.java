@@ -30,6 +30,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -40,13 +42,15 @@ final class SdmxDataAdapter implements TsCursor<Key> {
     private final Calendar calendar;
     private final Key group;
     private final DataCursor cursor;
+    private final String labelAttribute;
     private boolean closed;
     private Key currentKey;
 
-    public SdmxDataAdapter(Key group, DataCursor cursor) {
+    SdmxDataAdapter(@Nonnull Key group, @Nonnull DataCursor cursor, @Nullable String labelAttribute) {
         this.calendar = new GregorianCalendar();
         this.group = group;
         this.cursor = cursor;
+        this.labelAttribute = labelAttribute;
         this.closed = false;
         this.currentKey = null;
     }
@@ -79,6 +83,12 @@ final class SdmxDataAdapter implements TsCursor<Key> {
 
     @Override
     public String getSeriesLabel() throws IOException, IllegalStateException {
+        if (labelAttribute != null && !labelAttribute.isEmpty()) {
+            String result = cursor.getSeriesAttribute(labelAttribute);
+            if (result != null) {
+                return result;
+            }
+        }
         return currentKey.toString();
     }
 

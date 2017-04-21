@@ -53,6 +53,7 @@ interface SdmxWebServiceParam extends IParam<DataSource, SdmxWebServiceBean> {
         private final IParam<DataSource, String> dbName = onString("", "dbName");
         private final IParam<DataSource, String> flowRef = onString("", "tableName");
         private final IParam<DataSource, List<String>> dimensionIds = onStringList(ImmutableList.of(), "dimColumns", dimensionSplitter, dimensionJoiner);
+        private final IParam<DataSource, String> labelAttribute = onString("", "l");
         private final IParam<DataSource, Long> cacheTtl = onLong(TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES), "cacheTtl");
         private final IParam<DataSource, Integer> cacheDepth = onInteger(1, "cacheDepth");
 
@@ -67,6 +68,7 @@ interface SdmxWebServiceParam extends IParam<DataSource, SdmxWebServiceBean> {
             result.setSource(dbName.defaultValue());
             result.setFlow(flowRef.defaultValue());
             result.setDimensions(dimensionIds.defaultValue());
+            result.setLabelAttribute(labelAttribute.defaultValue());
             result.setCacheTtl(Duration.ofMillis(cacheTtl.defaultValue()));
             result.setCacheDepth(cacheDepth.defaultValue());
             return result;
@@ -78,6 +80,7 @@ interface SdmxWebServiceParam extends IParam<DataSource, SdmxWebServiceBean> {
             result.setSource(dbName.get(dataSource));
             result.setFlow(flowRef.get(dataSource));
             result.setDimensions(dimensionIds.get(dataSource));
+            result.setLabelAttribute(labelAttribute.get(dataSource));
             result.setCacheTtl(Duration.ofMillis(cacheTtl.get(dataSource)));
             result.setCacheDepth(cacheDepth.get(dataSource));
             return result;
@@ -88,6 +91,7 @@ interface SdmxWebServiceParam extends IParam<DataSource, SdmxWebServiceBean> {
             dbName.set(builder, value.getSource());
             flowRef.set(builder, value.getFlow());
             dimensionIds.set(builder, value.getDimensions());
+            labelAttribute.set(builder, value.getLabelAttribute());
             cacheTtl.set(builder, value.getCacheTtl().toMillis());
             cacheDepth.set(builder, value.getCacheDepth());
         }

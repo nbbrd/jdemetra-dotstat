@@ -100,7 +100,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
 
         Key colKey = converter.convert(ref);
-        try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeries(conn, flowRef, colKey)) {
+        try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeries(conn, flowRef, colKey, SdmxQueryUtil.NO_LABEL)) {
             ImmutableList.Builder<DbSetId> result = ImmutableList.builder();
             while (cursor.nextSeries()) {
                 result.add(converter.reverse().convert(cursor.getSeriesId()));
@@ -113,7 +113,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
 
         Key colKey = converter.convert(ref);
-        try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeriesWithData(conn, flowRef, colKey)) {
+        try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeriesWithData(conn, flowRef, colKey, SdmxQueryUtil.NO_LABEL)) {
             ImmutableList.Builder<DbSeries> result = ImmutableList.builder();
             while (cursor.nextSeries()) {
                 result.add(new DbSeries(converter.reverse().convert(cursor.getSeriesId()), cursor.getSeriesData()));

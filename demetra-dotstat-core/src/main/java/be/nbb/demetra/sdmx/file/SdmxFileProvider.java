@@ -147,7 +147,7 @@ public final class SdmxFileProvider implements IFileLoader {
             SdmxConnection conn = DRIVER.connect(getUri(paths, bean), new Properties());
             DataflowRef flow = conn.getDataflows().iterator().next().getFlowRef();
             List<String> dimensions = getDimensionIds(conn.getDataStructure(flow));
-            return SdmxCubeAccessor.create(new Stuff(conn), "???", flow, dimensions);
+            return SdmxCubeAccessor.create(new Stuff(conn), "???", flow, dimensions, bean.getLabelAttribute());
         }
 
         private static URI getUri(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {

@@ -29,7 +29,6 @@ import static internal.sdmx.SdmxQueryUtil.getAllSeries;
 import static internal.sdmx.SdmxQueryUtil.getAllSeriesWithData;
 import static internal.sdmx.SdmxQueryUtil.getChildren;
 import static internal.sdmx.SdmxQueryUtil.getSeriesWithData;
-import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.Test;
 
@@ -43,6 +42,7 @@ public class SdmxQueryUtilTest {
     private final MemSdmxRepository ecb = TestResource.ecb();
     private final DataflowRef nbbFlow = DataflowRef.of("NBB", "TEST_DATASET", null);
     private final DataflowRef ecbFlow = DataflowRef.parse("ECB,AME,1.0");
+    private final String title = "FR. Germany - Net lending (+) or net borrowing (-): general government :- Excessive deficit procedure (Including one-off proceeds relative to the allocation of mobile phone licences (UMTS))";
 
     @Test
     public void testGetAllSeries20() throws Exception {
@@ -50,22 +50,28 @@ public class SdmxQueryUtilTest {
 
         Key single = Key.of("LOCSTL04", "AUS", "M");
 
-        try (TsCursor<Key> cursor = getAllSeries(conn, nbbFlow, Key.ALL)) {
-            assertThat(cursor.nextSeries()).isTrue();
-            assertThat(cursor.getSeriesId()).isEqualTo(single);
-            assertThat(cursor.nextSeries()).isFalse();
+        try (TsCursor<Key> o = getAllSeries(conn, nbbFlow, Key.ALL, SdmxQueryUtil.NO_LABEL)) {
+            assertThat(o.nextSeries()).isTrue();
+            assertThat(o.getSeriesId()).isEqualTo(single);
+            assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
+            assertThat(o.getSeriesMetaData()).isEmpty();
+            assertThat(o.nextSeries()).isFalse();
         }
 
-        try (TsCursor<Key> cursor = getAllSeries(conn, nbbFlow, Key.of("LOCSTL04", "", ""))) {
-            assertThat(cursor.nextSeries()).isTrue();
-            assertThat(cursor.getSeriesId()).isEqualTo(single);
-            assertThat(cursor.nextSeries()).isFalse();
+        try (TsCursor<Key> o = getAllSeries(conn, nbbFlow, Key.of("LOCSTL04", "", ""), SdmxQueryUtil.NO_LABEL)) {
+            assertThat(o.nextSeries()).isTrue();
+            assertThat(o.getSeriesId()).isEqualTo(single);
+            assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
+            assertThat(o.getSeriesMetaData()).isEmpty();
+            assertThat(o.nextSeries()).isFalse();
         }
 
-        try (TsCursor<Key> cursor = getAllSeries(conn, nbbFlow, Key.of("LOCSTL04", "AUS", ""))) {
-            assertThat(cursor.nextSeries()).isTrue();
-            assertThat(cursor.getSeriesId()).isEqualTo(single);
-            assertThat(cursor.nextSeries()).isFalse();
+        try (TsCursor<Key> o = getAllSeries(conn, nbbFlow, Key.of("LOCSTL04", "AUS", ""), SdmxQueryUtil.NO_LABEL)) {
+            assertThat(o.nextSeries()).isTrue();
+            assertThat(o.getSeriesId()).isEqualTo(single);
+            assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
+            assertThat(o.getSeriesMetaData()).isEmpty();
+            assertThat(o.nextSeries()).isFalse();
         }
     }
 
@@ -75,25 +81,31 @@ public class SdmxQueryUtilTest {
 
         Key single = Key.of("LOCSTL04", "AUS", "M");
 
-        try (TsCursor<Key> cursor = getAllSeriesWithData(conn, nbbFlow, Key.ALL)) {
-            assertThat(cursor.nextSeries()).isTrue();
-            assertThat(cursor.getSeriesId()).isEqualTo(single);
-            assertThat(cursor.getSeriesData().get().getLength()).isEqualTo(55);
-            assertThat(cursor.nextSeries()).isFalse();
+        try (TsCursor<Key> o = getAllSeriesWithData(conn, nbbFlow, Key.ALL, SdmxQueryUtil.NO_LABEL)) {
+            assertThat(o.nextSeries()).isTrue();
+            assertThat(o.getSeriesId()).isEqualTo(single);
+            assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
+            assertThat(o.getSeriesMetaData()).isEmpty();
+            assertThat(o.getSeriesData().get().getLength()).isEqualTo(55);
+            assertThat(o.nextSeries()).isFalse();
         }
 
-        try (TsCursor<Key> cursor = getAllSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "", ""))) {
-            assertThat(cursor.nextSeries()).isTrue();
-            assertThat(cursor.getSeriesId()).isEqualTo(single);
-            assertThat(cursor.getSeriesData().get().getLength()).isEqualTo(55);
-            assertThat(cursor.nextSeries()).isFalse();
+        try (TsCursor<Key> o = getAllSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "", ""), SdmxQueryUtil.NO_LABEL)) {
+            assertThat(o.nextSeries()).isTrue();
+            assertThat(o.getSeriesId()).isEqualTo(single);
+            assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
+            assertThat(o.getSeriesMetaData()).isEmpty();
+            assertThat(o.getSeriesData().get().getLength()).isEqualTo(55);
+            assertThat(o.nextSeries()).isFalse();
         }
 
-        try (TsCursor<Key> cursor = getAllSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "AUS", ""))) {
-            assertThat(cursor.nextSeries()).isTrue();
-            assertThat(cursor.getSeriesId()).isEqualTo(single);
-            assertThat(cursor.getSeriesData().get().getLength()).isEqualTo(55);
-            assertThat(cursor.nextSeries()).isFalse();
+        try (TsCursor<Key> o = getAllSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "AUS", ""), SdmxQueryUtil.NO_LABEL)) {
+            assertThat(o.nextSeries()).isTrue();
+            assertThat(o.getSeriesId()).isEqualTo(single);
+            assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
+            assertThat(o.getSeriesMetaData()).isEmpty();
+            assertThat(o.getSeriesData().get().getLength()).isEqualTo(55);
+            assertThat(o.nextSeries()).isFalse();
         }
     }
 
@@ -101,14 +113,14 @@ public class SdmxQueryUtilTest {
     public void testGetSeriesWithData20() throws Exception {
         SdmxConnection conn = nbb.asConnection();
 
-        TsData data = getSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "AUS", "M")).get();
-        assertThat(data.getStart()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1966, 1));
-        assertThat(data.getLastPeriod()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1970, 7));
-        assertThat(data.getLength()).isEqualTo(55);
-        assertThat(data.getObsCount()).isEqualTo(54);
-        assertThat(data.isMissing(50)).isTrue(); // 1970-04
-        assertThat(data.get(0)).isEqualTo(98.68823);
-        assertThat(data.get(54)).isEqualTo(101.1945);
+        TsData o = getSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "AUS", "M")).get();
+        assertThat(o.getStart()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1966, 1));
+        assertThat(o.getLastPeriod()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1970, 7));
+        assertThat(o.getLength()).isEqualTo(55);
+        assertThat(o.getObsCount()).isEqualTo(54);
+        assertThat(o.isMissing(50)).isTrue(); // 1970-04
+        assertThat(o.get(0)).isEqualTo(98.68823);
+        assertThat(o.get(54)).isEqualTo(101.1945);
     }
 
     @Test
@@ -127,38 +139,42 @@ public class SdmxQueryUtilTest {
         Key key;
 
         key = Key.ALL;
-        try (TsCursor<Key> cursor = getAllSeries(conn, ecbFlow, key)) {
+        try (TsCursor<Key> o = getAllSeries(conn, ecbFlow, key, "EXT_TITLE")) {
             int index = 0;
-            while (cursor.nextSeries()) {
+            while (o.nextSeries()) {
                 switch (index++) {
                     case 0:
-                        assertThat(cursor.getSeriesId()).isEqualTo(Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE"));
+                        assertThat(o.getSeriesId()).isEqualTo(Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE"));
+                        assertThat(o.getSeriesLabel()).isEqualTo(title);
+                        assertThat(o.getSeriesMetaData()).containsOnlyKeys("EXT_TITLE", "EXT_UNIT", "TITLE_COMPL");
                         break;
                     case 119:
-                        assertThat(cursor.getSeriesId()).isEqualTo(Key.of("A", "HRV", "1", "0", "0", "0", "ZUTN"));
+                        assertThat(o.getSeriesId()).isEqualTo(Key.of("A", "HRV", "1", "0", "0", "0", "ZUTN"));
+                        assertThat(o.getSeriesLabel()).isEqualTo(o.getSeriesId().toString());
+                        assertThat(o.getSeriesMetaData()).isEmpty();
                         break;
                 }
-                assertThat(key.contains(cursor.getSeriesId())).isTrue();
+                assertThat(key.contains(o.getSeriesId())).isTrue();
             }
             assertThat(index).isEqualTo(120);
         }
 
         key = Key.of("A", "", "", "", "", "", "");
-        try (TsCursor<Key> cursor = getAllSeries(conn, ecbFlow, key)) {
+        try (TsCursor<Key> o = getAllSeries(conn, ecbFlow, key, "EXT_TITLE")) {
             int index = 0;
-            while (cursor.nextSeries()) {
+            while (o.nextSeries()) {
                 index++;
-                assertThat(key.contains(cursor.getSeriesId())).isTrue();
+                assertThat(key.contains(o.getSeriesId())).isTrue();
             }
             assertThat(index).isEqualTo(120);
         }
 
         key = Key.of("A", "DEU", "", "", "", "", "");
-        try (TsCursor<Key> cursor = getAllSeries(conn, ecbFlow, key)) {
+        try (TsCursor<Key> o = getAllSeries(conn, ecbFlow, key, "EXT_TITLE")) {
             int index = 0;
-            while (cursor.nextSeries()) {
+            while (o.nextSeries()) {
                 index++;
-                assertThat(key.contains(cursor.getSeriesId())).isTrue();
+                assertThat(key.contains(o.getSeriesId())).isTrue();
             }
             assertThat(index).isEqualTo(4);
         }
@@ -170,31 +186,35 @@ public class SdmxQueryUtilTest {
         Key key;
 
         key = Key.ALL;
-        try (TsCursor<Key> cursor = getAllSeriesWithData(conn, ecbFlow, key)) {
+        try (TsCursor<Key> o = getAllSeriesWithData(conn, ecbFlow, key, "EXT_TITLE")) {
             int index = 0;
-            while (cursor.nextSeries()) {
+            while (o.nextSeries()) {
                 switch (index++) {
                     case 0:
-                        assertThat(cursor.getSeriesId()).isEqualTo(Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE"));
-                        assertThat(cursor.getSeriesData().get().getLength()).isEqualTo(25);
+                        assertThat(o.getSeriesId()).isEqualTo(Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE"));
+                        assertThat(o.getSeriesLabel()).isEqualTo(title);
+                        assertThat(o.getSeriesMetaData()).containsOnlyKeys("EXT_TITLE", "EXT_UNIT", "TITLE_COMPL");
+                        assertThat(o.getSeriesData().get().getLength()).isEqualTo(25);
                         break;
                 }
-                assertThat(key.contains(cursor.getSeriesId())).isTrue();
+                assertThat(key.contains(o.getSeriesId())).isTrue();
             }
             assertThat(index).isEqualTo(120);
         }
 
         key = Key.of("A", "DEU", "", "", "", "", "");
-        try (TsCursor<Key> cursor = getAllSeriesWithData(conn, ecbFlow, key)) {
+        try (TsCursor<Key> o = getAllSeriesWithData(conn, ecbFlow, key, "EXT_TITLE")) {
             int index = 0;
-            while (cursor.nextSeries()) {
+            while (o.nextSeries()) {
                 switch (index++) {
                     case 0:
-                        assertThat(cursor.getSeriesId()).isEqualTo(Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE"));
-                        assertThat(cursor.getSeriesData().get().getLength()).isEqualTo(25);
+                        assertThat(o.getSeriesId()).isEqualTo(Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE"));
+                        assertThat(o.getSeriesLabel()).isEqualTo(title);
+                        assertThat(o.getSeriesMetaData()).containsOnlyKeys("EXT_TITLE", "EXT_UNIT", "TITLE_COMPL");
+                        assertThat(o.getSeriesData().get().getLength()).isEqualTo(25);
                         break;
                 }
-                assertThat(key.contains(cursor.getSeriesId())).isTrue();
+                assertThat(key.contains(o.getSeriesId())).isTrue();
             }
             assertThat(index).isEqualTo(4);
         }
@@ -206,35 +226,22 @@ public class SdmxQueryUtilTest {
 
         Key key = Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE");
 
-        TsData data = getSeriesWithData(conn, ecbFlow, key).get();
-        assertThat(data.getStart()).isEqualTo(new TsPeriod(TsFrequency.Yearly, 1991, 0));
-        assertThat(data.getLastPeriod()).isEqualTo(new TsPeriod(TsFrequency.Yearly, 2015, 0));
-        assertThat(data.getLength()).isEqualTo(25);
-        assertThat(data.getObsCount()).isEqualTo(25);
-        assertThat(data.get(0)).isEqualTo(-2.8574221);
-        assertThat(data.get(24)).isEqualTo(-0.1420473);
+        TsData o = getSeriesWithData(conn, ecbFlow, key).get();
+        assertThat(o.getStart()).isEqualTo(new TsPeriod(TsFrequency.Yearly, 1991, 0));
+        assertThat(o.getLastPeriod()).isEqualTo(new TsPeriod(TsFrequency.Yearly, 2015, 0));
+        assertThat(o.getLength()).isEqualTo(25);
+        assertThat(o.getObsCount()).isEqualTo(25);
+        assertThat(o.get(0)).isEqualTo(-2.8574221);
+        assertThat(o.get(24)).isEqualTo(-0.1420473);
     }
 
     @Test
     public void testGetChildren21() throws Exception {
         SdmxConnection conn = ecb.asConnection();
 
-        List<String> children;
-
-        children = getChildren(conn, ecbFlow, Key.ALL, 1);
-        assertThat(children.size()).isEqualTo(1);
-        assertThat(children.contains("A")).isTrue();
-
-        children = getChildren(conn, ecbFlow, Key.of("A", "", "", "", "", "", ""), 2);
-        assertThat(children.size()).isEqualTo(30);
-        assertThat(children.contains("BEL")).isTrue();
-        assertThat(children.contains("POL")).isTrue();
-
-        children = getChildren(conn, ecbFlow, Key.of("A", "BEL", "", "", "", "", ""), 3);
-        assertThat(children.size()).isEqualTo(1);
-        assertThat(children.contains("1")).isTrue();
-
-        children = getChildren(conn, ecbFlow, Key.of("hello", "", "", "", "", "", ""), 2);
-        assertThat(children.isEmpty()).isTrue();
+        assertThat(getChildren(conn, ecbFlow, Key.ALL, 1)).containsExactly("A");
+        assertThat(getChildren(conn, ecbFlow, Key.of("A", "", "", "", "", "", ""), 2)).hasSize(30).contains("BEL", "POL");
+        assertThat(getChildren(conn, ecbFlow, Key.of("A", "BEL", "", "", "", "", ""), 3)).containsExactly("1");
+        assertThat(getChildren(conn, ecbFlow, Key.of("hello", "", "", "", "", "", ""), 2)).isEmpty();
     }
 }
