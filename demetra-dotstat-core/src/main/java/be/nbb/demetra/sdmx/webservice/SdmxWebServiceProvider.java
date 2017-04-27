@@ -42,6 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,10 +51,10 @@ import org.slf4j.LoggerFactory;
  * @author Philippe Charles
  * @since 2.2.0
  */
-//@ServiceProvider(service = ITsProvider.class, supersedes = "be.nbb.demetra.dotstat.DotStatProvider")
+@ServiceProvider(service = ITsProvider.class, supersedes = "be.nbb.demetra.dotstat.DotStatProvider")
 public final class SdmxWebServiceProvider implements IDataSourceLoader {
 
-    private static final String NAME = "DOTSTAT";
+    public static final String NAME = "DOTSTAT";
 
     private final AtomicReference<SdmxConnectionSupplier> connectionSupplier;
     private final AtomicBoolean displayCodes;

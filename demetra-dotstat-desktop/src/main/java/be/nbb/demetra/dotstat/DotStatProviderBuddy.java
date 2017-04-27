@@ -22,7 +22,6 @@ import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import com.google.common.base.Converter;
-import com.google.common.base.Optional;
 import ec.nbdemetra.db.DbProviderBuddy;
 import ec.nbdemetra.ui.BeanHandler;
 import ec.nbdemetra.ui.Config;
@@ -34,11 +33,9 @@ import ec.tss.tsproviders.TsProviders;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tss.tsproviders.utils.Params;
 import ec.util.completion.AutoCompletionSource;
-import ec.util.completion.swing.CustomListCellRenderer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
-import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.nodes.Sheet;
@@ -50,9 +47,11 @@ import static ec.util.completion.AutoCompletionSource.Behavior.ASYNC;
 import static ec.util.completion.AutoCompletionSource.Behavior.NONE;
 import static ec.util.completion.AutoCompletionSource.Behavior.SYNC;
 import ec.util.completion.ExtAutoCompletionSource;
+import internal.desktop.AutoCompletionRenderers;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -60,6 +59,7 @@ import java.util.stream.Collectors;
  *
  * @author Philippe Charles
  */
+@Deprecated
 @ServiceProvider(service = IDataSourceProviderBuddy.class)
 public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> implements IConfigurable {
 
@@ -71,8 +71,8 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
     public DotStatProviderBuddy() {
         this.configurator = createConfigurator();
         this.supplier = SdmxDriverManager.getDefault();
-        this.tableRenderer = new DataflowRenderer();
-        this.columnRenderer = new DimensionRenderer();
+        this.tableRenderer = AutoCompletionRenderers.of(Dataflow::getLabel, o -> o.getFlowRef().toString());
+        this.columnRenderer = AutoCompletionRenderers.of(Dimension::getId, Dimension::getLabel);
         initDriverCache();
     }
 
@@ -207,44 +207,46 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
                 .collect(Collectors.toList());
     }
 
-    //<editor-fold defaultstate="collapsed" desc="Renderers">
-    private static final class DataflowRenderer extends CustomListCellRenderer<Dataflow> {
-
-        @Override
-        protected String getValueAsString(Dataflow value) {
-            return value.getLabel();
-        }
-
-        @Override
-        protected String toToolTipText(String term, JList list, Dataflow value, int index, boolean isSelected, boolean cellHasFocus) {
-            return value.getFlowRef().toString();
-        }
-    }
-
-    private static final class DimensionRenderer extends CustomListCellRenderer<Dimension> {
-
-        @Override
-        protected String getValueAsString(Dimension value) {
-            return value.getId();
-        }
-
-        @Override
-        protected String toToolTipText(String term, JList list, Dimension value, int index, boolean isSelected, boolean cellHasFocus) {
-            return value.getLabel();
-        }
-    }
-    //</editor-fold>
-
     //<editor-fold defaultstate="collapsed" desc="Configuration">
     private static Configurator<DotStatProviderBuddy> createConfigurator() {
-        return new BuddyConfigHandler().toConfigurator(new BuddyConfigConverter());
+        return new BuddyConfigHandler().toConfigurator(BuddyConfig.converter());
     }
 
     @lombok.Data
     public static final class BuddyConfig {
 
-        private String preferredLanguage;
-        private boolean displayCodes;
+        String preferredLanguage;
+        boolean displayCodes;
+
+        public static Converter<BuddyConfig, Config> converter() {
+            return new BuddyConfigConverter();
+        }
+
+        private static final class BuddyConfigConverter extends Converter<BuddyConfig, Config> {
+
+            private final IParam<Config, String> prefferedLanguageParam = Params.onString("en", "preferredLanguage");
+            private final IParam<Config, Boolean> displayCodesParam = Params.onBoolean(false, "displayCodes");
+
+            @Override
+            protected Config doForward(BuddyConfig a) {
+                Config.Builder result = Config.builder(BuddyConfig.class.getName(), "INSTANCE", "20150225");
+                prefferedLanguageParam.set(result, a.getPreferredLanguage());
+                displayCodesParam.set(result, a.isDisplayCodes());
+                return result.build();
+            }
+
+            @Override
+            protected BuddyConfig doBackward(Config b) {
+                BuddyConfig result = new BuddyConfig();
+                result.setPreferredLanguage(prefferedLanguageParam.get(b));
+                result.setDisplayCodes(displayCodesParam.get(b));
+                return result;
+            }
+        }
+    }
+
+    private static Optional<DotStatProvider> lookupProvider() {
+        return TsProviders.lookup(DotStatProvider.class, DotStatProvider.NAME).toJavaUtil();
     }
 
     private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, DotStatProviderBuddy> {
@@ -252,43 +254,19 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
         @Override
         public BuddyConfig loadBean(DotStatProviderBuddy resource) {
             BuddyConfig result = new BuddyConfig();
-            Optional<DotStatProvider> provider = TsProviders.lookup(DotStatProvider.class, DotStatProvider.NAME);
-            if (provider.isPresent()) {
-                result.setPreferredLanguage(provider.get().getPreferredLanguage());
-                result.setDisplayCodes(provider.get().isDisplayCodes());
-            }
+            lookupProvider().ifPresent(o -> {
+                result.setPreferredLanguage(o.getPreferredLanguage());
+                result.setDisplayCodes(o.isDisplayCodes());
+            });
             return result;
         }
 
         @Override
         public void storeBean(DotStatProviderBuddy resource, BuddyConfig bean) {
-            Optional<DotStatProvider> provider = TsProviders.lookup(DotStatProvider.class, DotStatProvider.NAME);
-            if (provider.isPresent()) {
-                provider.get().setPreferredLanguage(bean.getPreferredLanguage());
-                provider.get().setDisplayCodes(bean.isDisplayCodes());
-            }
-        }
-    }
-
-    private static final class BuddyConfigConverter extends Converter<BuddyConfig, Config> {
-
-        private final IParam<Config, String> prefferedLanguageParam = Params.onString("en", "preferredLanguage");
-        private final IParam<Config, Boolean> displayCodesParam = Params.onBoolean(false, "displayCodes");
-
-        @Override
-        protected Config doForward(BuddyConfig a) {
-            Config.Builder result = Config.builder(BuddyConfig.class.getName(), "INSTANCE", "20150225");
-            prefferedLanguageParam.set(result, a.getPreferredLanguage());
-            displayCodesParam.set(result, a.isDisplayCodes());
-            return result.build();
-        }
-
-        @Override
-        protected BuddyConfig doBackward(Config b) {
-            BuddyConfig result = new BuddyConfig();
-            result.setPreferredLanguage(prefferedLanguageParam.get(b));
-            result.setDisplayCodes(displayCodesParam.get(b));
-            return result;
+            lookupProvider().ifPresent(o -> {
+                o.setPreferredLanguage(bean.getPreferredLanguage());
+                o.setDisplayCodes(bean.isDisplayCodes());
+            });
         }
     }
     //</editor-fold>
