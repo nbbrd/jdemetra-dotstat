@@ -19,7 +19,6 @@ package be.nbb.demetra.dotstat;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
-import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import com.google.common.base.Converter;
 import ec.nbdemetra.db.DbProviderBuddy;
@@ -41,18 +40,10 @@ import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.ServiceProvider;
 import be.nbb.sdmx.facade.util.HasCache;
-import com.google.common.base.Strings;
 import ec.tstoolkit.utilities.GuavaCaches;
-import static ec.util.completion.AutoCompletionSource.Behavior.ASYNC;
-import static ec.util.completion.AutoCompletionSource.Behavior.NONE;
-import static ec.util.completion.AutoCompletionSource.Behavior.SYNC;
-import ec.util.completion.ExtAutoCompletionSource;
-import internal.desktop.AutoCompletionRenderers;
-import java.io.IOException;
-import java.time.Duration;
-import java.util.Comparator;
+import ec.util.completion.swing.CustomListCellRenderer;
+import internal.sdmx.SdmxAutoCompletion;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -71,8 +62,8 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
     public DotStatProviderBuddy() {
         this.configurator = createConfigurator();
         this.supplier = SdmxDriverManager.getDefault();
-        this.tableRenderer = AutoCompletionRenderers.of(Dataflow::getLabel, o -> o.getFlowRef().toString());
-        this.columnRenderer = AutoCompletionRenderers.of(Dimension::getId, Dimension::getLabel);
+        this.tableRenderer = CustomListCellRenderer.of(Dataflow::getLabel, o -> o.getFlowRef().toString());
+        this.columnRenderer = CustomListCellRenderer.of(Dimension::getId, Dimension::getLabel);
         initDriverCache();
     }
 
@@ -133,13 +124,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
     @Override
     protected AutoCompletionSource getTableSource(DotStatBean bean) {
-        return ExtAutoCompletionSource
-                .builder(o -> getDataflows(supplier, bean))
-                .behavior(o -> !Strings.isNullOrEmpty(bean.getDbName()) ? ASYNC : NONE)
-                .postProcessor(DotStatProviderBuddy::getDataflows)
-                .valueToString(o -> o.getFlowRef().toString())
-                .cache(GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1)), o -> bean.getDbName(), SYNC)
-                .build();
+        return SdmxAutoCompletion.onFlows(supplier, bean::getDbName);
     }
 
     @Override
@@ -149,13 +134,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
     @Override
     protected AutoCompletionSource getColumnSource(DotStatBean bean) {
-        return ExtAutoCompletionSource
-                .builder(o -> getDimensions(supplier, bean))
-                .behavior(o -> !Strings.isNullOrEmpty(bean.getDbName()) && !Strings.isNullOrEmpty(bean.getTableName()) ? ASYNC : NONE)
-                .postProcessor(DotStatProviderBuddy::getDimensions)
-                .valueToString(Dimension::getId)
-                .cache(GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1)), o -> bean.getDbName() + "/" + bean.getTableName(), SYNC)
-                .build();
+        return SdmxAutoCompletion.onDimensions(supplier, bean::getDbName, bean::getTableName);
     }
 
     @Override
@@ -177,34 +156,6 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
     public Config editConfig(Config config) throws IllegalArgumentException {
         OptionsDisplayer.getDefault().open(DotStatOptionsPanelController.ID);
         return config;
-    }
-
-    private static List<Dataflow> getDataflows(SdmxConnectionSupplier supplier, DotStatBean bean) throws IOException {
-        try (SdmxConnection c = supplier.getConnection(bean.getDbName())) {
-            return new ArrayList<>(c.getDataflows());
-        }
-    }
-
-    private static List<Dimension> getDimensions(SdmxConnectionSupplier supplier, DotStatBean bean) throws IOException {
-        try (SdmxConnection c = supplier.getConnection(bean.getDbName())) {
-            return new ArrayList<>(c.getDataStructure(bean.getFlowRef()).getDimensions());
-        }
-    }
-
-    private static List<Dataflow> getDataflows(List<Dataflow> values, String term) {
-        Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
-        return values.stream()
-                .filter(o -> filter.test(o.getLabel()) || filter.test(o.getFlowRef().getId()))
-                .sorted(Comparator.comparing(Dataflow::getLabel))
-                .collect(Collectors.toList());
-    }
-
-    private static List<Dimension> getDimensions(List<Dimension> values, String term) {
-        Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
-        return values.stream()
-                .filter(o -> filter.test(o.getId()) || filter.test(o.getLabel()) || filter.test(String.valueOf(o.getPosition())))
-                .sorted(Comparator.comparing(Dimension::getId))
-                .collect(Collectors.toList());
     }
 
     //<editor-fold defaultstate="collapsed" desc="Configuration">
