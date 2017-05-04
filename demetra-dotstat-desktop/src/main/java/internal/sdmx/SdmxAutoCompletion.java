@@ -65,7 +65,10 @@ public class SdmxAutoCompletion {
     }
 
     public String getDefaultDimensionsAsString(SdmxConnectionSupplier supplier, Supplier<String> source, Supplier<String> flow, CharSequence delimiter) throws Exception {
-        return onDimensions(supplier, source, flow).getValues("").stream().map(o -> ((Dimension) o).getId()).collect(Collectors.joining(delimiter));
+        return loadDimensions(supplier, source, flow).stream()
+                .sorted(Comparator.comparingInt(Dimension::getPosition))
+                .map(Dimension::getId)
+                .collect(Collectors.joining(delimiter));
     }
 
     private boolean canLoadFlows(Supplier<String> source) {
