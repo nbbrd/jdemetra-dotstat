@@ -16,8 +16,6 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.facade.Dataflow;
-import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import com.google.common.base.Converter;
@@ -41,10 +39,9 @@ import org.openide.nodes.Sheet;
 import org.openide.util.lookup.ServiceProvider;
 import be.nbb.sdmx.facade.util.HasCache;
 import ec.tstoolkit.utilities.GuavaCaches;
-import ec.util.completion.swing.CustomListCellRenderer;
 import internal.sdmx.SdmxAutoCompletion;
+import java.time.Duration;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -58,17 +55,18 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
     private final SdmxConnectionSupplier supplier;
     private final ListCellRenderer tableRenderer;
     private final ListCellRenderer columnRenderer;
+    private final ConcurrentMap autoCompletionCache;
 
     public DotStatProviderBuddy() {
         this.configurator = createConfigurator();
         this.supplier = SdmxDriverManager.getDefault();
-        this.tableRenderer = CustomListCellRenderer.of(Dataflow::getLabel, o -> o.getFlowRef().toString());
-        this.columnRenderer = CustomListCellRenderer.of(Dimension::getId, Dimension::getLabel);
-        initDriverCache();
+        this.tableRenderer = SdmxAutoCompletion.getFlowsRenderer();
+        this.columnRenderer = SdmxAutoCompletion.getDimensionsRenderer();
+        this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
+        initDriverCache(GuavaCaches.softValuesCacheAsMap());
     }
 
-    private static void initDriverCache() {
-        ConcurrentMap cache = GuavaCaches.softValuesCacheAsMap();
+    private static void initDriverCache(ConcurrentMap cache) {
         SdmxDriverManager.getDefault().getDrivers().stream()
                 .filter(o -> (o instanceof HasCache))
                 .forEach(o -> ((HasCache) o).setCache(cache));
@@ -106,7 +104,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
                 .select(bean, "dimColumns")
                 .source(getColumnSource(bean))
                 .separator(",")
-                .defaultValueSupplier(() -> getColumnSource(bean).getValues("").stream().map(o -> ((Dimension) o).getId()).collect(Collectors.joining(",")))
+                .defaultValueSupplier(() -> SdmxAutoCompletion.getDefaultDimensionsAsString(supplier, bean::getDbName, bean::getTableName, autoCompletionCache, ","))
                 .cellRenderer(getColumnRenderer(bean))
                 .display("Dimensions")
                 .add();
@@ -124,7 +122,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
     @Override
     protected AutoCompletionSource getTableSource(DotStatBean bean) {
-        return SdmxAutoCompletion.onFlows(supplier, bean::getDbName);
+        return SdmxAutoCompletion.onFlows(supplier, bean::getDbName, autoCompletionCache);
     }
 
     @Override
@@ -134,7 +132,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
     @Override
     protected AutoCompletionSource getColumnSource(DotStatBean bean) {
-        return SdmxAutoCompletion.onDimensions(supplier, bean::getDbName, bean::getTableName);
+        return SdmxAutoCompletion.onDimensions(supplier, bean::getDbName, bean::getTableName, autoCompletionCache);
     }
 
     @Override

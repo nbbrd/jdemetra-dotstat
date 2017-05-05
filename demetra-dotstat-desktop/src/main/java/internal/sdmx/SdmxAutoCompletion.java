@@ -21,21 +21,24 @@ import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
+import be.nbb.sdmx.facade.driver.SdmxDriverManager;
+import be.nbb.sdmx.facade.driver.WsEntryPoint;
 import com.google.common.base.Strings;
-import ec.tstoolkit.utilities.GuavaCaches;
 import ec.util.completion.AutoCompletionSource;
 import static ec.util.completion.AutoCompletionSource.Behavior.ASYNC;
 import static ec.util.completion.AutoCompletionSource.Behavior.NONE;
 import static ec.util.completion.AutoCompletionSource.Behavior.SYNC;
 import ec.util.completion.ExtAutoCompletionSource;
+import ec.util.completion.swing.CustomListCellRenderer;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.swing.ListCellRenderer;
 
 /**
  *
@@ -44,31 +47,66 @@ import java.util.stream.Collectors;
 @lombok.experimental.UtilityClass
 public class SdmxAutoCompletion {
 
-    public AutoCompletionSource onFlows(SdmxConnectionSupplier supplier, Supplier<String> source) {
+    public AutoCompletionSource onEntryPoints(SdmxDriverManager manager) {
+        return ExtAutoCompletionSource
+                .builder(o -> manager.getEntryPoints())
+                .behavior(AutoCompletionSource.Behavior.SYNC)
+                .postProcessor(SdmxAutoCompletion::filterAndSortEntryPoints)
+                .valueToString(WsEntryPoint::getName)
+                .build();
+    }
+
+    public ListCellRenderer getEntryPointsRenderer() {
+        return CustomListCellRenderer.of(WsEntryPoint::getDescription, WsEntryPoint::getName);
+    }
+
+    public AutoCompletionSource onFlows(SdmxConnectionSupplier supplier, Supplier<String> source, ConcurrentMap cache) {
         return ExtAutoCompletionSource
                 .builder(o -> loadFlows(supplier, source))
                 .behavior(o -> canLoadFlows(source) ? ASYNC : NONE)
                 .postProcessor(SdmxAutoCompletion::filterAndSortFlows)
                 .valueToString(o -> o.getFlowRef().toString())
-                .cache(GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1)), o -> getFlowCacheKey(source), SYNC)
+                .cache(cache, o -> getFlowCacheKey(source), SYNC)
                 .build();
     }
 
-    public AutoCompletionSource onDimensions(SdmxConnectionSupplier supplier, Supplier<String> source, Supplier<String> flow) {
+    public ListCellRenderer getFlowsRenderer() {
+        return CustomListCellRenderer.of(Dataflow::getLabel, o -> o.getFlowRef().toString());
+    }
+
+    public AutoCompletionSource onDimensions(SdmxConnectionSupplier supplier, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache) {
         return ExtAutoCompletionSource
                 .builder(o -> loadDimensions(supplier, source, flow))
                 .behavior(o -> canLoadDimensions(source, flow) ? ASYNC : NONE)
                 .postProcessor(SdmxAutoCompletion::filterAndSortDimensions)
                 .valueToString(Dimension::getId)
-                .cache(GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1)), o -> getDimensionCacheKey(source, flow), SYNC)
+                .cache(cache, o -> getDimensionCacheKey(source, flow), SYNC)
                 .build();
     }
 
-    public String getDefaultDimensionsAsString(SdmxConnectionSupplier supplier, Supplier<String> source, Supplier<String> flow, CharSequence delimiter) throws Exception {
-        return loadDimensions(supplier, source, flow).stream()
+    public ListCellRenderer getDimensionsRenderer() {
+        return CustomListCellRenderer.of(Dimension::getId, Dimension::getLabel);
+    }
+
+    public String getDefaultDimensionsAsString(SdmxConnectionSupplier supplier, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache, CharSequence delimiter) throws Exception {
+        String key = getDimensionCacheKey(source, flow);
+        List<Dimension> result = (List<Dimension>) cache.get(key);
+        if (result == null) {
+            result = loadDimensions(supplier, source, flow);
+            cache.put(key, result);
+        }
+        return result.stream()
                 .sorted(Comparator.comparingInt(Dimension::getPosition))
                 .map(Dimension::getId)
                 .collect(Collectors.joining(delimiter));
+    }
+
+    private List<WsEntryPoint> filterAndSortEntryPoints(List<WsEntryPoint> allValues, String term) {
+        Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
+        return allValues.stream()
+                .filter(o -> filter.test(o.getDescription()) || filter.test(o.getUri().toString()))
+                .sorted(Comparator.comparing(WsEntryPoint::getDescription))
+                .collect(Collectors.toList());
     }
 
     private boolean canLoadFlows(Supplier<String> source) {

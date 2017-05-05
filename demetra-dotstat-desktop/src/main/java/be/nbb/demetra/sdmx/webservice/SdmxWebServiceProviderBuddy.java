@@ -19,8 +19,6 @@ package be.nbb.demetra.sdmx.webservice;
 import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
 import be.nbb.demetra.dotstat.DotStatProviderBuddy.BuddyConfig;
 import be.nbb.demetra.dotstat.SdmxWsAutoCompletionService;
-import be.nbb.sdmx.facade.Dataflow;
-import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import be.nbb.sdmx.facade.util.HasCache;
@@ -38,7 +36,6 @@ import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.TsProviders;
 import ec.tstoolkit.utilities.GuavaCaches;
-import ec.util.completion.swing.CustomListCellRenderer;
 import internal.sdmx.SdmxAutoCompletion;
 import java.awt.Image;
 import java.beans.BeanInfo;
@@ -63,10 +60,12 @@ import org.openide.util.lookup.ServiceProvider;
 public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBuddy, IConfigurable {
 
     private final Configurator<SdmxWebServiceProviderBuddy> configurator;
+    private final ConcurrentMap autoCompletionCache;
 
     public SdmxWebServiceProviderBuddy() {
         this.configurator = createConfigurator();
-        initDriverCache();
+        this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
+        initDriverCache(GuavaCaches.softValuesCacheAsMap());
     }
 
     @Override
@@ -105,7 +104,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
                 return new PropertySheetDialogBuilder()
                         .title(title)
                         .icon(getIcon(BeanInfo.ICON_COLOR_16x16, false))
-                        .editSheet(createSheet((SdmxWebServiceBean) bean, provider.get().getConnectionSupplier()));
+                        .editSheet(createSheet((SdmxWebServiceBean) bean, provider.get().getConnectionSupplier(), autoCompletionCache));
             }
         }
         return IDataSourceProviderBuddy.super.editBean(title, bean);
@@ -157,18 +156,19 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
         }
     }
 
-    private static void initDriverCache() {
-        ConcurrentMap cache = GuavaCaches.softValuesCacheAsMap();
+    private static void initDriverCache(ConcurrentMap cache) {
         SdmxDriverManager.getDefault().getDrivers().stream()
                 .filter(o -> (o instanceof HasCache))
                 .forEach(o -> ((HasCache) o).setCache(cache));
     }
 
-    private static Sheet createSheet(SdmxWebServiceBean bean, SdmxConnectionSupplier supplier) {
+    @NbBundle.Messages({
+        "bean.cache.description=Mechanism used to improve performance."})
+    private static Sheet createSheet(SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, ConcurrentMap cache) {
         Sheet result = new Sheet();
         NodePropertySetBuilder b = new NodePropertySetBuilder();
-        result.put(withSource(b.reset("Source"), bean, supplier).build());
-        result.put(withCache(b.reset("Cache").description("Mechanism used to improve performance."), bean).build());
+        result.put(withSource(b.reset("Source"), bean, supplier, cache).build());
+        result.put(withCache(b.reset("Cache").description(Bundle.bean_cache_description()), bean).build());
         return result;
     }
 
@@ -180,7 +180,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
         "bean.labelAttribute.display=Label attribute",
         "bean.labelAttribute.description=An optional dimension that defines the label of a series."
     })
-    private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier) {
+    private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, ConcurrentMap cache) {
         b.withAutoCompletion()
                 .select(bean, "source")
                 .servicePath(SdmxWsAutoCompletionService.PATH)
@@ -188,16 +188,16 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
                 .add();
         b.withAutoCompletion()
                 .select(bean, "flow")
-                .source(SdmxAutoCompletion.onFlows(supplier, bean::getSource))
-                .cellRenderer(CustomListCellRenderer.of(Dataflow::getLabel, o -> o.getFlowRef().toString()))
+                .source(SdmxAutoCompletion.onFlows(supplier, bean::getSource, cache))
+                .cellRenderer(SdmxAutoCompletion.getFlowsRenderer())
                 .display(Bundle.bean_flow_display())
                 .add();
         b.withAutoCompletion()
                 .select(bean, "dimensions", List.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)
-                .source(SdmxAutoCompletion.onDimensions(supplier, bean::getSource, bean::getFlow))
+                .source(SdmxAutoCompletion.onDimensions(supplier, bean::getSource, bean::getFlow, cache))
                 .separator(",")
-                .defaultValueSupplier(() -> SdmxAutoCompletion.getDefaultDimensionsAsString(supplier, bean::getSource, bean::getFlow, ","))
-                .cellRenderer(CustomListCellRenderer.of(Dimension::getId, Dimension::getLabel))
+                .defaultValueSupplier(() -> SdmxAutoCompletion.getDefaultDimensionsAsString(supplier, bean::getSource, bean::getFlow, cache, ","))
+                .cellRenderer(SdmxAutoCompletion.getDimensionsRenderer())
                 .display(Bundle.bean_dimensions_display())
                 .description(Bundle.bean_dimensions_description())
                 .add();
