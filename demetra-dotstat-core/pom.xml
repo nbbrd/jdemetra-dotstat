@@ -27,7 +27,7 @@
         <jdk.version>1.8</jdk.version>
         <maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
         <!-- dependencies -->
-        <demetra.version>2.2.0-RC1</demetra.version>
+        <demetra.version>2.2.0-RC2</demetra.version>
     </properties>
 
     <dependencyManagement>
