@@ -100,7 +100,6 @@ public final class TestResource {
         }
     }
 
-    //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private static Map<DataStructureRef, DataStructure> toDataStructures(List<DataFlowStructure> input) {
         return input.stream()
                 .map(Util::toDataStructure)
