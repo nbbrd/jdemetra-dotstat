@@ -23,7 +23,7 @@ import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.samples.SdmxSource;
 import be.nbb.sdmx.facade.util.MemSdmxRepository;
-import be.nbb.sdmx.facade.xml.stream.XMLStreamCursors;
+import be.nbb.sdmx.facade.xml.stream.SdmxXmlStreams;
 import it.bancaditalia.oss.sdmx.api.DataFlowStructure;
 import it.bancaditalia.oss.sdmx.exceptions.SdmxException;
 import java.io.IOException;
@@ -59,7 +59,7 @@ public final class TestResource {
                         .collect(Collectors.toList()));
             }
             DataStructure dfs = dataStructures.get(DataStructureRef.of("NBB", "TEST_DATASET", null));
-            try (DataCursor cursor = XMLStreamCursors.genericData20(XMLInputFactory.newInstance(), SdmxSource.NBB_DATA.openReader(), dfs)) {
+            try (DataCursor cursor = SdmxXmlStreams.genericData20(XMLInputFactory.newInstance(), SdmxSource.NBB_DATA.openReader(), dfs)) {
                 result.copyOf(flowRef, cursor);
             }
             return result
@@ -88,7 +88,7 @@ public final class TestResource {
                         .collect(Collectors.toList()));
             }
             DataStructure dfs = dataStructures.get(DataStructureRef.of("ECB", "ECB_AME1", "1.0"));
-            try (DataCursor cursor = XMLStreamCursors.genericData21(XMLInputFactory.newInstance(), SdmxSource.ECB_DATA.openReader(), dfs)) {
+            try (DataCursor cursor = SdmxXmlStreams.genericData21(XMLInputFactory.newInstance(), SdmxSource.ECB_DATA.openReader(), dfs)) {
                 result.copyOf(flowRef, cursor);
             }
             return result

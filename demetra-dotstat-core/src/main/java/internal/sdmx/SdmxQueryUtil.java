@@ -74,7 +74,7 @@ public class SdmxQueryUtil {
                 int index = dimensionPosition - 1;
                 TreeSet<String> result = new TreeSet<>();
                 while (cursor.nextSeries()) {
-                    result.add(cursor.getSeriesId().getItem(index));
+                    result.add(cursor.getSeriesId().get(index));
                 }
                 return ImmutableList.copyOf(result);
             }
@@ -127,7 +127,7 @@ public class SdmxQueryUtil {
     private Set<String> getCodeList(Dimension[] dimensionByIndex, Key ref, int idx) {
         return Key.ALL.equals(ref) || ref.isWildcard(idx)
                 ? dimensionByIndex[idx].getCodes().keySet()
-                : Collections.singleton(ref.getItem(idx));
+                : Collections.singleton(ref.get(idx));
     }
 
     private void computeAllPossibleSeries(IntFunction<Set<String>> codeLists, int idx, String[] stack, List<Key> result) {

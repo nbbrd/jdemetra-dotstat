@@ -229,7 +229,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
 
         public CubeId getId(Key o) {
             for (int i = 0; i < indices.length; i++) {
-                dimValues[i] = o.getItem(indices[i]);
+                dimValues[i] = o.get(indices[i]);
             }
             return ref.child(dimValues);
         }
