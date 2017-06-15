@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Test;
 import static ec.tss.tsproviders.Assertions.assertThat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  *
@@ -131,7 +133,7 @@ public class SdmxWebServiceProviderTest {
 
     private static List<Obs> toSeries(TsFrequency freq, int seed) {
         return TsData.random(freq, seed).stream()
-                .map(o -> Obs.of(o.getPeriod().middle(), o.getValue()))
+                .map(o -> Obs.of(LocalDateTime.ofInstant(o.getPeriod().middle().toInstant(), ZoneId.systemDefault()), o.getValue()))
                 .collect(Collectors.toList());
     }
 }
