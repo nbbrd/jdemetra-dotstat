@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -141,18 +142,15 @@ public final class SdmxFileProvider implements IFileLoader {
             return CubeSupport.idBySeparator(root, ".", "k");
         }
 
-        private static final FileSdmxDriver DRIVER = new FileSdmxDriver();
-
         private static CubeAccessor of(HasFilePaths paths, SdmxFileBean bean) throws IOException {
-            SdmxConnection conn = DRIVER.connect(getUri(paths, bean), new Properties());
-            DataflowRef flow = conn.getDataflows().iterator().next().getFlowRef();
-            List<String> dimensions = getDimensionIds(conn.getDataStructure(flow));
-            return SdmxCubeAccessor.create(new Stuff(conn), "???", flow, dimensions, bean.getLabelAttribute());
-        }
-
-        private static URI getUri(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {
-            File target = paths.resolveFilePath(bean.getFile());
-            return URI.create("sdmx:" + target.toURI().toString());
+            FileSupplier supplier = FileSupplier.of(paths, bean);
+            DataflowRef flow;
+            List<String> dimensions;
+            try (SdmxConnection conn = supplier.getConnection("")) {
+                flow = conn.getDataflows().iterator().next().getFlowRef();
+                dimensions = getDimensionIds(conn.getDataStructure(flow));
+            }
+            return SdmxCubeAccessor.create(supplier, "???", flow, dimensions, bean.getLabelAttribute());
         }
 
         private static List<String> getDimensionIds(DataStructure dataStructure) {
@@ -163,17 +161,39 @@ public final class SdmxFileProvider implements IFileLoader {
         }
     }
 
-    private static final class Stuff implements SdmxConnectionSupplier {
+    private static final FileSdmxDriver DRIVER = new FileSdmxDriver();
 
-        private final SdmxConnection single;
+    private static final class FileSupplier implements SdmxConnectionSupplier {
 
-        public Stuff(SdmxConnection single) {
-            this.single = single;
+        static FileSupplier of(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {
+            return new FileSupplier(getUri(paths, bean), getProperties(paths, bean));
+        }
+
+        private final URI uri;
+        private final Map<?, ?> properties;
+
+        private FileSupplier(URI uri, Map<?, ?> properties) {
+            this.uri = uri;
+            this.properties = properties;
         }
 
         @Override
-        public SdmxConnection getConnection(String name) {
-            return single;
+        public SdmxConnection getConnection(String name) throws IOException {
+            return DRIVER.connect(uri, properties);
+        }
+
+        private static URI getUri(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {
+            File target = paths.resolveFilePath(bean.getFile());
+            return URI.create("sdmx:" + target.toURI().toString());
+        }
+
+        private static Properties getProperties(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {
+            Properties p = new Properties();
+            File structureFile = bean.getStructureFile();
+            if (!structureFile.toString().isEmpty()) {
+                p.put(p, paths.resolveFilePath(structureFile).toString());
+            }
+            return p;
         }
     }
 }

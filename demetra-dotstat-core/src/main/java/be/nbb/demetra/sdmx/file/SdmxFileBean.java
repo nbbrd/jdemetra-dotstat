@@ -28,5 +28,6 @@ import java.io.File;
 public final class SdmxFileBean implements IFileBean {
 
     private File file;
+    private File structureFile;
     private String labelAttribute;
 }

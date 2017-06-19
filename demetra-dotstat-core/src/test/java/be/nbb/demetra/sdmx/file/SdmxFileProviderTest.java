@@ -17,6 +17,8 @@
 package be.nbb.demetra.sdmx.file;
 
 import be.nbb.sdmx.facade.samples.SdmxSource;
+import ec.tss.TsCollectionInformation;
+import ec.tss.TsInformationType;
 import ec.tss.TsMoniker;
 import static ec.tss.tsproviders.Assertions.assertThat;
 import ec.tss.tsproviders.DataSet;
@@ -24,6 +26,8 @@ import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.IDataSourceLoaderAssert;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import org.assertj.core.api.Assertions;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -73,5 +77,31 @@ public class SdmxFileProviderTest {
     private static SdmxFileProvider getProvider() {
         SdmxFileProvider result = new SdmxFileProvider();
         return result;
+    }
+
+    @Test
+    public void testContent() throws IOException {
+        File structureFile = File.createTempFile("sdmx", ".xml");
+        structureFile.deleteOnExit();
+        SdmxSource.NBB_DATA_STRUCTURE.copyTo(structureFile.toPath());
+
+        SdmxFileBean bean = new SdmxFileBean();
+        bean.setFile(sampleFile);
+        bean.setStructureFile(structureFile);
+
+        try (SdmxFileProvider p = new SdmxFileProvider()) {
+            DataSource dataSource = p.encodeBean(bean);
+            Assertions.assertThat(p.open(dataSource)).isTrue();
+            TsCollectionInformation info = new TsCollectionInformation(p.toMoniker(dataSource), TsInformationType.All);
+            Assertions.assertThat(p.get(info)).isTrue();
+            Assertions.assertThat(info.items)
+                    .hasSize(1)
+                    .element(0)
+                    .satisfies(o -> {
+                        Assertions.assertThat(o.name).isEqualTo("LOCSTL04.AUS.M");
+                        Assertions.assertThat(new HashMap(o.metaData)).hasSize(1).containsEntry("TIME_FORMAT", "P1M");
+                        Assertions.assertThat(o.data).isNotNull();
+                    });
+        }
     }
 }

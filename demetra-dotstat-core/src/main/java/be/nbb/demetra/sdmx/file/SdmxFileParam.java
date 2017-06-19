@@ -33,6 +33,7 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
     static final class V1 implements SdmxFileParam {
 
         private final IParam<DataSource, File> file = Params.onFile(new File(""), "f");
+        private final IParam<DataSource, File> structureFile = Params.onFile(new File(""), "s");
         private final IParam<DataSource, String> labelAttribute = Params.onString("", "l");
 
         @Override
@@ -44,6 +45,7 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
         public SdmxFileBean defaultValue() {
             SdmxFileBean result = new SdmxFileBean();
             result.setFile(file.defaultValue());
+            result.setStructureFile(structureFile.defaultValue());
             result.setLabelAttribute(labelAttribute.defaultValue());
             return result;
         }
@@ -52,6 +54,7 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
         public SdmxFileBean get(DataSource dataSource) {
             SdmxFileBean result = new SdmxFileBean();
             result.setFile(file.get(dataSource));
+            result.setStructureFile(structureFile.get(dataSource));
             result.setLabelAttribute(labelAttribute.get(dataSource));
             return result;
         }
@@ -59,6 +62,7 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
         @Override
         public void set(IConfig.Builder<?, DataSource> builder, SdmxFileBean value) {
             file.set(builder, value.getFile());
+            structureFile.set(builder, value.getStructureFile());
             labelAttribute.set(builder, value.getLabelAttribute());
         }
     }
