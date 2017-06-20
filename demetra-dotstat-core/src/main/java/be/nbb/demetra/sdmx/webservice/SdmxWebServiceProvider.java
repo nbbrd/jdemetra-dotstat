@@ -35,6 +35,7 @@ import ec.tss.tsproviders.cursor.HasTsCursor;
 import ec.tss.tsproviders.utils.DataSourcePreconditions;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tstoolkit.utilities.GuavaCaches;
+import internal.sdmx.SdmxCubeItems;
 import it.bancaditalia.oss.sdmx.util.Configuration;
 import java.io.IOException;
 import java.util.List;
@@ -78,14 +79,14 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader {
         this.connectionSupplier = new AtomicReference(SdmxDriverManager.getDefault());
         this.displayCodes = new AtomicBoolean(false);
 
-        Cache<DataSource, CubeAccessor> cache = GuavaCaches.softValuesCache();
+        Cache<DataSource, SdmxCubeItems> cache = GuavaCaches.softValuesCache();
         Logger logger = LoggerFactory.getLogger(NAME);
         SdmxWebServiceParam beanParam = new SdmxWebServiceParam.V1();
 
         this.mutableListSupport = HasDataSourceMutableList.of(NAME, logger, cache::invalidate);
         this.monikerSupport = HasDataMoniker.usingUri(NAME);
         this.beanSupport = HasDataSourceBean.of(NAME, beanParam, beanParam.getVersion());
-        this.cubeSupport = CubeSupport.of(new DotStatCubeResource(cache, connectionSupplier, beanParam));
+        this.cubeSupport = CubeSupport.of(new SdmxCubeResource(cache, connectionSupplier, beanParam));
         this.tsSupport = CubeSupport.asTsProvider(NAME, logger, cubeSupport, monikerSupport, cache::invalidateAll);
     }
 
@@ -126,34 +127,44 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader {
         }
     }
 
-    private static final class DotStatCubeResource implements CubeSupport.Resource {
+    @lombok.AllArgsConstructor
+    private static final class SdmxCubeResource implements CubeSupport.Resource {
 
-        private final Cache<DataSource, CubeAccessor> cache;
+        private final Cache<DataSource, SdmxCubeItems> cache;
         private final AtomicReference<SdmxConnectionSupplier> supplier;
         private final SdmxWebServiceParam param;
 
-        public DotStatCubeResource(Cache<DataSource, CubeAccessor> cache, AtomicReference<SdmxConnectionSupplier> supplier, SdmxWebServiceParam param) {
-            this.cache = cache;
-            this.supplier = supplier;
-            this.param = param;
-        }
-
         @Override
         public CubeAccessor getAccessor(DataSource dataSource) throws IOException {
-            DataSourcePreconditions.checkProvider(NAME, dataSource);
-            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(supplier.get(), param.get(dataSource)));
+            return get(dataSource).getAccessor();
         }
 
         @Override
         public IParam<DataSet, CubeId> getIdParam(DataSource dataSource) throws IOException {
-            return param.getCubeIdParam(dataSource);
+            return get(dataSource).getIdParam();
         }
 
-        private static CubeAccessor of(SdmxConnectionSupplier supplier, SdmxWebServiceBean bean) throws IllegalArgumentException {
+        private SdmxCubeItems get(DataSource dataSource) throws IOException {
+            DataSourcePreconditions.checkProvider(NAME, dataSource);
+            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(supplier.get(), param, dataSource));
+        }
+
+        private static SdmxCubeItems of(SdmxConnectionSupplier supplier, SdmxWebServiceParam param, DataSource dataSource) throws IllegalArgumentException, IOException {
+            SdmxWebServiceBean bean = param.get(dataSource);
+
             DataflowRef flow = DataflowRef.parse(bean.getFlow());
+
             List<String> dimensions = bean.getDimensions();
-            return SdmxCubeAccessor.create(supplier, bean.getSource(), flow, dimensions, bean.getLabelAttribute())
+            if (dimensions.isEmpty()) {
+                dimensions = SdmxCubeItems.getDefaultDimIds(supplier, bean.getSource(), flow);
+            }
+
+            CubeAccessor accessor = SdmxCubeAccessor.create(supplier, bean.getSource(), flow, dimensions, bean.getLabelAttribute())
                     .bulk(bean.getCacheDepth(), GuavaCaches.ttlCacheAsMap(bean.getCacheTtl()));
+
+            IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());
+
+            return new SdmxCubeItems(accessor, idParam);
         }
     }
 }

@@ -168,18 +168,14 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
         Sheet result = new Sheet();
         NodePropertySetBuilder b = new NodePropertySetBuilder();
         result.put(withSource(b.reset("Source"), bean, supplier, cache).build());
+        result.put(withOptions(b.reset("Options"), bean, supplier, cache).build());
         result.put(withCache(b.reset("Cache").description(Bundle.bean_cache_description()), bean).build());
         return result;
     }
 
     @NbBundle.Messages({
         "bean.source.display=REST endpoint name",
-        "bean.flow.display=Dataset",
-        "bean.dimensions.display=Dimensions",
-        "bean.dimensions.description=A comma-separated list of dimensions.",
-        "bean.labelAttribute.display=Label attribute",
-        "bean.labelAttribute.description=An optional dimension that defines the label of a series."
-    })
+        "bean.flow.display=Dataset",})
     private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, ConcurrentMap cache) {
         b.withAutoCompletion()
                 .select(bean, "source")
@@ -192,6 +188,16 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
                 .cellRenderer(SdmxAutoCompletion.getFlowsRenderer())
                 .display(Bundle.bean_flow_display())
                 .add();
+        return b;
+    }
+
+    @NbBundle.Messages({
+        "bean.dimensions.display=Dimensions",
+        "bean.dimensions.description=An optional comma-separated list of dimensions.",
+        "bean.labelAttribute.display=Label attribute",
+        "bean.labelAttribute.description=An optional dimension that defines the label of a series."
+    })
+    private static NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, ConcurrentMap cache) {
         b.withAutoCompletion()
                 .select(bean, "dimensions", List.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)
                 .source(SdmxAutoCompletion.onDimensions(supplier, bean::getSource, bean::getFlow, cache))

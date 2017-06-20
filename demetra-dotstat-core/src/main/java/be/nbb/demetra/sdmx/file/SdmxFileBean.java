@@ -18,6 +18,7 @@ package be.nbb.demetra.sdmx.file;
 
 import ec.tss.tsproviders.IFileBean;
 import java.io.File;
+import java.util.List;
 
 /**
  *
@@ -29,5 +30,6 @@ public final class SdmxFileBean implements IFileBean {
 
     private File file;
     private File structureFile;
+    private List<String> dimensions;
     private String labelAttribute;
 }

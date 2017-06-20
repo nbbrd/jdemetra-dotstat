@@ -16,6 +16,7 @@
  */
 package be.nbb.demetra.sdmx.file;
 
+import be.nbb.sdmx.facade.samples.ByteSource;
 import be.nbb.sdmx.facade.samples.SdmxSource;
 import ec.tss.TsCollectionInformation;
 import ec.tss.TsInformationType;
@@ -26,6 +27,7 @@ import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.IDataSourceLoaderAssert;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import org.assertj.core.api.Assertions;
 import org.junit.BeforeClass;
@@ -37,20 +39,32 @@ import org.junit.Test;
  */
 public class SdmxFileProviderTest {
 
-    private static File sampleFile;
+    private static File NO_XML;
+    private static File BLANK;
+    private static File GENERIC20;
+    private static File STRUCT20;
+
+    private static File createTemp(ByteSource bytes, String prefix, String suffix) throws IOException {
+        File result = File.createTempFile(prefix, suffix);
+        result.deleteOnExit();
+        bytes.copyTo(result.toPath());
+        return result;
+    }
 
     @BeforeClass
     public static void beforeClass() throws IOException {
-        sampleFile = File.createTempFile("sdmx", ".xml");
-        sampleFile.deleteOnExit();
-        SdmxSource.NBB_DATA.copyTo(sampleFile.toPath());
+        NO_XML = File.createTempFile("sdmx_empty", ".xml");
+        NO_XML.deleteOnExit();
+        BLANK = new File("");
+        GENERIC20 = createTemp(SdmxSource.NBB_DATA, "sdmx_generic20", ".xml");
+        STRUCT20 = createTemp(SdmxSource.NBB_DATA_STRUCTURE, "sdmx_struct20", ".xml");
     }
 
     @Test
     public void testTspCompliance() {
         IDataSourceLoaderAssert.assertCompliance(SdmxFileProviderTest::getProvider, o -> {
             SdmxFileBean result = o.newBean();
-            result.setFile(sampleFile);
+            result.setFile(GENERIC20);
             return result;
         });
     }
@@ -81,27 +95,60 @@ public class SdmxFileProviderTest {
 
     @Test
     public void testContent() throws IOException {
-        File structureFile = File.createTempFile("sdmx", ".xml");
-        structureFile.deleteOnExit();
-        SdmxSource.NBB_DATA_STRUCTURE.copyTo(structureFile.toPath());
-
-        SdmxFileBean bean = new SdmxFileBean();
-        bean.setFile(sampleFile);
-        bean.setStructureFile(structureFile);
-
         try (SdmxFileProvider p = new SdmxFileProvider()) {
-            DataSource dataSource = p.encodeBean(bean);
-            Assertions.assertThat(p.open(dataSource)).isTrue();
-            TsCollectionInformation info = new TsCollectionInformation(p.toMoniker(dataSource), TsInformationType.All);
-            Assertions.assertThat(p.get(info)).isTrue();
-            Assertions.assertThat(info.items)
-                    .hasSize(1)
-                    .element(0)
-                    .satisfies(o -> {
-                        Assertions.assertThat(o.name).isEqualTo("LOCSTL04.AUS.M");
-                        Assertions.assertThat(new HashMap(o.metaData)).hasSize(1).containsEntry("TIME_FORMAT", "P1M");
-                        Assertions.assertThat(o.data).isNotNull();
-                    });
+            Assertions.assertThat(newRequest(p, GENERIC20, STRUCT20)).satisfies(info -> {
+                Assertions.assertThat(p.get(info)).isTrue();
+                Assertions.assertThat(info.items)
+                        .hasSize(1)
+                        .element(0)
+                        .satisfies(o -> {
+                            Assertions.assertThat(o.name).isEqualTo("LOCSTL04.AUS.M");
+                            Assertions.assertThat(new HashMap(o.metaData)).hasSize(1).containsEntry("TIME_FORMAT", "P1M");
+                            Assertions.assertThat(o.data).isNotNull();
+                            Assertions.assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("Monthly");
+                        });
+            });
+
+            Assertions.assertThat(newRequest(p, GENERIC20, BLANK)).satisfies(info -> {
+                Assertions.assertThat(p.get(info)).isTrue();
+                Assertions.assertThat(info.items).hasSize(1).element(0).satisfies(o -> Assertions.assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("M"));
+            });
+
+            Assertions.assertThat(newRequest(p, GENERIC20, BLANK, "SUBJECT", "LOCATION", "FREQUENCY")).satisfies(info -> {
+                Assertions.assertThat(p.get(info)).isTrue();
+                Assertions.assertThat(info.items).hasSize(1).element(0).satisfies(o -> Assertions.assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("M"));
+            });
+
+            Assertions.assertThat(newRequest(p, GENERIC20, BLANK, "LOCATION", "FREQUENCY", "SUBJECT")).satisfies(info -> {
+                Assertions.assertThat(p.get(info)).isTrue();
+                Assertions.assertThat(info.items).hasSize(1).element(0).satisfies(o -> Assertions.assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("LOCSTL04"));
+            });
+
+            Assertions.assertThat(newRequest(p, GENERIC20, STRUCT20, "LOCATION", "FREQUENCY", "SUBJECT")).satisfies(info -> {
+                Assertions.assertThat(p.get(info)).isTrue();
+                Assertions.assertThat(info.items).hasSize(1).element(0).satisfies(o -> Assertions.assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("Amplitude adjusted (CLI)"));
+            });
+
+            Assertions.assertThat(newRequest(p, NO_XML, STRUCT20)).satisfies(info -> {
+                Assertions.assertThat(p.get(info)).isFalse();
+                Assertions.assertThat(info.invalidDataCause).contains("XMLStreamException");
+            });
+
+            Assertions.assertThat(newRequest(p, GENERIC20, NO_XML)).satisfies(info -> {
+                Assertions.assertThat(p.get(info)).isFalse();
+                Assertions.assertThat(info.invalidDataCause).contains("XMLStreamException");
+            });
         }
+    }
+
+    private static TsCollectionInformation newRequest(SdmxFileProvider p, File data, File structure, String... dims) {
+        SdmxFileBean bean = new SdmxFileBean();
+        bean.setFile(data);
+        bean.setStructureFile(structure);
+        bean.setDimensions(Arrays.asList(dims));
+
+        DataSource dataSource = p.encodeBean(bean);
+        Assertions.assertThat(p.open(dataSource)).isTrue();
+        return new TsCollectionInformation(p.toMoniker(dataSource), TsInformationType.All);
     }
 }

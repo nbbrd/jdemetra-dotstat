@@ -16,11 +16,19 @@
  */
 package be.nbb.demetra.sdmx.file;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.DataSource;
+import ec.tss.tsproviders.cube.CubeId;
+import ec.tss.tsproviders.cube.CubeSupport;
 import ec.tss.tsproviders.utils.IConfig;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tss.tsproviders.utils.Params;
+import static ec.tss.tsproviders.utils.Params.onStringList;
 import java.io.File;
+import java.util.List;
 
 /**
  *
@@ -30,10 +38,16 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
 
     String getVersion();
 
-    static final class V1 implements SdmxFileParam {
+    IParam<DataSet, CubeId> getCubeIdParam(CubeId root);
+
+    final class V1 implements SdmxFileParam {
+
+        private final Splitter dimensionSplitter = Splitter.on(',').trimResults().omitEmptyStrings();
+        private final Joiner dimensionJoiner = Joiner.on(',');
 
         private final IParam<DataSource, File> file = Params.onFile(new File(""), "f");
         private final IParam<DataSource, File> structureFile = Params.onFile(new File(""), "s");
+        private final IParam<DataSource, List<String>> dimensionIds = onStringList(ImmutableList.of(), "d", dimensionSplitter, dimensionJoiner);
         private final IParam<DataSource, String> labelAttribute = Params.onString("", "l");
 
         @Override
@@ -46,6 +60,7 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
             SdmxFileBean result = new SdmxFileBean();
             result.setFile(file.defaultValue());
             result.setStructureFile(structureFile.defaultValue());
+            result.setDimensions(dimensionIds.defaultValue());
             result.setLabelAttribute(labelAttribute.defaultValue());
             return result;
         }
@@ -55,6 +70,7 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
             SdmxFileBean result = new SdmxFileBean();
             result.setFile(file.get(dataSource));
             result.setStructureFile(structureFile.get(dataSource));
+            result.setDimensions(dimensionIds.get(dataSource));
             result.setLabelAttribute(labelAttribute.get(dataSource));
             return result;
         }
@@ -63,7 +79,13 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
         public void set(IConfig.Builder<?, DataSource> builder, SdmxFileBean value) {
             file.set(builder, value.getFile());
             structureFile.set(builder, value.getStructureFile());
+            dimensionIds.set(builder, value.getDimensions());
             labelAttribute.set(builder, value.getLabelAttribute());
+        }
+
+        @Override
+        public IParam<DataSet, CubeId> getCubeIdParam(CubeId root) {
+            return CubeSupport.idBySeparator(root, ".", "k");
         }
     }
 }

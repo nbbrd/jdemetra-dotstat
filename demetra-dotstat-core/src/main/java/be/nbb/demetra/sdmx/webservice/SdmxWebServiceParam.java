@@ -32,7 +32,6 @@ import static ec.tss.tsproviders.utils.Params.onStringList;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nonnull;
 
 /**
  *
@@ -42,10 +41,9 @@ interface SdmxWebServiceParam extends IParam<DataSource, SdmxWebServiceBean> {
 
     String getVersion();
 
-    @Nonnull
-    IParam<DataSet, CubeId> getCubeIdParam(@Nonnull DataSource dataSource);
+    IParam<DataSet, CubeId> getCubeIdParam(CubeId root);
 
-    static final class V1 implements SdmxWebServiceParam {
+    final class V1 implements SdmxWebServiceParam {
 
         private final Splitter dimensionSplitter = Splitter.on(',').trimResults().omitEmptyStrings();
         private final Joiner dimensionJoiner = Joiner.on(',');
@@ -97,8 +95,8 @@ interface SdmxWebServiceParam extends IParam<DataSource, SdmxWebServiceBean> {
         }
 
         @Override
-        public IParam<DataSet, CubeId> getCubeIdParam(DataSource dataSource) {
-            return CubeSupport.idByName(CubeId.root(dimensionIds.get(dataSource)));
+        public IParam<DataSet, CubeId> getCubeIdParam(CubeId root) {
+            return CubeSupport.idByName(root);
         }
     }
 }

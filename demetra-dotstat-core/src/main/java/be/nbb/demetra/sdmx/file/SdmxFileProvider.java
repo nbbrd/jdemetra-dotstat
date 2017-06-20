@@ -16,10 +16,8 @@
  */
 package be.nbb.demetra.sdmx.file;
 
-import be.nbb.sdmx.facade.DataStructure;
 import internal.sdmx.SdmxCubeAccessor;
 import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.file.FileSdmxDriver;
@@ -39,16 +37,15 @@ import ec.tss.tsproviders.cursor.HasTsCursor;
 import ec.tss.tsproviders.utils.DataSourcePreconditions;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tstoolkit.utilities.GuavaCaches;
+import internal.sdmx.SdmxCubeItems;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -88,14 +85,14 @@ public final class SdmxFileProvider implements IFileLoader {
         this.preferredLanguage = new AtomicReference<>("en");
 
         Logger logger = LoggerFactory.getLogger(NAME);
-        Cache<DataSource, CubeAccessor> cache = GuavaCaches.softValuesCache();
+        Cache<DataSource, SdmxCubeItems> cache = GuavaCaches.softValuesCache();
         SdmxFileParam sdmxParam = new SdmxFileParam.V1();
 
         this.mutableListSupport = HasDataSourceMutableList.of(NAME, logger, cache::invalidate);
         this.monikerSupport = HasDataMoniker.usingUri(NAME);
         this.beanSupport = HasDataSourceBean.of(NAME, sdmxParam, sdmxParam.getVersion());
         this.filePathSupport = HasFilePaths.of(cache::invalidateAll);
-        this.cubeSupport = CubeSupport.of(new SdmxCubeResource(cache, sdmxParam, filePathSupport));
+        this.cubeSupport = CubeSupport.of(new SdmxCubeResource(cache, filePathSupport, sdmxParam));
         this.tsSupport = CubeSupport.asTsProvider(NAME, logger, cubeSupport, monikerSupport, cache::invalidateAll);
     }
 
@@ -118,52 +115,50 @@ public final class SdmxFileProvider implements IFileLoader {
         preferredLanguage.set(lang != null ? lang : "en");
     }
 
+    @lombok.AllArgsConstructor
     private static final class SdmxCubeResource implements CubeSupport.Resource {
 
-        private final Cache<DataSource, CubeAccessor> cache;
-        private final SdmxFileParam sdmxParam;
+        private final Cache<DataSource, SdmxCubeItems> cache;
         private final HasFilePaths paths;
-
-        SdmxCubeResource(Cache<DataSource, CubeAccessor> cache, SdmxFileParam param, HasFilePaths paths) {
-            this.cache = cache;
-            this.sdmxParam = param;
-            this.paths = paths;
-        }
+        private final SdmxFileParam param;
 
         @Override
         public CubeAccessor getAccessor(DataSource dataSource) throws IOException {
-            DataSourcePreconditions.checkProvider(NAME, dataSource);
-            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(paths, sdmxParam.get(dataSource)));
+            return get(dataSource).getAccessor();
         }
 
         @Override
         public IParam<DataSet, CubeId> getIdParam(DataSource dataSource) throws IOException {
-            CubeId root = getAccessor(dataSource).getRoot();
-            return CubeSupport.idBySeparator(root, ".", "k");
+            return get(dataSource).getIdParam();
         }
 
-        private static CubeAccessor of(HasFilePaths paths, SdmxFileBean bean) throws IOException {
+        private SdmxCubeItems get(DataSource dataSource) throws IOException {
+            DataSourcePreconditions.checkProvider(NAME, dataSource);
+            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(paths, param, dataSource));
+        }
+
+        private static SdmxCubeItems of(HasFilePaths paths, SdmxFileParam param, DataSource dataSource) throws IOException {
+            SdmxFileBean bean = param.get(dataSource);
+
             FileSupplier supplier = FileSupplier.of(paths, bean);
-            DataflowRef flow;
-            List<String> dimensions;
-            try (SdmxConnection conn = supplier.getConnection("")) {
-                flow = conn.getDataflows().iterator().next().getFlowRef();
-                dimensions = getDimensionIds(conn.getDataStructure(flow));
-            }
-            return SdmxCubeAccessor.create(supplier, "???", flow, dimensions, bean.getLabelAttribute());
-        }
+            DataflowRef flow = DataflowRef.parse(bean.getFile().getName());
 
-        private static List<String> getDimensionIds(DataStructure dataStructure) {
-            return dataStructure.getDimensions().stream()
-                    .sorted(Comparator.comparing(Dimension::getPosition))
-                    .map(Dimension::getId)
-                    .collect(Collectors.toList());
+            List<String> dimensions = bean.getDimensions();
+            if (dimensions.isEmpty()) {
+                dimensions = SdmxCubeItems.getDefaultDimIds(supplier, "", flow);
+            }
+
+            CubeAccessor accessor = SdmxCubeAccessor.create(supplier, "", flow, dimensions, bean.getLabelAttribute());
+
+            IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());
+
+            return new SdmxCubeItems(accessor, idParam);
         }
     }
 
-    private static final FileSdmxDriver DRIVER = new FileSdmxDriver();
-
     private static final class FileSupplier implements SdmxConnectionSupplier {
+
+        private static final FileSdmxDriver DRIVER = new FileSdmxDriver();
 
         static FileSupplier of(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {
             return new FileSupplier(getUri(paths, bean), getProperties(paths, bean));
@@ -191,7 +186,7 @@ public final class SdmxFileProvider implements IFileLoader {
             Properties p = new Properties();
             File structureFile = bean.getStructureFile();
             if (!structureFile.toString().isEmpty()) {
-                p.put(p, paths.resolveFilePath(structureFile).toString());
+                p.put("structurePath", paths.resolveFilePath(structureFile).toString());
             }
             return p;
         }
