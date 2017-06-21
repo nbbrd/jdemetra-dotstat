@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 National Bank of Belgium
+ * Copyright 2017 National Bank of Belgium
  * 
  * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
@@ -14,29 +14,27 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.sdmx.facade.driver;
+package be.nbb.demetra.sdmx;
 
-import be.nbb.sdmx.facade.SdmxConnection;
-import java.io.IOException;
-import java.net.URI;
+import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import javax.annotation.Nonnull;
-import javax.annotation.concurrent.ThreadSafe;
+import javax.annotation.Nullable;
 
 /**
  *
  * @author Philippe Charles
  */
-@ThreadSafe
-public interface SdmxDriver {
+public interface HasSdmxProperties {
 
     @Nonnull
-    SdmxConnection connect(@Nonnull URI uri, @Nonnull Map<?, ?> info, @Nonnull List<Locale.LanguageRange> languages) throws IOException;
+    SdmxConnectionSupplier getConnectionSupplier();
 
-    boolean acceptsURI(@Nonnull URI uri) throws IOException;
+    void setConnectionSupplier(@Nullable SdmxConnectionSupplier connectionSupplier);
 
     @Nonnull
-    List<WsEntryPoint> getDefaultEntryPoints();
+    List<Locale.LanguageRange> getLanguages();
+
+    void setLanguages(@Nullable List<Locale.LanguageRange> languages);
 }

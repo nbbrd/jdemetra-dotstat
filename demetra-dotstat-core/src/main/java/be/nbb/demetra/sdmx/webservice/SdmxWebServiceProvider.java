@@ -16,6 +16,7 @@
  */
 package be.nbb.demetra.sdmx.webservice;
 
+import be.nbb.demetra.sdmx.HasSdmxProperties;
 import internal.sdmx.SdmxCubeAccessor;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
@@ -38,11 +39,11 @@ import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxCubeItems;
 import it.bancaditalia.oss.sdmx.util.Configuration;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,11 +54,12 @@ import org.slf4j.LoggerFactory;
  * @since 2.2.0
  */
 @ServiceProvider(service = ITsProvider.class, supersedes = "be.nbb.demetra.dotstat.DotStatProvider")
-public final class SdmxWebServiceProvider implements IDataSourceLoader {
+public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxProperties {
 
     public static final String NAME = "DOTSTAT";
 
     private final AtomicReference<SdmxConnectionSupplier> connectionSupplier;
+    private final AtomicReference<List<Locale.LanguageRange>> languages;
     private final AtomicBoolean displayCodes;
 
     @lombok.experimental.Delegate
@@ -76,7 +78,8 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader {
     private final ITsProvider tsSupport;
 
     public SdmxWebServiceProvider() {
-        this.connectionSupplier = new AtomicReference(SdmxDriverManager.getDefault());
+        this.connectionSupplier = new AtomicReference<>(SdmxDriverManager.getDefault());
+        this.languages = new AtomicReference<>(SdmxConnectionSupplier.defaultLanguages());
         this.displayCodes = new AtomicBoolean(false);
 
         Cache<DataSource, SdmxCubeItems> cache = GuavaCaches.softValuesCache();
@@ -86,8 +89,10 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader {
         this.mutableListSupport = HasDataSourceMutableList.of(NAME, logger, cache::invalidate);
         this.monikerSupport = HasDataMoniker.usingUri(NAME);
         this.beanSupport = HasDataSourceBean.of(NAME, beanParam, beanParam.getVersion());
-        this.cubeSupport = CubeSupport.of(new SdmxCubeResource(cache, connectionSupplier, beanParam));
+        this.cubeSupport = CubeSupport.of(new SdmxCubeResource(cache, connectionSupplier, languages, beanParam));
         this.tsSupport = CubeSupport.asTsProvider(NAME, logger, cubeSupport, monikerSupport, cache::invalidateAll);
+
+        updateConnectorsConfig();
     }
 
     @Override
@@ -95,25 +100,31 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader {
         return "DotStat";
     }
 
-    @Nonnull
+    @Override
     public SdmxConnectionSupplier getConnectionSupplier() {
         return connectionSupplier.get();
     }
 
-    public void setConnectionSupplier(@Nullable SdmxConnectionSupplier connectionSupplier) {
+    @Override
+    public void setConnectionSupplier(SdmxConnectionSupplier connectionSupplier) {
         SdmxConnectionSupplier old = this.connectionSupplier.get();
         if (this.connectionSupplier.compareAndSet(old, connectionSupplier != null ? connectionSupplier : SdmxDriverManager.getDefault())) {
             clearCache();
         }
     }
 
-    @Nonnull
-    public String getPreferredLanguage() {
-        return Configuration.getLang();
+    @Override
+    public List<Locale.LanguageRange> getLanguages() {
+        return languages.get();
     }
 
-    public void setPreferredLanguage(@Nullable String lang) {
-        Configuration.setLang(lang != null ? lang : "en");
+    @Override
+    public void setLanguages(List<Locale.LanguageRange> languages) {
+        List<Locale.LanguageRange> old = this.languages.get();
+        if (this.languages.compareAndSet(old, languages != null ? languages : SdmxConnectionSupplier.defaultLanguages())) {
+            updateConnectorsConfig();
+            clearCache();
+        }
     }
 
     public boolean isDisplayCodes() {
@@ -127,11 +138,16 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader {
         }
     }
 
+    private void updateConnectorsConfig() {
+        Configuration.setLang(SdmxCubeItems.toString(getLanguages()));
+    }
+
     @lombok.AllArgsConstructor
     private static final class SdmxCubeResource implements CubeSupport.Resource {
 
         private final Cache<DataSource, SdmxCubeItems> cache;
         private final AtomicReference<SdmxConnectionSupplier> supplier;
+        private final AtomicReference<List<Locale.LanguageRange>> languages;
         private final SdmxWebServiceParam param;
 
         @Override
@@ -146,20 +162,20 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader {
 
         private SdmxCubeItems get(DataSource dataSource) throws IOException {
             DataSourcePreconditions.checkProvider(NAME, dataSource);
-            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(supplier.get(), param, dataSource));
+            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(supplier.get(), languages.get(), param, dataSource));
         }
 
-        private static SdmxCubeItems of(SdmxConnectionSupplier supplier, SdmxWebServiceParam param, DataSource dataSource) throws IllegalArgumentException, IOException {
+        private static SdmxCubeItems of(SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, SdmxWebServiceParam param, DataSource dataSource) throws IllegalArgumentException, IOException {
             SdmxWebServiceBean bean = param.get(dataSource);
 
             DataflowRef flow = DataflowRef.parse(bean.getFlow());
 
             List<String> dimensions = bean.getDimensions();
             if (dimensions.isEmpty()) {
-                dimensions = SdmxCubeItems.getDefaultDimIds(supplier, bean.getSource(), flow);
+                dimensions = SdmxCubeItems.getDefaultDimIds(supplier, languages, bean.getSource(), flow);
             }
 
-            CubeAccessor accessor = SdmxCubeAccessor.create(supplier, bean.getSource(), flow, dimensions, bean.getLabelAttribute())
+            CubeAccessor accessor = SdmxCubeAccessor.of(supplier, Collections.emptyList(), bean.getSource(), flow, dimensions, bean.getLabelAttribute())
                     .bulk(bean.getCacheDepth(), GuavaCaches.ttlCacheAsMap(bean.getCacheTtl()));
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());

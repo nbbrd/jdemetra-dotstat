@@ -16,7 +16,6 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import com.google.common.base.Converter;
 import ec.nbdemetra.db.DbProviderBuddy;
@@ -42,6 +41,7 @@ import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxAutoCompletion;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 
 /**
  *
@@ -52,14 +52,12 @@ import java.util.Optional;
 public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> implements IConfigurable {
 
     private final Configurator<DotStatProviderBuddy> configurator;
-    private final SdmxConnectionSupplier supplier;
     private final ListCellRenderer tableRenderer;
     private final ListCellRenderer columnRenderer;
     private final ConcurrentMap autoCompletionCache;
 
     public DotStatProviderBuddy() {
         this.configurator = createConfigurator();
-        this.supplier = SdmxDriverManager.getDefault();
         this.tableRenderer = SdmxAutoCompletion.getFlowsRenderer();
         this.columnRenderer = SdmxAutoCompletion.getDimensionsRenderer();
         this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
@@ -104,11 +102,20 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
                 .select(bean, "dimColumns")
                 .source(getColumnSource(bean))
                 .separator(",")
-                .defaultValueSupplier(() -> SdmxAutoCompletion.getDefaultDimensionsAsString(supplier, bean::getDbName, bean::getTableName, autoCompletionCache, ","))
+                .defaultValueSupplier(getDefaultDimColumnsSupplier(bean))
                 .cellRenderer(getColumnRenderer(bean))
                 .display("Dimensions")
                 .add();
         return b;
+    }
+
+    private Callable<String> getDefaultDimColumnsSupplier(DotStatBean bean) {
+        Optional<DotStatProvider> provider = lookupProvider();
+        if (provider.isPresent()) {
+            DotStatProvider o = provider.get();
+            return () -> SdmxAutoCompletion.getDefaultDimensionsAsString(o.getConnectionSupplier(), o.getLanguages(), bean::getDbName, bean::getTableName, autoCompletionCache, ",");
+        }
+        return () -> "";
     }
 
     @Override
@@ -122,7 +129,12 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
     @Override
     protected AutoCompletionSource getTableSource(DotStatBean bean) {
-        return SdmxAutoCompletion.onFlows(supplier, bean::getDbName, autoCompletionCache);
+        Optional<DotStatProvider> provider = lookupProvider();
+        if (provider.isPresent()) {
+            DotStatProvider o = provider.get();
+            return SdmxAutoCompletion.onFlows(o.getConnectionSupplier(), o.getLanguages(), bean::getDbName, autoCompletionCache);
+        }
+        return super.getTableSource(bean);
     }
 
     @Override
@@ -132,7 +144,12 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
     @Override
     protected AutoCompletionSource getColumnSource(DotStatBean bean) {
-        return SdmxAutoCompletion.onDimensions(supplier, bean::getDbName, bean::getTableName, autoCompletionCache);
+        Optional<DotStatProvider> provider = lookupProvider();
+        if (provider.isPresent()) {
+            DotStatProvider o = provider.get();
+            return SdmxAutoCompletion.onDimensions(o.getConnectionSupplier(), o.getLanguages(), bean::getDbName, bean::getTableName, autoCompletionCache);
+        }
+        return super.getColumnSource(bean);
     }
 
     @Override

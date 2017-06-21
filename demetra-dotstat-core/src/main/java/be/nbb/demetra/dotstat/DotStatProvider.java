@@ -16,6 +16,7 @@
  */
 package be.nbb.demetra.dotstat;
 
+import be.nbb.demetra.sdmx.HasSdmxProperties;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
@@ -30,9 +31,13 @@ import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbBean;
 import ec.tss.tsproviders.db.DbProvider;
+import internal.sdmx.SdmxCubeItems;
 import it.bancaditalia.oss.sdmx.util.Configuration;
 import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.openide.util.lookup.ServiceProvider;
@@ -44,21 +49,24 @@ import org.slf4j.LoggerFactory;
  */
 @Deprecated
 @ServiceProvider(service = ITsProvider.class)
-public final class DotStatProvider extends DbProvider<DotStatBean> {
+public final class DotStatProvider extends DbProvider<DotStatBean> implements HasSdmxProperties {
 
     public static final String NAME = "DOTSTAT", VERSION = "20150203";
-    private SdmxConnectionSupplier supplier;
+    private final AtomicReference<SdmxConnectionSupplier> connectionSupplier;
+    private final AtomicReference<List<Locale.LanguageRange>> languages;
     private boolean displayCodes;
 
     public DotStatProvider() {
         super(LoggerFactory.getLogger(DotStatProvider.class), NAME, TsAsyncMode.Once);
-        this.supplier = SdmxDriverManager.getDefault();
+        this.connectionSupplier = new AtomicReference<>(SdmxDriverManager.getDefault());
+        this.languages = new AtomicReference<>(SdmxConnectionSupplier.defaultLanguages());
         this.displayCodes = false;
+        updateConnectorsConfig();
     }
 
     @Override
     protected DbAccessor<DotStatBean> loadFromBean(DotStatBean bean) throws Exception {
-        return new DotStatAccessor(bean, supplier).memoize();
+        return new DotStatAccessor(bean, connectionSupplier.get(), languages.get()).memoize();
     }
 
     @Override
@@ -80,7 +88,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
     public String getDisplayName(DataSource dataSource) {
         DotStatBean bean = decodeBean(dataSource);
         if (!displayCodes) {
-            try (SdmxConnection conn = supplier.getConnection(bean.getDbName())) {
+            try (SdmxConnection conn = connect(bean.getDbName())) {
                 return String.format("%s ~ %s", bean.getDbName(), conn.getDataflow(bean.getFlowRef()).getLabel());
             } catch (IOException ex) {
             }
@@ -91,7 +99,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
     @Override
     public String getDisplayName(DataSet dataSet) {
         DotStatBean bean = decodeBean(dataSet.getDataSource());
-        try (SdmxConnection conn = supplier.getConnection(bean.getDbName())) {
+        try (SdmxConnection conn = connect(bean.getDbName())) {
             DataStructure dfs = conn.getDataStructure(bean.getFlowRef());
             Key.Builder b = Key.builder(dfs);
             for (Dimension o : dfs.getDimensions()) {
@@ -112,7 +120,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
         if (nodeDim != null) {
             if (!displayCodes) {
                 DotStatBean bean = decodeBean(dataSet.getDataSource());
-                try (SdmxConnection conn = supplier.getConnection(bean.getDbName())) {
+                try (SdmxConnection conn = connect(bean.getDbName())) {
                     DataStructure dfs = conn.getDataStructure(bean.getFlowRef());
                     for (Dimension o : dfs.getDimensions()) {
                         if (o.getId().equals(nodeDim.getKey())) {
@@ -133,22 +141,40 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
         return support.checkBean(bean, DotStatBean.class).toDataSource(NAME, VERSION);
     }
 
-    @Nonnull
+    @Override
     public SdmxConnectionSupplier getConnectionSupplier() {
-        return supplier;
+        return connectionSupplier.get();
     }
 
-    public void setConnectionSupplier(@Nullable SdmxConnectionSupplier supplier) {
-        this.supplier = supplier != null ? supplier : SdmxDriverManager.getDefault();
+    @Override
+    public void setConnectionSupplier(SdmxConnectionSupplier connectionSupplier) {
+        SdmxConnectionSupplier old = this.connectionSupplier.get();
+        if (this.connectionSupplier.compareAndSet(old, connectionSupplier != null ? connectionSupplier : SdmxDriverManager.getDefault())) {
+            clearCache();
+        }
+    }
+
+    @Override
+    public List<Locale.LanguageRange> getLanguages() {
+        return languages.get();
+    }
+
+    @Override
+    public void setLanguages(List<Locale.LanguageRange> languages) {
+        List<Locale.LanguageRange> old = this.languages.get();
+        if (this.languages.compareAndSet(old, languages != null ? languages : SdmxConnectionSupplier.defaultLanguages())) {
+            updateConnectorsConfig();
+            clearCache();
+        }
     }
 
     @Nonnull
     public String getPreferredLanguage() {
-        return Configuration.getLang();
+        return SdmxCubeItems.toString(getLanguages());
     }
 
     public void setPreferredLanguage(@Nullable String lang) {
-        Configuration.setLang(lang != null ? lang : "en");
+        setLanguages(lang != null ? Locale.LanguageRange.parse(lang) : null);
     }
 
     public boolean isDisplayCodes() {
@@ -157,6 +183,14 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
 
     public void setDisplayCodes(boolean displayCodes) {
         this.displayCodes = displayCodes;
+    }
+
+    private void updateConnectorsConfig() {
+        Configuration.setLang(SdmxCubeItems.toString(getLanguages()));
+    }
+
+    private SdmxConnection connect(String name) throws IOException {
+        return connectionSupplier.get().getConnection(name, languages.get());
     }
 
     @Nullable

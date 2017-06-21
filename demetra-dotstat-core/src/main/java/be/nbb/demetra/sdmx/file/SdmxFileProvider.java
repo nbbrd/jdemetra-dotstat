@@ -16,6 +16,7 @@
  */
 package be.nbb.demetra.sdmx.file;
 
+import be.nbb.demetra.sdmx.HasSdmxProperties;
 import internal.sdmx.SdmxCubeAccessor;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
@@ -39,11 +40,11 @@ import ec.tss.tsproviders.utils.IParam;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxCubeItems;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,12 +54,12 @@ import org.slf4j.LoggerFactory;
  * @since 2.2.0
  */
 //@ServiceProvider(service = ITsProvider.class)
-public final class SdmxFileProvider implements IFileLoader {
+public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
 
     private static final String NAME = "sdmx-file";
 
     private final AtomicReference<SdmxConnectionSupplier> connectionSupplier;
-    private final AtomicReference<String> preferredLanguage;
+    private final AtomicReference<List<Locale.LanguageRange>> languages;
 
     @lombok.experimental.Delegate
     private final HasDataSourceMutableList mutableListSupport;
@@ -79,8 +80,8 @@ public final class SdmxFileProvider implements IFileLoader {
     private final ITsProvider tsSupport;
 
     public SdmxFileProvider() {
-        this.connectionSupplier = new AtomicReference(SdmxFileManager.getDefault());
-        this.preferredLanguage = new AtomicReference<>("en");
+        this.connectionSupplier = new AtomicReference<>(SdmxFileManager.getDefault());
+        this.languages = new AtomicReference<>(SdmxConnectionSupplier.defaultLanguages());
 
         Logger logger = LoggerFactory.getLogger(NAME);
         Cache<DataSource, SdmxCubeItems> cache = GuavaCaches.softValuesCache();
@@ -90,7 +91,7 @@ public final class SdmxFileProvider implements IFileLoader {
         this.monikerSupport = HasDataMoniker.usingUri(NAME);
         this.beanSupport = HasDataSourceBean.of(NAME, sdmxParam, sdmxParam.getVersion());
         this.filePathSupport = HasFilePaths.of(cache::invalidateAll);
-        this.cubeSupport = CubeSupport.of(new SdmxCubeResource(cache, connectionSupplier, filePathSupport, sdmxParam));
+        this.cubeSupport = CubeSupport.of(new SdmxCubeResource(cache, connectionSupplier, languages, filePathSupport, sdmxParam));
         this.tsSupport = CubeSupport.asTsProvider(NAME, logger, cubeSupport, monikerSupport, cache::invalidateAll);
     }
 
@@ -104,25 +105,30 @@ public final class SdmxFileProvider implements IFileLoader {
         return pathname.getName().toLowerCase().endsWith(".xml");
     }
 
-    @Nonnull
+    @Override
     public SdmxConnectionSupplier getConnectionSupplier() {
         return connectionSupplier.get();
     }
 
-    public void setConnectionSupplier(@Nullable SdmxConnectionSupplier connectionSupplier) {
+    @Override
+    public void setConnectionSupplier(SdmxConnectionSupplier connectionSupplier) {
         SdmxConnectionSupplier old = this.connectionSupplier.get();
         if (this.connectionSupplier.compareAndSet(old, connectionSupplier != null ? connectionSupplier : SdmxFileManager.getDefault())) {
             clearCache();
         }
     }
 
-    @Nonnull
-    public String getPreferredLanguage() {
-        return preferredLanguage.get();
+    @Override
+    public List<Locale.LanguageRange> getLanguages() {
+        return languages.get();
     }
 
-    public void setPreferredLanguage(@Nullable String lang) {
-        preferredLanguage.set(lang != null ? lang : "en");
+    @Override
+    public void setLanguages(List<Locale.LanguageRange> languages) {
+        List<Locale.LanguageRange> old = this.languages.get();
+        if (this.languages.compareAndSet(old, languages != null ? languages : SdmxConnectionSupplier.defaultLanguages())) {
+            clearCache();
+        }
     }
 
     @lombok.AllArgsConstructor
@@ -130,6 +136,7 @@ public final class SdmxFileProvider implements IFileLoader {
 
         private final Cache<DataSource, SdmxCubeItems> cache;
         private final AtomicReference<SdmxConnectionSupplier> supplier;
+        private final AtomicReference<List<Locale.LanguageRange>> languages;
         private final HasFilePaths paths;
         private final SdmxFileParam param;
 
@@ -145,26 +152,30 @@ public final class SdmxFileProvider implements IFileLoader {
 
         private SdmxCubeItems get(DataSource dataSource) throws IOException {
             DataSourcePreconditions.checkProvider(NAME, dataSource);
-            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(supplier.get(), paths, param, dataSource));
+            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(supplier.get(), languages.get(), paths, param, dataSource));
         }
 
-        private static SdmxCubeItems of(SdmxConnectionSupplier supplier, HasFilePaths paths, SdmxFileParam param, DataSource dataSource) throws IOException {
+        private static SdmxCubeItems of(SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, HasFilePaths paths, SdmxFileParam param, DataSource dataSource) throws IOException {
             SdmxFileBean bean = param.get(dataSource);
-            SdmxFile file = new SdmxFile(paths.resolveFilePath(bean.getFile()), bean.getStructureFile().toString().isEmpty() ? null : paths.resolveFilePath(bean.getStructureFile()));
+            SdmxFile file = getFile(paths, bean.getFile(), bean.getStructureFile());
 
             String source = file.toString();
             DataflowRef flow = file.getDataflowRef();
 
             List<String> dimensions = bean.getDimensions();
             if (dimensions.isEmpty()) {
-                dimensions = SdmxCubeItems.getDefaultDimIds(supplier, source, flow);
+                dimensions = SdmxCubeItems.getDefaultDimIds(supplier, languages, source, flow);
             }
 
-            CubeAccessor accessor = SdmxCubeAccessor.create(supplier, source, flow, dimensions, bean.getLabelAttribute());
+            CubeAccessor accessor = SdmxCubeAccessor.of(supplier, languages, source, flow, dimensions, bean.getLabelAttribute());
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());
 
             return new SdmxCubeItems(accessor, idParam);
+        }
+
+        private static SdmxFile getFile(HasFilePaths paths, File data, File structure) throws FileNotFoundException {
+            return new SdmxFile(paths.resolveFilePath(data), structure.toString().isEmpty() ? null : paths.resolveFilePath(structure));
         }
     }
 }

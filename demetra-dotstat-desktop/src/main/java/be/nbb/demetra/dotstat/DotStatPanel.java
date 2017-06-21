@@ -27,10 +27,12 @@ import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
 import ec.tss.tsproviders.TsProviders;
 import ec.util.various.swing.FontAwesome;
 import ec.util.various.swing.ext.FontAwesomeUtils;
+import internal.sdmx.SdmxCubeItems;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.beans.BeanInfo;
 import java.beans.PropertyChangeEvent;
+import java.util.Locale;
 import java.util.Optional;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -211,7 +213,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
     void load() {
         lookupProvider().ifPresent(o -> {
-            preferedLangTextBox.setText(o.getPreferredLanguage());
+            preferedLangTextBox.setText(SdmxCubeItems.toString(o.getLanguages()));
             displayCodesCheckBox.setSelected(o.isDisplayCodes());
             loadEntryPoints(o.getConnectionSupplier());
         });
@@ -219,7 +221,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
     void store() {
         lookupProvider().ifPresent(o -> {
-            o.setPreferredLanguage(preferedLangTextBox.getText());
+            o.setLanguages(Locale.LanguageRange.parse(preferedLangTextBox.getText()));
             o.setDisplayCodes(displayCodesCheckBox.isSelected());
         });
     }

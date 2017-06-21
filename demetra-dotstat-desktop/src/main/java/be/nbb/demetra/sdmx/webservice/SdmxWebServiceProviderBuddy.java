@@ -37,12 +37,14 @@ import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.TsProviders;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxAutoCompletion;
+import internal.sdmx.SdmxCubeItems;
 import java.awt.Image;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 import org.netbeans.api.options.OptionsDisplayer;
@@ -101,10 +103,11 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
         if (bean instanceof SdmxWebServiceBean) {
             Optional<SdmxWebServiceProvider> provider = lookupProvider();
             if (provider.isPresent()) {
+                SdmxWebServiceProvider o = provider.get();
                 return new PropertySheetDialogBuilder()
                         .title(title)
                         .icon(getIcon(BeanInfo.ICON_COLOR_16x16, false))
-                        .editSheet(createSheet((SdmxWebServiceBean) bean, provider.get().getConnectionSupplier(), autoCompletionCache));
+                        .editSheet(createSheet((SdmxWebServiceBean) bean, o.getConnectionSupplier(), o.getLanguages(), autoCompletionCache));
             }
         }
         return IDataSourceProviderBuddy.super.editBean(title, bean);
@@ -141,7 +144,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
         public BuddyConfig loadBean(SdmxWebServiceProviderBuddy resource) {
             BuddyConfig result = new BuddyConfig();
             lookupProvider().ifPresent(o -> {
-                result.setPreferredLanguage(o.getPreferredLanguage());
+                result.setPreferredLanguage(SdmxCubeItems.toString(o.getLanguages()));
                 result.setDisplayCodes(o.isDisplayCodes());
             });
             return result;
@@ -150,7 +153,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
         @Override
         public void storeBean(SdmxWebServiceProviderBuddy resource, BuddyConfig bean) {
             lookupProvider().ifPresent(o -> {
-                o.setPreferredLanguage(bean.getPreferredLanguage());
+                o.setLanguages(Locale.LanguageRange.parse(bean.getPreferredLanguage()));
                 o.setDisplayCodes(bean.isDisplayCodes());
             });
         }
@@ -164,11 +167,11 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
 
     @NbBundle.Messages({
         "bean.cache.description=Mechanism used to improve performance."})
-    private static Sheet createSheet(SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, ConcurrentMap cache) {
+    private static Sheet createSheet(SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, ConcurrentMap cache) {
         Sheet result = new Sheet();
         NodePropertySetBuilder b = new NodePropertySetBuilder();
-        result.put(withSource(b.reset("Source"), bean, supplier, cache).build());
-        result.put(withOptions(b.reset("Options"), bean, supplier, cache).build());
+        result.put(withSource(b.reset("Source"), bean, supplier, languages, cache).build());
+        result.put(withOptions(b.reset("Options"), bean, supplier, languages, cache).build());
         result.put(withCache(b.reset("Cache").description(Bundle.bean_cache_description()), bean).build());
         return result;
     }
@@ -176,7 +179,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
     @NbBundle.Messages({
         "bean.source.display=REST endpoint name",
         "bean.flow.display=Dataset",})
-    private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, ConcurrentMap cache) {
+    private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, ConcurrentMap cache) {
         b.withAutoCompletion()
                 .select(bean, "source")
                 .servicePath(SdmxWsAutoCompletionService.PATH)
@@ -184,7 +187,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
                 .add();
         b.withAutoCompletion()
                 .select(bean, "flow")
-                .source(SdmxAutoCompletion.onFlows(supplier, bean::getSource, cache))
+                .source(SdmxAutoCompletion.onFlows(supplier, languages, bean::getSource, cache))
                 .cellRenderer(SdmxAutoCompletion.getFlowsRenderer())
                 .display(Bundle.bean_flow_display())
                 .add();
@@ -197,12 +200,12 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
         "bean.labelAttribute.display=Label attribute",
         "bean.labelAttribute.description=An optional dimension that defines the label of a series."
     })
-    private static NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, ConcurrentMap cache) {
+    private static NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, ConcurrentMap cache) {
         b.withAutoCompletion()
                 .select(bean, "dimensions", List.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)
-                .source(SdmxAutoCompletion.onDimensions(supplier, bean::getSource, bean::getFlow, cache))
+                .source(SdmxAutoCompletion.onDimensions(supplier, languages, bean::getSource, bean::getFlow, cache))
                 .separator(",")
-                .defaultValueSupplier(() -> SdmxAutoCompletion.getDefaultDimensionsAsString(supplier, bean::getSource, bean::getFlow, cache, ","))
+                .defaultValueSupplier(() -> SdmxAutoCompletion.getDefaultDimensionsAsString(supplier, languages, bean::getSource, bean::getFlow, cache, ","))
                 .cellRenderer(SdmxAutoCompletion.getDimensionsRenderer())
                 .display(Bundle.bean_dimensions_display())
                 .description(Bundle.bean_dimensions_description())

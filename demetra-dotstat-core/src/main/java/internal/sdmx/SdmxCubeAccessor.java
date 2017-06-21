@@ -31,31 +31,27 @@ import ec.tss.tsproviders.utils.IteratorWithIO;
 import ec.tstoolkit.design.VisibleForTesting;
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import lombok.AccessLevel;
 
 /**
  *
  * @author Philippe Charles
  */
+@lombok.AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SdmxCubeAccessor implements CubeAccessor {
 
-    public static SdmxCubeAccessor create(SdmxConnectionSupplier supplier, String source, DataflowRef flow, List<String> dimensions, String labelAttribute) {
-        return new SdmxCubeAccessor(supplier, source, flow, CubeId.root(dimensions), labelAttribute);
+    public static SdmxCubeAccessor of(SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, String source, DataflowRef flow, List<String> dimensions, String labelAttribute) {
+        return new SdmxCubeAccessor(supplier, languages, source, flow, CubeId.root(dimensions), labelAttribute);
     }
 
     private final SdmxConnectionSupplier supplier;
+    private final List<Locale.LanguageRange> languages;
     private final String source;
     private final DataflowRef flowRef;
     private final CubeId root;
     private final String labelAttribute;
-
-    private SdmxCubeAccessor(SdmxConnectionSupplier supplier, String source, DataflowRef flowRef, CubeId root, String labelAttribute) {
-        this.supplier = supplier;
-        this.source = source;
-        this.flowRef = flowRef;
-        this.root = root;
-        this.labelAttribute = labelAttribute;
-    }
 
     @Override
     public IOException testConnection() {
@@ -69,7 +65,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
 
     @Override
     public TsCursor<CubeId> getAllSeries(CubeId ref) throws IOException {
-        SdmxConnection conn = supplier.getConnection(source);
+        SdmxConnection conn = supplier.getConnection(source, languages);
         try {
             return getAllSeriesCursor(conn, flowRef, ref, labelAttribute).onClose(conn);
         } catch (IOException ex) {
@@ -79,7 +75,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
 
     @Override
     public TsCursor<CubeId> getAllSeriesWithData(CubeId ref) throws IOException {
-        SdmxConnection conn = supplier.getConnection(source);
+        SdmxConnection conn = supplier.getConnection(source, languages);
         try {
             return getAllSeriesWithDataCursor(conn, flowRef, ref, labelAttribute).onClose(conn);
         } catch (IOException ex) {
@@ -89,7 +85,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
 
     @Override
     public TsCursor<CubeId> getSeriesWithData(CubeId ref) throws IOException {
-        SdmxConnection conn = supplier.getConnection(source);
+        SdmxConnection conn = supplier.getConnection(source, languages);
         try {
             return getSeriesWithDataCursor(conn, flowRef, ref).onClose(conn);
         } catch (IOException ex) {
@@ -99,7 +95,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
 
     @Override
     public IteratorWithIO<CubeId> getChildren(CubeId ref) throws IOException {
-        SdmxConnection conn = supplier.getConnection(source);
+        SdmxConnection conn = supplier.getConnection(source, languages);
         try {
             return getChildren(conn, flowRef, ref).onClose(conn);
         } catch (IOException ex) {
@@ -109,7 +105,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
 
     @Override
     public String getDisplayName() throws IOException {
-        try (SdmxConnection conn = supplier.getConnection(source)) {
+        try (SdmxConnection conn = supplier.getConnection(source, languages)) {
             return String.format("%s ~ %s", source, conn.getDataflow(flowRef).getLabel());
         }
     }
@@ -119,7 +115,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         if (id.isVoid()) {
             return "All";
         }
-        try (SdmxConnection conn = supplier.getConnection(source)) {
+        try (SdmxConnection conn = supplier.getConnection(source, languages)) {
             Map<String, Dimension> dimensionById = dimensionById(conn.getDataStructure(flowRef));
             return getKey(dimensionById, id).toString();
         }
@@ -130,7 +126,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         if (id.isVoid()) {
             return "All";
         }
-        try (SdmxConnection conn = supplier.getConnection(source)) {
+        try (SdmxConnection conn = supplier.getConnection(source, languages)) {
             Map<String, Dimension> dimensionById = dimensionById(conn.getDataStructure(flowRef));
             return getDisplayName(dimensionById, id, id.getLevel() - 1);
         }
