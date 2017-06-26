@@ -70,6 +70,8 @@ public final class SdmxCubeAccessor implements CubeAccessor {
             return getAllSeriesCursor(conn, flowRef, ref, labelAttribute).onClose(conn);
         } catch (IOException ex) {
             throw close(conn, ex);
+        } catch (RuntimeException ex) {
+            throw new IOException("Unexpected exception", close(conn, ex));
         }
     }
 
@@ -80,6 +82,8 @@ public final class SdmxCubeAccessor implements CubeAccessor {
             return getAllSeriesWithDataCursor(conn, flowRef, ref, labelAttribute).onClose(conn);
         } catch (IOException ex) {
             throw close(conn, ex);
+        } catch (RuntimeException ex) {
+            throw new IOException("Unexpected exception", close(conn, ex));
         }
     }
 
@@ -90,6 +94,8 @@ public final class SdmxCubeAccessor implements CubeAccessor {
             return getSeriesWithDataCursor(conn, flowRef, ref).onClose(conn);
         } catch (IOException ex) {
             throw close(conn, ex);
+        } catch (RuntimeException ex) {
+            throw new IOException("Unexpected exception", close(conn, ex));
         }
     }
 
@@ -100,6 +106,8 @@ public final class SdmxCubeAccessor implements CubeAccessor {
             return getChildren(conn, flowRef, ref).onClose(conn);
         } catch (IOException ex) {
             throw close(conn, ex);
+        } catch (RuntimeException ex) {
+            throw new IOException("Unexpected exception", close(conn, ex));
         }
     }
 
@@ -107,6 +115,8 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     public String getDisplayName() throws IOException {
         try (SdmxConnection conn = supplier.getConnection(source, languages)) {
             return String.format("%s ~ %s", source, conn.getDataflow(flowRef).getLabel());
+        } catch (RuntimeException ex) {
+            throw new IOException("Unexpected exception", ex);
         }
     }
 
@@ -118,6 +128,8 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         try (SdmxConnection conn = supplier.getConnection(source, languages)) {
             Map<String, Dimension> dimensionById = dimensionById(conn.getDataStructure(flowRef));
             return getKey(dimensionById, id).toString();
+        } catch (RuntimeException ex) {
+            throw new IOException("Unexpected exception", ex);
         }
     }
 
@@ -129,6 +141,8 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         try (SdmxConnection conn = supplier.getConnection(source, languages)) {
             Map<String, Dimension> dimensionById = dimensionById(conn.getDataStructure(flowRef));
             return getDisplayName(dimensionById, id, id.getLevel() - 1);
+        } catch (RuntimeException ex) {
+            throw new IOException("Unexpected exception", ex);
         }
     }
 
@@ -167,7 +181,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         return IteratorWithIO.from(children.iterator()).transform(ref::child);
     }
 
-    private static IOException close(SdmxConnection conn, IOException ex) {
+    private static <EX extends Throwable> EX close(SdmxConnection conn, EX ex) {
         try {
             conn.close();
         } catch (IOException other) {

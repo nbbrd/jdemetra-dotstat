@@ -88,7 +88,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
         if (!displayCodes) {
             try (SdmxConnection conn = connect(bean.getDbName())) {
                 return String.format("%s ~ %s", bean.getDbName(), conn.getDataflow(bean.getFlowRef()).getLabel());
-            } catch (IOException ex) {
+            } catch (IOException | RuntimeException ex) {
             }
         }
         return bean.getTableName();
@@ -107,7 +107,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
                 }
             }
             return b.toString();
-        } catch (IOException ex) {
+        } catch (IOException | RuntimeException ex) {
         }
         return super.getDisplayName(dataSet);
     }
@@ -126,7 +126,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
                         }
                     }
                     return nodeDim.getValue();
-                } catch (IOException ex) {
+                } catch (IOException | RuntimeException ex) {
                 }
             }
             return nodeDim.getValue();

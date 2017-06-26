@@ -117,6 +117,8 @@ public class SdmxAutoCompletion {
     private List<Dataflow> loadFlows(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source) throws IOException {
         try (SdmxConnection c = supplier.getConnection(source.get(), languages)) {
             return new ArrayList<>(c.getDataflows());
+        } catch (RuntimeException ex) {
+            throw new IOException("Unexpected exception", ex);
         }
     }
 
@@ -139,6 +141,8 @@ public class SdmxAutoCompletion {
     private List<Dimension> loadDimensions(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source, Supplier<String> flow) throws IOException {
         try (SdmxConnection c = supplier.getConnection(source.get(), languages)) {
             return new ArrayList<>(c.getDataStructure(DataflowRef.parse(flow.get())).getDimensions());
+        } catch (RuntimeException ex) {
+            throw new IOException("Unexpected exception", ex);
         }
     }
 
