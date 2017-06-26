@@ -48,12 +48,12 @@ public final class TestResource {
             MemSdmxRepository.Builder result = MemSdmxRepository.builder();
             Map<DataStructureRef, DataStructure> dataStructures;
             try (InputStreamReader r = SdmxSource.NBB_DATA_STRUCTURE.openReader()) {
-                dataStructures = toDataStructures(it.bancaditalia.oss.sdmx.parser.v20.DataStructureParser.parse(r));
+                dataStructures = toDataStructures(new it.bancaditalia.oss.sdmx.parser.v20.DataStructureParser().parse(r));
                 result.dataStructures(dataStructures.values());
             }
             DataflowRef flowRef = DataflowRef.of("NBB", "TEST_DATASET", null);
             try (InputStreamReader r = SdmxSource.NBB_DATAFLOWS.openReader()) {
-                result.dataflows(it.bancaditalia.oss.sdmx.parser.v20.DataStructureParser.parse(r).stream()
+                result.dataflows(new it.bancaditalia.oss.sdmx.parser.v20.DataStructureParser().parse(r).stream()
                         .map(TestResource::toDataFlow)
                         .filter(o -> o.getFlowRef().equals(flowRef))
                         .collect(Collectors.toList()));
@@ -77,12 +77,12 @@ public final class TestResource {
             MemSdmxRepository.Builder result = MemSdmxRepository.builder();
             Map<DataStructureRef, DataStructure> dataStructures;
             try (InputStreamReader r = SdmxSource.ECB_DATA_STRUCTURE.openReader()) {
-                dataStructures = toDataStructures(it.bancaditalia.oss.sdmx.parser.v21.DataStructureParser.parse(r));
+                dataStructures = toDataStructures(new it.bancaditalia.oss.sdmx.parser.v21.DataStructureParser().parse(r));
                 result.dataStructures(dataStructures.values());
             }
             DataflowRef flowRef = DataflowRef.of("ECB", "AME", "1.0");
             try (InputStreamReader r = SdmxSource.ECB_DATAFLOWS.openReader()) {
-                result.dataflows(it.bancaditalia.oss.sdmx.parser.v21.DataflowParser.parse(r).stream()
+                result.dataflows(new it.bancaditalia.oss.sdmx.parser.v21.DataflowParser().parse(r).stream()
                         .map(Util::toDataflow)
                         .filter(o -> o.getFlowRef().equals(flowRef))
                         .collect(Collectors.toList()));
