@@ -20,6 +20,7 @@ import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.SdmxConnection;
 import com.google.common.base.Converter;
@@ -33,7 +34,6 @@ import ec.tstoolkit.design.VisibleForTesting;
 import internal.sdmx.SdmxQueryUtil;
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -44,9 +44,9 @@ import java.util.Map;
 final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
 
     private final SdmxConnectionSupplier supplier;
-    private final List<Locale.LanguageRange> languages;
+    private final LanguagePriorityList languages;
 
-    DotStatAccessor(DotStatBean dbBean, SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages) {
+    DotStatAccessor(DotStatBean dbBean, SdmxConnectionSupplier supplier, LanguagePriorityList languages) {
         super(dbBean);
         this.supplier = supplier;
         this.languages = languages;

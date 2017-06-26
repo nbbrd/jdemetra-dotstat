@@ -17,6 +17,7 @@
 package be.nbb.demetra.dotstat;
 
 import be.nbb.demetra.sdmx.webservice.SdmxWebServiceProvider;
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import be.nbb.sdmx.facade.driver.WsEntryPoint;
@@ -27,12 +28,10 @@ import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
 import ec.tss.tsproviders.TsProviders;
 import ec.util.various.swing.FontAwesome;
 import ec.util.various.swing.ext.FontAwesomeUtils;
-import internal.sdmx.SdmxCubeItems;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.beans.BeanInfo;
 import java.beans.PropertyChangeEvent;
-import java.util.Locale;
 import java.util.Optional;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -213,7 +212,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
     void load() {
         lookupProvider().ifPresent(o -> {
-            preferedLangTextBox.setText(SdmxCubeItems.toString(o.getLanguages()));
+            preferedLangTextBox.setText(o.getLanguages().toString());
             displayCodesCheckBox.setSelected(o.isDisplayCodes());
             loadEntryPoints(o.getConnectionSupplier());
         });
@@ -221,7 +220,10 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
     void store() {
         lookupProvider().ifPresent(o -> {
-            o.setLanguages(Locale.LanguageRange.parse(preferedLangTextBox.getText()));
+            try {
+                o.setLanguages(LanguagePriorityList.parse(preferedLangTextBox.getText()));
+            } catch (IllegalArgumentException ex) {
+            }
             o.setDisplayCodes(displayCodesCheckBox.isSelected());
         });
     }

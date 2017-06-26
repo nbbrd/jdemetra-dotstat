@@ -19,6 +19,7 @@ package internal.sdmx;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
@@ -34,7 +35,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -61,7 +61,7 @@ public class SdmxAutoCompletion {
         return CustomListCellRenderer.of(WsEntryPoint::getDescription, WsEntryPoint::getName);
     }
 
-    public AutoCompletionSource onFlows(SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, Supplier<String> source, ConcurrentMap cache) {
+    public AutoCompletionSource onFlows(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source, ConcurrentMap cache) {
         return ExtAutoCompletionSource
                 .builder(o -> loadFlows(supplier, languages, source))
                 .behavior(o -> canLoadFlows(source) ? ASYNC : NONE)
@@ -75,7 +75,7 @@ public class SdmxAutoCompletion {
         return CustomListCellRenderer.of(Dataflow::getLabel, o -> o.getFlowRef().toString());
     }
 
-    public AutoCompletionSource onDimensions(SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache) {
+    public AutoCompletionSource onDimensions(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache) {
         return ExtAutoCompletionSource
                 .builder(o -> loadDimensions(supplier, languages, source, flow))
                 .behavior(o -> canLoadDimensions(source, flow) ? ASYNC : NONE)
@@ -89,7 +89,7 @@ public class SdmxAutoCompletion {
         return CustomListCellRenderer.of(Dimension::getId, Dimension::getLabel);
     }
 
-    public String getDefaultDimensionsAsString(SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache, CharSequence delimiter) throws Exception {
+    public String getDefaultDimensionsAsString(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache, CharSequence delimiter) throws Exception {
         String key = getDimensionCacheKey(source, flow, languages);
         List<Dimension> result = (List<Dimension>) cache.get(key);
         if (result == null) {
@@ -114,7 +114,7 @@ public class SdmxAutoCompletion {
         return !Strings.isNullOrEmpty(source.get());
     }
 
-    private List<Dataflow> loadFlows(SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, Supplier<String> source) throws IOException {
+    private List<Dataflow> loadFlows(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source) throws IOException {
         try (SdmxConnection c = supplier.getConnection(source.get(), languages)) {
             return new ArrayList<>(c.getDataflows());
         }
@@ -128,15 +128,15 @@ public class SdmxAutoCompletion {
                 .collect(Collectors.toList());
     }
 
-    private String getFlowCacheKey(Supplier<String> source, List<Locale.LanguageRange> languages) {
-        return source.get() + SdmxCubeItems.toString(languages);
+    private String getFlowCacheKey(Supplier<String> source, LanguagePriorityList languages) {
+        return source.get() + languages.toString();
     }
 
     private boolean canLoadDimensions(Supplier<String> source, Supplier<String> flow) {
         return canLoadFlows(source) && !Strings.isNullOrEmpty(flow.get());
     }
 
-    private List<Dimension> loadDimensions(SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, Supplier<String> source, Supplier<String> flow) throws IOException {
+    private List<Dimension> loadDimensions(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source, Supplier<String> flow) throws IOException {
         try (SdmxConnection c = supplier.getConnection(source.get(), languages)) {
             return new ArrayList<>(c.getDataStructure(DataflowRef.parse(flow.get())).getDimensions());
         }
@@ -150,7 +150,7 @@ public class SdmxAutoCompletion {
                 .collect(Collectors.toList());
     }
 
-    private String getDimensionCacheKey(Supplier<String> source, Supplier<String> flow, List<Locale.LanguageRange> languages) {
-        return source.get() + "/" + flow.get() + SdmxCubeItems.toString(languages);
+    private String getDimensionCacheKey(Supplier<String> source, Supplier<String> flow, LanguagePriorityList languages) {
+        return source.get() + "/" + flow.get() + languages.toString();
     }
 }

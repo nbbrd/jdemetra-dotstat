@@ -16,9 +16,8 @@
  */
 package be.nbb.demetra.sdmx;
 
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
-import java.util.List;
-import java.util.Locale;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -34,7 +33,7 @@ public interface HasSdmxProperties {
     void setConnectionSupplier(@Nullable SdmxConnectionSupplier connectionSupplier);
 
     @Nonnull
-    List<Locale.LanguageRange> getLanguages();
+    LanguagePriorityList getLanguages();
 
-    void setLanguages(@Nullable List<Locale.LanguageRange> languages);
+    void setLanguages(@Nullable LanguagePriorityList languages);
 }

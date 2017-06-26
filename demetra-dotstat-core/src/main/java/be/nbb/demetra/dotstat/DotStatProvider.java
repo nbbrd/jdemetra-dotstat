@@ -20,6 +20,7 @@ import be.nbb.demetra.sdmx.HasSdmxProperties;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
@@ -31,11 +32,8 @@ import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbBean;
 import ec.tss.tsproviders.db.DbProvider;
-import internal.sdmx.SdmxCubeItems;
 import it.bancaditalia.oss.sdmx.util.Configuration;
 import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
@@ -53,13 +51,13 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
 
     public static final String NAME = "DOTSTAT", VERSION = "20150203";
     private final AtomicReference<SdmxConnectionSupplier> connectionSupplier;
-    private final AtomicReference<List<Locale.LanguageRange>> languages;
+    private final AtomicReference<LanguagePriorityList> languages;
     private boolean displayCodes;
 
     public DotStatProvider() {
         super(LoggerFactory.getLogger(DotStatProvider.class), NAME, TsAsyncMode.Once);
         this.connectionSupplier = new AtomicReference<>(SdmxDriverManager.getDefault());
-        this.languages = new AtomicReference<>(SdmxConnectionSupplier.defaultLanguages());
+        this.languages = new AtomicReference<>(LanguagePriorityList.ANY);
         this.displayCodes = false;
         updateConnectorsConfig();
     }
@@ -155,14 +153,14 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     }
 
     @Override
-    public List<Locale.LanguageRange> getLanguages() {
+    public LanguagePriorityList getLanguages() {
         return languages.get();
     }
 
     @Override
-    public void setLanguages(List<Locale.LanguageRange> languages) {
-        List<Locale.LanguageRange> old = this.languages.get();
-        if (this.languages.compareAndSet(old, languages != null ? languages : SdmxConnectionSupplier.defaultLanguages())) {
+    public void setLanguages(LanguagePriorityList languages) {
+        LanguagePriorityList old = this.languages.get();
+        if (this.languages.compareAndSet(old, languages != null ? languages : LanguagePriorityList.ANY)) {
             updateConnectorsConfig();
             clearCache();
         }
@@ -170,11 +168,14 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
 
     @Nonnull
     public String getPreferredLanguage() {
-        return SdmxCubeItems.toString(getLanguages());
+        return getLanguages().toString();
     }
 
     public void setPreferredLanguage(@Nullable String lang) {
-        setLanguages(lang != null ? Locale.LanguageRange.parse(lang) : null);
+        try {
+            setLanguages(lang != null ? LanguagePriorityList.parse(lang) : null);
+        } catch (IllegalArgumentException ex) {
+        }
     }
 
     public boolean isDisplayCodes() {
@@ -186,7 +187,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     }
 
     private void updateConnectorsConfig() {
-        Configuration.setLang(SdmxCubeItems.toString(getLanguages()));
+        Configuration.setLang(getLanguages().toString());
     }
 
     private SdmxConnection connect(String name) throws IOException {

@@ -19,6 +19,7 @@ package be.nbb.demetra.sdmx.webservice;
 import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
 import be.nbb.demetra.dotstat.DotStatProviderBuddy.BuddyConfig;
 import be.nbb.demetra.dotstat.SdmxWsAutoCompletionService;
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import be.nbb.sdmx.facade.util.HasCache;
@@ -37,14 +38,12 @@ import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.TsProviders;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxAutoCompletion;
-import internal.sdmx.SdmxCubeItems;
 import java.awt.Image;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 import org.netbeans.api.options.OptionsDisplayer;
@@ -144,7 +143,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
         public BuddyConfig loadBean(SdmxWebServiceProviderBuddy resource) {
             BuddyConfig result = new BuddyConfig();
             lookupProvider().ifPresent(o -> {
-                result.setPreferredLanguage(SdmxCubeItems.toString(o.getLanguages()));
+                result.setPreferredLanguage(o.getLanguages().toString());
                 result.setDisplayCodes(o.isDisplayCodes());
             });
             return result;
@@ -153,7 +152,10 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
         @Override
         public void storeBean(SdmxWebServiceProviderBuddy resource, BuddyConfig bean) {
             lookupProvider().ifPresent(o -> {
-                o.setLanguages(Locale.LanguageRange.parse(bean.getPreferredLanguage()));
+                try {
+                    o.setLanguages(LanguagePriorityList.parse(bean.getPreferredLanguage()));
+                } catch (IllegalArgumentException ex) {
+                }
                 o.setDisplayCodes(bean.isDisplayCodes());
             });
         }
@@ -167,7 +169,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
 
     @NbBundle.Messages({
         "bean.cache.description=Mechanism used to improve performance."})
-    private static Sheet createSheet(SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, ConcurrentMap cache) {
+    private static Sheet createSheet(SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, LanguagePriorityList languages, ConcurrentMap cache) {
         Sheet result = new Sheet();
         NodePropertySetBuilder b = new NodePropertySetBuilder();
         result.put(withSource(b.reset("Source"), bean, supplier, languages, cache).build());
@@ -179,7 +181,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
     @NbBundle.Messages({
         "bean.source.display=REST endpoint name",
         "bean.flow.display=Dataset",})
-    private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, ConcurrentMap cache) {
+    private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, LanguagePriorityList languages, ConcurrentMap cache) {
         b.withAutoCompletion()
                 .select(bean, "source")
                 .servicePath(SdmxWsAutoCompletionService.PATH)
@@ -200,7 +202,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
         "bean.labelAttribute.display=Label attribute",
         "bean.labelAttribute.description=An optional dimension that defines the label of a series."
     })
-    private static NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, ConcurrentMap cache) {
+    private static NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, LanguagePriorityList languages, ConcurrentMap cache) {
         b.withAutoCompletion()
                 .select(bean, "dimensions", List.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)
                 .source(SdmxAutoCompletion.onDimensions(supplier, languages, bean::getSource, bean::getFlow, cache))

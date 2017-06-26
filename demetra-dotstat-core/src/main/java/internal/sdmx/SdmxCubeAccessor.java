@@ -20,6 +20,7 @@ import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import com.google.common.base.Converter;
@@ -31,7 +32,6 @@ import ec.tss.tsproviders.utils.IteratorWithIO;
 import ec.tstoolkit.design.VisibleForTesting;
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import lombok.AccessLevel;
 
@@ -42,12 +42,12 @@ import lombok.AccessLevel;
 @lombok.AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SdmxCubeAccessor implements CubeAccessor {
 
-    public static SdmxCubeAccessor of(SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, String source, DataflowRef flow, List<String> dimensions, String labelAttribute) {
+    public static SdmxCubeAccessor of(SdmxConnectionSupplier supplier, LanguagePriorityList languages, String source, DataflowRef flow, List<String> dimensions, String labelAttribute) {
         return new SdmxCubeAccessor(supplier, languages, source, flow, CubeId.root(dimensions), labelAttribute);
     }
 
     private final SdmxConnectionSupplier supplier;
-    private final List<Locale.LanguageRange> languages;
+    private final LanguagePriorityList languages;
     private final String source;
     private final DataflowRef flowRef;
     private final CubeId root;

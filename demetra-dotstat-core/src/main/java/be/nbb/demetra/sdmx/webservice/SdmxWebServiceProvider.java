@@ -19,6 +19,7 @@ package be.nbb.demetra.sdmx.webservice;
 import be.nbb.demetra.sdmx.HasSdmxProperties;
 import internal.sdmx.SdmxCubeAccessor;
 import be.nbb.sdmx.facade.DataflowRef;
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import com.google.common.cache.Cache;
@@ -39,9 +40,7 @@ import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxCubeItems;
 import it.bancaditalia.oss.sdmx.util.Configuration;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.openide.util.lookup.ServiceProvider;
@@ -59,7 +58,7 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxP
     public static final String NAME = "DOTSTAT";
 
     private final AtomicReference<SdmxConnectionSupplier> connectionSupplier;
-    private final AtomicReference<List<Locale.LanguageRange>> languages;
+    private final AtomicReference<LanguagePriorityList> languages;
     private final AtomicBoolean displayCodes;
 
     @lombok.experimental.Delegate
@@ -79,7 +78,7 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxP
 
     public SdmxWebServiceProvider() {
         this.connectionSupplier = new AtomicReference<>(SdmxDriverManager.getDefault());
-        this.languages = new AtomicReference<>(SdmxConnectionSupplier.defaultLanguages());
+        this.languages = new AtomicReference<>(LanguagePriorityList.ANY);
         this.displayCodes = new AtomicBoolean(false);
 
         Cache<DataSource, SdmxCubeItems> cache = GuavaCaches.softValuesCache();
@@ -114,14 +113,14 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxP
     }
 
     @Override
-    public List<Locale.LanguageRange> getLanguages() {
+    public LanguagePriorityList getLanguages() {
         return languages.get();
     }
 
     @Override
-    public void setLanguages(List<Locale.LanguageRange> languages) {
-        List<Locale.LanguageRange> old = this.languages.get();
-        if (this.languages.compareAndSet(old, languages != null ? languages : SdmxConnectionSupplier.defaultLanguages())) {
+    public void setLanguages(LanguagePriorityList languages) {
+        LanguagePriorityList old = this.languages.get();
+        if (this.languages.compareAndSet(old, languages != null ? languages : LanguagePriorityList.ANY)) {
             updateConnectorsConfig();
             clearCache();
         }
@@ -139,7 +138,7 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxP
     }
 
     private void updateConnectorsConfig() {
-        Configuration.setLang(SdmxCubeItems.toString(getLanguages()));
+        Configuration.setLang(getLanguages().toString());
     }
 
     @lombok.AllArgsConstructor
@@ -147,7 +146,7 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxP
 
         private final Cache<DataSource, SdmxCubeItems> cache;
         private final AtomicReference<SdmxConnectionSupplier> supplier;
-        private final AtomicReference<List<Locale.LanguageRange>> languages;
+        private final AtomicReference<LanguagePriorityList> languages;
         private final SdmxWebServiceParam param;
 
         @Override
@@ -165,7 +164,7 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxP
             return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(supplier.get(), languages.get(), param, dataSource));
         }
 
-        private static SdmxCubeItems of(SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, SdmxWebServiceParam param, DataSource dataSource) throws IllegalArgumentException, IOException {
+        private static SdmxCubeItems of(SdmxConnectionSupplier supplier, LanguagePriorityList languages, SdmxWebServiceParam param, DataSource dataSource) throws IllegalArgumentException, IOException {
             SdmxWebServiceBean bean = param.get(dataSource);
 
             DataflowRef flow = DataflowRef.parse(bean.getFlow());
@@ -175,7 +174,7 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxP
                 dimensions = SdmxCubeItems.getDefaultDimIds(supplier, languages, bean.getSource(), flow);
             }
 
-            CubeAccessor accessor = SdmxCubeAccessor.of(supplier, Collections.emptyList(), bean.getSource(), flow, dimensions, bean.getLabelAttribute())
+            CubeAccessor accessor = SdmxCubeAccessor.of(supplier, languages, bean.getSource(), flow, dimensions, bean.getLabelAttribute())
                     .bulk(bean.getCacheDepth(), GuavaCaches.ttlCacheAsMap(bean.getCacheTtl()));
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());

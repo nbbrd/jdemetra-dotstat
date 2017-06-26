@@ -19,6 +19,7 @@ package be.nbb.demetra.sdmx.file;
 import be.nbb.demetra.sdmx.HasSdmxProperties;
 import internal.sdmx.SdmxCubeAccessor;
 import be.nbb.sdmx.facade.DataflowRef;
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.file.SdmxFileManager;
 import be.nbb.sdmx.facade.file.SdmxFile;
@@ -43,7 +44,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +59,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
     private static final String NAME = "sdmx-file";
 
     private final AtomicReference<SdmxConnectionSupplier> connectionSupplier;
-    private final AtomicReference<List<Locale.LanguageRange>> languages;
+    private final AtomicReference<LanguagePriorityList> languages;
 
     @lombok.experimental.Delegate
     private final HasDataSourceMutableList mutableListSupport;
@@ -81,7 +81,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
 
     public SdmxFileProvider() {
         this.connectionSupplier = new AtomicReference<>(SdmxFileManager.getDefault());
-        this.languages = new AtomicReference<>(SdmxConnectionSupplier.defaultLanguages());
+        this.languages = new AtomicReference<>(LanguagePriorityList.ANY);
 
         Logger logger = LoggerFactory.getLogger(NAME);
         Cache<DataSource, SdmxCubeItems> cache = GuavaCaches.softValuesCache();
@@ -119,14 +119,14 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
     }
 
     @Override
-    public List<Locale.LanguageRange> getLanguages() {
+    public LanguagePriorityList getLanguages() {
         return languages.get();
     }
 
     @Override
-    public void setLanguages(List<Locale.LanguageRange> languages) {
-        List<Locale.LanguageRange> old = this.languages.get();
-        if (this.languages.compareAndSet(old, languages != null ? languages : SdmxConnectionSupplier.defaultLanguages())) {
+    public void setLanguages(LanguagePriorityList languages) {
+        LanguagePriorityList old = this.languages.get();
+        if (this.languages.compareAndSet(old, languages != null ? languages : LanguagePriorityList.ANY)) {
             clearCache();
         }
     }
@@ -136,7 +136,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
 
         private final Cache<DataSource, SdmxCubeItems> cache;
         private final AtomicReference<SdmxConnectionSupplier> supplier;
-        private final AtomicReference<List<Locale.LanguageRange>> languages;
+        private final AtomicReference<LanguagePriorityList> languages;
         private final HasFilePaths paths;
         private final SdmxFileParam param;
 
@@ -155,7 +155,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
             return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(supplier.get(), languages.get(), paths, param, dataSource));
         }
 
-        private static SdmxCubeItems of(SdmxConnectionSupplier supplier, List<Locale.LanguageRange> languages, HasFilePaths paths, SdmxFileParam param, DataSource dataSource) throws IOException {
+        private static SdmxCubeItems of(SdmxConnectionSupplier supplier, LanguagePriorityList languages, HasFilePaths paths, SdmxFileParam param, DataSource dataSource) throws IOException {
             SdmxFileBean bean = param.get(dataSource);
             SdmxFile file = getFile(paths, bean.getFile(), bean.getStructureFile());
 
