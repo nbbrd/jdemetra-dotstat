@@ -177,7 +177,9 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     }
 
     private static String getDisplayName(Map<String, Dimension> dimensionById, CubeId id, int index) {
-        return dimensionById.get(id.getDimensionId(index)).getCodes().get(id.getDimensionValue(index));
+        Map<String, String> codes = dimensionById.get(id.getDimensionId(index)).getCodes();
+        String codeId = id.getDimensionValue(index);
+        return codes.getOrDefault(codeId, codeId);
     }
 
     @VisibleForTesting
