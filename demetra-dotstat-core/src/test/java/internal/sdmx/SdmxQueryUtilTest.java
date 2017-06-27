@@ -20,7 +20,7 @@ import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.connectors.TestResource;
-import be.nbb.sdmx.facade.util.MemSdmxRepository;
+import be.nbb.sdmx.facade.repo.SdmxRepository;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
@@ -38,8 +38,8 @@ import org.junit.Test;
  */
 public class SdmxQueryUtilTest {
 
-    private final MemSdmxRepository nbb = TestResource.nbb();
-    private final MemSdmxRepository ecb = TestResource.ecb();
+    private final SdmxRepository nbb = TestResource.nbb();
+    private final SdmxRepository ecb = TestResource.ecb();
     private final DataflowRef nbbFlow = DataflowRef.of("NBB", "TEST_DATASET", null);
     private final DataflowRef ecbFlow = DataflowRef.parse("ECB,AME,1.0");
     private final String title = "FR. Germany - Net lending (+) or net borrowing (-): general government :- Excessive deficit procedure (Including one-off proceeds relative to the allocation of mobile phone licences (UMTS))";

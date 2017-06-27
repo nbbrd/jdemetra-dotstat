@@ -25,7 +25,7 @@ import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.connectors.TestResource;
-import be.nbb.sdmx.facade.util.MemSdmxConnectionSupplier;
+import be.nbb.sdmx.facade.repo.SdmxRepositorySupplier;
 import com.google.common.base.Joiner;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbSeries;
@@ -44,7 +44,7 @@ import org.junit.Test;
  */
 public class DotStatAccessorTest {
 
-    private final SdmxConnectionSupplier supplier = MemSdmxConnectionSupplier.builder()
+    private final SdmxConnectionSupplier supplier = SdmxRepositorySupplier.builder()
             .repository(TestResource.nbb())
             .repository(TestResource.ecb())
             .build();

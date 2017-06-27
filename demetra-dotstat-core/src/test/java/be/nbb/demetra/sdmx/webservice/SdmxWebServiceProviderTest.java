@@ -25,9 +25,10 @@ import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.Frequency;
-import be.nbb.sdmx.facade.util.MemSdmxRepository;
-import be.nbb.sdmx.facade.util.MemSdmxRepository.Obs;
-import be.nbb.sdmx.facade.util.MemSdmxRepository.Series;
+import be.nbb.sdmx.facade.repo.SdmxRepository;
+import be.nbb.sdmx.facade.repo.Obs;
+import be.nbb.sdmx.facade.repo.SdmxRepositorySupplier;
+import be.nbb.sdmx.facade.repo.Series;
 import ec.tss.TsMoniker;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.DataSource;
@@ -120,15 +121,14 @@ public class SdmxWebServiceProviderTest {
                 .build();
         Dataflow conj = Dataflow.of(DataflowRef.parse("CONJ"), conjStruct.getRef(), "Conjoncture");
 
-        return MemSdmxRepository.builder()
+        return SdmxRepositorySupplier.of(SdmxRepository.builder()
                 .name("world")
                 .dataStructure(conjStruct)
                 .dataflow(conj)
-                .series(Series.of(conj.getFlowRef(), Key.of("BE", "IND"), Frequency.MONTHLY, toSeries(TsFrequency.Monthly, 1)))
-                .series(Series.of(conj.getFlowRef(), Key.of("BE", "XXX"), Frequency.MONTHLY, toSeries(TsFrequency.Monthly, 2)))
-                .series(Series.of(conj.getFlowRef(), Key.of("FR", "IND"), Frequency.MONTHLY, toSeries(TsFrequency.Monthly, 3)))
-                .build()
-                .asConnectionSupplier();
+                .data(conj.getFlowRef(), Series.builder().key(Key.of("BE", "IND")).frequency(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 1)).build())
+                .data(conj.getFlowRef(), Series.builder().key(Key.of("BE", "XXX")).frequency(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 2)).build())
+                .data(conj.getFlowRef(), Series.builder().key(Key.of("FR", "IND")).frequency(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 3)).build())
+                .build());
     }
 
     private static List<Obs> toSeries(TsFrequency freq, int seed) {

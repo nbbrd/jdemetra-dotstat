@@ -22,7 +22,7 @@ import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.samples.SdmxSource;
-import be.nbb.sdmx.facade.util.MemSdmxRepository;
+import be.nbb.sdmx.facade.repo.SdmxRepository;
 import be.nbb.sdmx.facade.xml.stream.SdmxXmlStreams;
 import it.bancaditalia.oss.sdmx.api.DataFlowStructure;
 import it.bancaditalia.oss.sdmx.exceptions.SdmxException;
@@ -43,9 +43,9 @@ import javax.xml.stream.XMLStreamException;
 public final class TestResource {
 
     @Nonnull
-    public static final MemSdmxRepository nbb() {
+    public static final SdmxRepository nbb() {
         try {
-            MemSdmxRepository.Builder result = MemSdmxRepository.builder();
+            SdmxRepository.Builder result = SdmxRepository.builder();
             Map<DataStructureRef, DataStructure> dataStructures;
             try (InputStreamReader r = SdmxSource.NBB_DATA_STRUCTURE.openReader()) {
                 dataStructures = toDataStructures(new it.bancaditalia.oss.sdmx.parser.v20.DataStructureParser().parse(r));
@@ -72,9 +72,9 @@ public final class TestResource {
     }
 
     @Nonnull
-    public static final MemSdmxRepository ecb() {
+    public static final SdmxRepository ecb() {
         try {
-            MemSdmxRepository.Builder result = MemSdmxRepository.builder();
+            SdmxRepository.Builder result = SdmxRepository.builder();
             Map<DataStructureRef, DataStructure> dataStructures;
             try (InputStreamReader r = SdmxSource.ECB_DATA_STRUCTURE.openReader()) {
                 dataStructures = toDataStructures(new it.bancaditalia.oss.sdmx.parser.v21.DataStructureParser().parse(r));
