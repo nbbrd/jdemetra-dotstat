@@ -18,7 +18,7 @@ package internal.sdmx;
 
 import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.TimeFormat;
+import be.nbb.sdmx.facade.Frequency;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tss.tsproviders.utils.ObsGathering;
 import ec.tss.tsproviders.utils.OptionalTsData;
@@ -100,7 +100,7 @@ final class SdmxDataAdapter implements TsCursor<Key> {
 
     @Override
     public OptionalTsData getSeriesData() throws IOException {
-        return hasTime(cursor.getSeriesTimeFormat()) ? toDataByDate(cursor) : toDataByLocalDate(cursor);
+        return hasTime(cursor.getSeriesFrequency()) ? toDataByDate(cursor) : toDataByLocalDate(cursor);
     }
 
     @Override
@@ -119,7 +119,7 @@ final class SdmxDataAdapter implements TsCursor<Key> {
             calendar = new GregorianCalendar();
             zoneId = ZoneId.systemDefault();
         }
-        OptionalTsData.Builder2<Date> result = OptionalTsData.builderByDate(calendar, GATHERINGS.get(cursor.getSeriesTimeFormat()));
+        OptionalTsData.Builder2<Date> result = OptionalTsData.builderByDate(calendar, GATHERINGS.get(cursor.getSeriesFrequency()));
         while (cursor.nextObs()) {
             LocalDateTime period = cursor.getObsPeriod();
             if (period != null) {
@@ -130,7 +130,7 @@ final class SdmxDataAdapter implements TsCursor<Key> {
     }
 
     private OptionalTsData toDataByLocalDate(DataCursor cursor) throws IOException {
-        OptionalTsData.Builder2<LocalDate> result = OptionalTsData.builderByLocalDate(GATHERINGS.get(cursor.getSeriesTimeFormat()));
+        OptionalTsData.Builder2<LocalDate> result = OptionalTsData.builderByLocalDate(GATHERINGS.get(cursor.getSeriesFrequency()));
         while (cursor.nextObs()) {
             LocalDateTime period = cursor.getObsPeriod();
             if (period != null) {
@@ -140,8 +140,8 @@ final class SdmxDataAdapter implements TsCursor<Key> {
         return result.build();
     }
 
-    private static boolean hasTime(TimeFormat format) {
-        switch (format) {
+    private static boolean hasTime(Frequency freq) {
+        switch (freq) {
             case HOURLY:
             case MINUTELY:
                 return true;
@@ -150,20 +150,20 @@ final class SdmxDataAdapter implements TsCursor<Key> {
         }
     }
 
-    private static final Map<TimeFormat, ObsGathering> GATHERINGS = initGatherings();
+    private static final Map<Frequency, ObsGathering> GATHERINGS = initGatherings();
 
-    private static Map<TimeFormat, ObsGathering> initGatherings() {
-        Map<TimeFormat, ObsGathering> result = new EnumMap<>(TimeFormat.class);
-        result.put(TimeFormat.YEARLY, ObsGathering.includingMissingValues(TsFrequency.Yearly, TsAggregationType.None));
-        result.put(TimeFormat.HALF_YEARLY, ObsGathering.includingMissingValues(TsFrequency.HalfYearly, TsAggregationType.None));
-        result.put(TimeFormat.QUADRI_MONTHLY, ObsGathering.includingMissingValues(TsFrequency.QuadriMonthly, TsAggregationType.None));
-        result.put(TimeFormat.QUARTERLY, ObsGathering.includingMissingValues(TsFrequency.Quarterly, TsAggregationType.None));
-        result.put(TimeFormat.MONTHLY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.None));
-        result.put(TimeFormat.WEEKLY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
-        result.put(TimeFormat.DAILY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
-        result.put(TimeFormat.HOURLY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
-        result.put(TimeFormat.MINUTELY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
-        result.put(TimeFormat.UNDEFINED, ObsGathering.includingMissingValues(TsFrequency.Undefined, TsAggregationType.None));
+    private static Map<Frequency, ObsGathering> initGatherings() {
+        Map<Frequency, ObsGathering> result = new EnumMap<>(Frequency.class);
+        result.put(Frequency.ANNUAL, ObsGathering.includingMissingValues(TsFrequency.Yearly, TsAggregationType.None));
+        result.put(Frequency.HALF_YEARLY, ObsGathering.includingMissingValues(TsFrequency.HalfYearly, TsAggregationType.None));
+        result.put(Frequency.QUARTERLY, ObsGathering.includingMissingValues(TsFrequency.Quarterly, TsAggregationType.None));
+        result.put(Frequency.MONTHLY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.None));
+        result.put(Frequency.WEEKLY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
+        result.put(Frequency.DAILY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
+        result.put(Frequency.HOURLY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
+        result.put(Frequency.DAILY_BUSINESS, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
+        result.put(Frequency.MINUTELY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
+        result.put(Frequency.UNDEFINED, ObsGathering.includingMissingValues(TsFrequency.Undefined, TsAggregationType.None));
         return result;
     }
 }

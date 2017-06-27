@@ -24,7 +24,7 @@ import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
-import be.nbb.sdmx.facade.TimeFormat;
+import be.nbb.sdmx.facade.Frequency;
 import be.nbb.sdmx.facade.util.MemSdmxRepository;
 import be.nbb.sdmx.facade.util.MemSdmxRepository.Obs;
 import be.nbb.sdmx.facade.util.MemSdmxRepository.Series;
@@ -124,9 +124,9 @@ public class SdmxWebServiceProviderTest {
                 .name("world")
                 .dataStructure(conjStruct)
                 .dataflow(conj)
-                .series(Series.of(conj.getFlowRef(), Key.of("BE", "IND"), TimeFormat.MONTHLY, toSeries(TsFrequency.Monthly, 1)))
-                .series(Series.of(conj.getFlowRef(), Key.of("BE", "XXX"), TimeFormat.MONTHLY, toSeries(TsFrequency.Monthly, 2)))
-                .series(Series.of(conj.getFlowRef(), Key.of("FR", "IND"), TimeFormat.MONTHLY, toSeries(TsFrequency.Monthly, 3)))
+                .series(Series.of(conj.getFlowRef(), Key.of("BE", "IND"), Frequency.MONTHLY, toSeries(TsFrequency.Monthly, 1)))
+                .series(Series.of(conj.getFlowRef(), Key.of("BE", "XXX"), Frequency.MONTHLY, toSeries(TsFrequency.Monthly, 2)))
+                .series(Series.of(conj.getFlowRef(), Key.of("FR", "IND"), Frequency.MONTHLY, toSeries(TsFrequency.Monthly, 3)))
                 .build()
                 .asConnectionSupplier();
     }
