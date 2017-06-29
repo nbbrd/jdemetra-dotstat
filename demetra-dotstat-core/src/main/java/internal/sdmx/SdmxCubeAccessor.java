@@ -34,6 +34,8 @@ import ec.tstoolkit.design.VisibleForTesting;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.AccessLevel;
 
 /**
@@ -141,7 +143,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         }
         try (SdmxConnection conn = supplier.getConnection(source, languages)) {
             Map<String, Dimension> dimensionById = dimensionById(conn.getDataStructure(flowRef));
-            return getDisplayName(dimensionById, id, id.getLevel() - 1);
+            return getDisplayNodeName(dimensionById, id);
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);
         }
@@ -191,10 +193,20 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         return ex;
     }
 
-    private static String getDisplayName(Map<String, Dimension> dimensionById, CubeId id, int index) {
-        Map<String, String> codes = dimensionById.get(id.getDimensionId(index)).getCodes();
-        String codeId = id.getDimensionValue(index);
+    private static String getDisplayNodeName(Map<String, Dimension> dimensionById, CubeId ref) {
+        if (ref.isRoot()) {
+            return "Invalid reference '" + dump(ref) + "'";
+        }
+        int index = ref.getLevel() - 1;
+        Map<String, String> codes = dimensionById.get(ref.getDimensionId(index)).getCodes();
+        String codeId = ref.getDimensionValue(index);
         return codes.getOrDefault(codeId, codeId);
+    }
+
+    private static String dump(CubeId ref) {
+        return IntStream.range(0, ref.getMaxLevel())
+                .mapToObj(o -> ref.getDimensionId(o) + "=" + (o < ref.getLevel() ? ref.getDimensionValue(0) : "null"))
+                .collect(Collectors.joining(", "));
     }
 
     @VisibleForTesting

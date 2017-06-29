@@ -43,7 +43,7 @@ import javax.annotation.Nullable;
  */
 final class SdmxDataAdapter implements TsCursor<Key> {
 
-    private final Key group;
+    private final Key ref;
     private final DataCursor cursor;
     private final String labelAttribute;
     private boolean closed;
@@ -51,8 +51,8 @@ final class SdmxDataAdapter implements TsCursor<Key> {
     private Calendar calendar;
     private ZoneId zoneId;
 
-    SdmxDataAdapter(@Nonnull Key group, @Nonnull DataCursor cursor, @Nullable String labelAttribute) {
-        this.group = group;
+    SdmxDataAdapter(@Nonnull Key ref, @Nonnull DataCursor cursor, @Nullable String labelAttribute) {
+        this.ref = ref;
         this.cursor = cursor;
         this.labelAttribute = labelAttribute;
         this.closed = false;
@@ -75,7 +75,7 @@ final class SdmxDataAdapter implements TsCursor<Key> {
     public boolean nextSeries() throws IOException {
         while (cursor.nextSeries()) {
             currentKey = cursor.getSeriesKey();
-            if (group.contains(currentKey)) {
+            if (currentKey.isSeries() && ref.contains(currentKey)) {
                 return true;
             }
         }
