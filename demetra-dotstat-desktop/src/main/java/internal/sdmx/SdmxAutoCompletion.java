@@ -24,6 +24,7 @@ import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import be.nbb.sdmx.facade.driver.WsEntryPoint;
+import be.nbb.sdmx.facade.util.UnexpectedIOException;
 import com.google.common.base.Strings;
 import ec.util.completion.AutoCompletionSource;
 import static ec.util.completion.AutoCompletionSource.Behavior.ASYNC;
@@ -118,7 +119,7 @@ public class SdmxAutoCompletion {
         try (SdmxConnection c = supplier.getConnection(source.get(), languages)) {
             return new ArrayList<>(c.getDataflows());
         } catch (RuntimeException ex) {
-            throw new IOException("Unexpected exception", ex);
+            throw new UnexpectedIOException(ex);
         }
     }
 
@@ -142,7 +143,7 @@ public class SdmxAutoCompletion {
         try (SdmxConnection c = supplier.getConnection(source.get(), languages)) {
             return new ArrayList<>(c.getDataStructure(DataflowRef.parse(flow.get())).getDimensions());
         } catch (RuntimeException ex) {
-            throw new IOException("Unexpected exception", ex);
+            throw new UnexpectedIOException(ex);
         }
     }
 

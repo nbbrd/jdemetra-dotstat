@@ -21,6 +21,7 @@ import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
+import be.nbb.sdmx.facade.util.UnexpectedIOException;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.cube.CubeAccessor;
 import ec.tss.tsproviders.cube.CubeId;
@@ -43,7 +44,7 @@ public class SdmxCubeItems {
         try (SdmxConnection conn = supplier.getConnection(source, languages)) {
             return conn.getDataStructure(flow).getDimensions().stream().map(Dimension::getId).collect(Collectors.toList());
         } catch (RuntimeException ex) {
-            throw new IOException("Unexpected exception", ex);
+            throw new UnexpectedIOException(ex);
         }
     }
 }
