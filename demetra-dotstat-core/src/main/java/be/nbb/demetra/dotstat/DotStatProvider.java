@@ -32,7 +32,6 @@ import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbBean;
 import ec.tss.tsproviders.db.DbProvider;
-import it.bancaditalia.oss.sdmx.util.Configuration;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -59,7 +58,6 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
         this.connectionSupplier = new AtomicReference<>(SdmxDriverManager.getDefault());
         this.languages = new AtomicReference<>(LanguagePriorityList.ANY);
         this.displayCodes = false;
-        updateConnectorsConfig();
     }
 
     @Override
@@ -161,7 +159,6 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     public void setLanguages(LanguagePriorityList languages) {
         LanguagePriorityList old = this.languages.get();
         if (this.languages.compareAndSet(old, languages != null ? languages : LanguagePriorityList.ANY)) {
-            updateConnectorsConfig();
             clearCache();
         }
     }
@@ -184,10 +181,6 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
 
     public void setDisplayCodes(boolean displayCodes) {
         this.displayCodes = displayCodes;
-    }
-
-    private void updateConnectorsConfig() {
-        Configuration.setLang(getLanguages().toString());
     }
 
     private SdmxConnection connect(String name) throws IOException {

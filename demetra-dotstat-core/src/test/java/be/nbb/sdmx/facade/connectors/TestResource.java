@@ -26,6 +26,7 @@ import be.nbb.sdmx.facade.repo.SdmxRepository;
 import be.nbb.sdmx.facade.xml.stream.SdmxXmlStreams;
 import it.bancaditalia.oss.sdmx.api.DataFlowStructure;
 import it.bancaditalia.oss.sdmx.exceptions.SdmxException;
+import it.bancaditalia.oss.sdmx.util.LanguagePriorityList;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
@@ -45,15 +46,16 @@ public final class TestResource {
     @Nonnull
     public static final SdmxRepository nbb() {
         try {
+            LanguagePriorityList l = LanguagePriorityList.parse("en");
             SdmxRepository.Builder result = SdmxRepository.builder();
             Map<DataStructureRef, DataStructure> dataStructures;
             try (InputStreamReader r = SdmxSource.NBB_DATA_STRUCTURE.openReader()) {
-                dataStructures = toDataStructures(new it.bancaditalia.oss.sdmx.parser.v20.DataStructureParser().parse(r));
+                dataStructures = toDataStructures(new it.bancaditalia.oss.sdmx.parser.v20.DataStructureParser().parse(r, l));
                 result.dataStructures(dataStructures.values());
             }
             DataflowRef flowRef = DataflowRef.of("NBB", "TEST_DATASET", null);
             try (InputStreamReader r = SdmxSource.NBB_DATAFLOWS.openReader()) {
-                result.dataflows(new it.bancaditalia.oss.sdmx.parser.v20.DataStructureParser().parse(r).stream()
+                result.dataflows(new it.bancaditalia.oss.sdmx.parser.v20.DataStructureParser().parse(r, l).stream()
                         .map(TestResource::toDataFlow)
                         .filter(o -> o.getFlowRef().equals(flowRef))
                         .collect(Collectors.toList()));
@@ -74,15 +76,16 @@ public final class TestResource {
     @Nonnull
     public static final SdmxRepository ecb() {
         try {
+            LanguagePriorityList l = LanguagePriorityList.parse("en");
             SdmxRepository.Builder result = SdmxRepository.builder();
             Map<DataStructureRef, DataStructure> dataStructures;
             try (InputStreamReader r = SdmxSource.ECB_DATA_STRUCTURE.openReader()) {
-                dataStructures = toDataStructures(new it.bancaditalia.oss.sdmx.parser.v21.DataStructureParser().parse(r));
+                dataStructures = toDataStructures(new it.bancaditalia.oss.sdmx.parser.v21.DataStructureParser().parse(r, l));
                 result.dataStructures(dataStructures.values());
             }
             DataflowRef flowRef = DataflowRef.of("ECB", "AME", "1.0");
             try (InputStreamReader r = SdmxSource.ECB_DATAFLOWS.openReader()) {
-                result.dataflows(new it.bancaditalia.oss.sdmx.parser.v21.DataflowParser().parse(r).stream()
+                result.dataflows(new it.bancaditalia.oss.sdmx.parser.v21.DataflowParser().parse(r, l).stream()
                         .map(Util::toDataflow)
                         .filter(o -> o.getFlowRef().equals(flowRef))
                         .collect(Collectors.toList()));

@@ -38,7 +38,6 @@ import ec.tss.tsproviders.utils.DataSourcePreconditions;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxCubeItems;
-import it.bancaditalia.oss.sdmx.util.Configuration;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -90,8 +89,6 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxP
         this.beanSupport = HasDataSourceBean.of(NAME, beanParam, beanParam.getVersion());
         this.cubeSupport = CubeSupport.of(new SdmxCubeResource(cache, connectionSupplier, languages, beanParam));
         this.tsSupport = CubeSupport.asTsProvider(NAME, logger, cubeSupport, monikerSupport, cache::invalidateAll);
-
-        updateConnectorsConfig();
     }
 
     @Override
@@ -121,7 +118,6 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxP
     public void setLanguages(LanguagePriorityList languages) {
         LanguagePriorityList old = this.languages.get();
         if (this.languages.compareAndSet(old, languages != null ? languages : LanguagePriorityList.ANY)) {
-            updateConnectorsConfig();
             clearCache();
         }
     }
@@ -135,10 +131,6 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxP
         if (this.displayCodes.compareAndSet(old, displayCodes)) {
             clearCache();
         }
-    }
-
-    private void updateConnectorsConfig() {
-        Configuration.setLang(getLanguages().toString());
     }
 
     @lombok.AllArgsConstructor
