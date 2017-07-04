@@ -93,7 +93,7 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxP
 
     @Override
     public String getDisplayName() {
-        return "DotStat";
+        return "SDMX Web Services";
     }
 
     @Override

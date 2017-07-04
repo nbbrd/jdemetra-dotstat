@@ -77,7 +77,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
 
     @Override
     public String getDisplayName() {
-        return "DotStat";
+        return "SDMX Web Services";
     }
 
     @Override

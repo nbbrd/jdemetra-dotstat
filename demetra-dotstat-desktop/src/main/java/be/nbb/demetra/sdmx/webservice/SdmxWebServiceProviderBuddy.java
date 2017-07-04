@@ -179,28 +179,32 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
     }
 
     @NbBundle.Messages({
-        "bean.source.display=REST endpoint name",
-        "bean.flow.display=Dataset",})
+        "bean.source.display=Provider",
+        "bean.source.description=The identifier of the service that provides data.",
+        "bean.flow.display=Dataflow",
+        "bean.flow.description=The identifier of a specific dataflow.",})
     private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, LanguagePriorityList languages, ConcurrentMap cache) {
         b.withAutoCompletion()
                 .select(bean, "source")
                 .servicePath(SdmxWsAutoCompletionService.PATH)
                 .display(Bundle.bean_source_display())
+                .description(Bundle.bean_source_description())
                 .add();
         b.withAutoCompletion()
                 .select(bean, "flow")
                 .source(SdmxAutoCompletion.onFlows(supplier, languages, bean::getSource, cache))
                 .cellRenderer(SdmxAutoCompletion.getFlowsRenderer())
                 .display(Bundle.bean_flow_display())
+                .description(Bundle.bean_flow_description())
                 .add();
         return b;
     }
 
     @NbBundle.Messages({
-        "bean.dimensions.display=Dimensions",
-        "bean.dimensions.description=An optional comma-separated list of dimensions.",
-        "bean.labelAttribute.display=Label attribute",
-        "bean.labelAttribute.description=An optional dimension that defines the label of a series."
+        "bean.dimensions.display=Dataflow dimensions",
+        "bean.dimensions.description=An optional comma-separated list of dimensions that defines the order used to hierarchise time series.",
+        "bean.labelAttribute.display=Series label attribute",
+        "bean.labelAttribute.description=An optional attribute that carries the label of time series."
     })
     private static NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, LanguagePriorityList languages, ConcurrentMap cache) {
         b.withAutoCompletion()
