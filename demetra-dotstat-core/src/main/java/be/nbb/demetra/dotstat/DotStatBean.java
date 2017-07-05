@@ -24,6 +24,7 @@ import ec.tss.tsproviders.db.DbBean;
  *
  * @author Philippe Charles
  */
+@Deprecated
 public final class DotStatBean extends DbBean.BulkBean {
 
     public DotStatBean() {

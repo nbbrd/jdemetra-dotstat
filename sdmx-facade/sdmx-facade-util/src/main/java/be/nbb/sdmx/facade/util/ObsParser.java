@@ -16,16 +16,9 @@
  */
 package be.nbb.sdmx.facade.util;
 
-import be.nbb.sdmx.facade.TimeFormat;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import be.nbb.sdmx.facade.Frequency;
+import java.time.LocalDateTime;
+import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -35,22 +28,40 @@ import javax.annotation.Nullable;
  */
 public final class ObsParser {
 
-    private DateParser periodParser;
-    private TimeFormat timeFormat;
+    @Nonnull
+    public static ObsParser standard() {
+        return new ObsParser(SafeParser::onStandardFreq, SafeParser.onDouble());
+    }
+
+    private final Function<Frequency, SafeParser<LocalDateTime>> toPeriodParser;
+    private final SafeParser<Double> valueParser;
+    private SafeParser<LocalDateTime> periodParser;
+    private Frequency freq;
     private String period;
     private String value;
 
-    public ObsParser() {
-        timeFormat(TimeFormat.UNDEFINED);
+    public ObsParser(Function<Frequency, SafeParser<LocalDateTime>> toPeriodParser, SafeParser<Double> valueParser) {
+        this.toPeriodParser = toPeriodParser;
+        this.valueParser = valueParser;
+        this.periodParser = toPeriodParser.apply(Frequency.UNDEFINED);
+        this.freq = Frequency.UNDEFINED;
+        this.period = null;
+        this.value = null;
     }
 
     @Nonnull
-    public ObsParser timeFormat(@Nonnull TimeFormat timeFormat) {
-        if (this.timeFormat != timeFormat) {
-            this.timeFormat = timeFormat;
-            this.periodParser = getParser(timeFormat);
-        }
-        return this;
+    public Frequency getFrequency() {
+        return freq;
+    }
+
+    @Nullable
+    public String getPeriod() {
+        return period;
+    }
+
+    @Nullable
+    public String getValue() {
+        return value;
     }
 
     @Nonnull
@@ -61,154 +72,33 @@ public final class ObsParser {
     }
 
     @Nonnull
-    public ObsParser periodString(@Nullable String period) {
+    public ObsParser frequency(@Nonnull Frequency freq) {
+        if (this.freq != freq) {
+            this.freq = freq;
+            this.periodParser = toPeriodParser.apply(freq);
+        }
+        return this;
+    }
+
+    @Nonnull
+    public ObsParser period(@Nullable String period) {
         this.period = period;
         return this;
     }
 
     @Nonnull
-    public ObsParser valueString(@Nullable String value) {
+    public ObsParser value(@Nullable String value) {
         this.value = value;
         return this;
     }
 
-    @Nonnull
-    public TimeFormat getTimeFormat() {
-        return timeFormat;
-    }
-
     @Nullable
-    public Date getPeriod() {
+    public LocalDateTime parsePeriod() {
         return period != null ? periodParser.parse(period) : null;
     }
 
     @Nullable
-    public Double getValue() {
-        return value != null ? Double.parseDouble(value) : null;
+    public Double parseValue() {
+        return value != null ? valueParser.parse(value) : null;
     }
-
-    //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private static abstract class DateParser {
-
-        @Nullable
-        abstract public Date parse(@Nonnull CharSequence input);
-
-        @Nonnull
-        public DateParser or(@Nonnull final DateParser r) {
-            final DateParser l = this;
-            return new DateParser() {
-                @Override
-                public Date parse(CharSequence input) {
-                    Date result = l.parse(input);
-                    return result != null ? result : r.parse(input);
-                }
-            };
-        }
-    }
-
-    @Nonnull
-    private static DateParser getParser(@Nonnull TimeFormat format) {
-        switch (format) {
-            case YEARLY:
-                return onStrictDatePattern("yyyy").or(onStrictDatePattern("yyyy'-01'")).or(onStrictDatePattern("yyyy'-A1'"));
-            case HALF_YEARLY:
-                return YearFreqPosParser.s().or(onStrictDatePattern("yyyy-MM"));
-            case QUADRI_MONTHLY:
-                return YearFreqPosParser.t().or(onStrictDatePattern("yyyy-MM"));
-            case QUARTERLY:
-                return YearFreqPosParser.q().or(onStrictDatePattern("yyyy-MM"));
-            case MONTHLY:
-                return YearFreqPosParser.m().or(onStrictDatePattern("yyyy-MM"));
-            case WEEKLY:
-                return onStrictDatePattern("yyyy-MM-dd");
-            case DAILY:
-                return onStrictDatePattern("yyyy-MM-dd");
-            case HOURLY:
-                return onStrictDatePattern("yyyy-MM-dd");
-            case MINUTELY:
-                return onStrictDatePattern("yyyy-MM-dd");
-            default:
-                return onStrictDatePattern("yyyy-MM");
-        }
-    }
-
-    @Nonnull
-    private static DateParser onStrictDatePattern(@Nonnull String datePattern) {
-        final DateFormat dateFormat = new SimpleDateFormat(datePattern, Locale.ROOT);
-        dateFormat.setLenient(false);
-        return new DateParser() {
-            @Override
-            public Date parse(CharSequence input) {
-                try {
-                    String inputAsString = input.toString();
-                    Date result = dateFormat.parse(inputAsString);
-                    return result != null && inputAsString.equals(dateFormat.format(result)) ? result : null;
-                } catch (ParseException ex) {
-                    return null;
-                }
-            }
-        };
-    }
-
-    private static final class YearFreqPosParser extends DateParser {
-
-        private static final Pattern Q = Pattern.compile("(\\d+)-?Q(\\d+)");
-        private static final Pattern M = Pattern.compile("(\\d+)-?M(\\d+)");
-        private static final Pattern Y = Pattern.compile("(\\d+)-?Y(\\d+)");
-        private static final Pattern S = Pattern.compile("(\\d+)-?S(\\d+)");
-        private static final Pattern T = Pattern.compile("(\\d+)-?T(\\d+)");
-
-        public static YearFreqPosParser q() {
-            return new YearFreqPosParser(Q, 4);
-        }
-
-        public static YearFreqPosParser m() {
-            return new YearFreqPosParser(M, 12);
-        }
-
-        public static YearFreqPosParser y() {
-            return new YearFreqPosParser(Y, 1);
-        }
-
-        public static YearFreqPosParser s() {
-            return new YearFreqPosParser(S, 2);
-        }
-
-        public static YearFreqPosParser t() {
-            return new YearFreqPosParser(T, 3);
-        }
-
-        private final Pattern regex;
-        private final int freq;
-        private final Calendar cal;
-
-        private YearFreqPosParser(Pattern regex, int freq) {
-            this.regex = regex;
-            this.freq = freq;
-            this.cal = new GregorianCalendar();
-        }
-
-        @Override
-        public Date parse(CharSequence input) {
-            Matcher m = regex.matcher(input);
-            return m.matches() ? toDate(Integer.parseInt(m.group(1)), freq, Integer.parseInt(m.group(2)) - 1) : null;
-        }
-
-        private Date toDate(int year, int freq, int pos) {
-            if ((pos < 0) || (pos >= freq)) {
-                return null;
-            }
-            int c = 12 / freq;
-            int month = pos * c;
-            cal.set(Calendar.YEAR, year);
-            cal.set(Calendar.MONTH, month);
-            cal.set(Calendar.DAY_OF_MONTH, 1);
-            cal.set(Calendar.HOUR_OF_DAY, 0);
-            cal.set(Calendar.MINUTE, 0);
-            cal.set(Calendar.SECOND, 0);
-            cal.set(Calendar.MILLISECOND, 0);
-            return cal.getTime();
-        }
-    }
-    //</editor-fold>
 }

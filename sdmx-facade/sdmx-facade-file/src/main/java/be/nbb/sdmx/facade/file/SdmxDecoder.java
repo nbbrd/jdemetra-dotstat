@@ -17,7 +17,7 @@
 package be.nbb.sdmx.facade.file;
 
 import be.nbb.sdmx.facade.DataStructure;
-import java.io.File;
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import java.io.IOException;
 import javax.annotation.Nonnull;
 
@@ -25,20 +25,20 @@ import javax.annotation.Nonnull;
  *
  * @author Philippe Charles
  */
-public abstract class SdmxDecoder {
+public interface SdmxDecoder {
 
     @Nonnull
-    abstract public Info decode(@Nonnull File file) throws IOException;
+    Info decode(@Nonnull SdmxFile file, @Nonnull LanguagePriorityList ranges) throws IOException;
 
-    public enum FileType {
+    enum DataType {
 
-        GENERIC20, GENERIC21, COMPACT20, COMPACT21, UNKNOWN;
+        GENERIC20, GENERIC21, COMPACT20, COMPACT21, UNKNOWN
     }
 
     @lombok.Value(staticConstructor = "of")
-    public static final class Info {
+    class Info {
 
-        private final FileType fileType;
-        private final DataStructure dataStructure;
+        DataType dataType;
+        DataStructure dataStructure;
     }
 }

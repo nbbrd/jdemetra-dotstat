@@ -18,9 +18,10 @@ package be.nbb.sdmx.facade.util;
 
 import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.TimeFormat;
+import be.nbb.sdmx.facade.Frequency;
 import java.io.IOException;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.util.Map;
 import javax.annotation.Nonnull;
 
 /**
@@ -31,42 +32,67 @@ public final class NoOpCursor implements DataCursor {
 
     @Nonnull
     public static DataCursor noOp() {
-        return INSTANCE;
+        return new NoOpCursor();
     }
 
-    private static final NoOpCursor INSTANCE = new NoOpCursor();
+    private boolean closed = false;
 
     @Override
     public boolean nextSeries() throws IOException {
+        checkState();
         return false;
     }
 
     @Override
     public boolean nextObs() throws IOException {
-        return false;
-    }
-
-    @Override
-    public Key getKey() throws IOException {
+        checkState();
         throw new IllegalStateException();
     }
 
     @Override
-    public TimeFormat getTimeFormat() throws IOException {
+    public Key getSeriesKey() throws IOException {
+        checkState();
         throw new IllegalStateException();
     }
 
     @Override
-    public Date getPeriod() throws IOException {
+    public Frequency getSeriesFrequency() throws IOException {
+        checkState();
         throw new IllegalStateException();
     }
 
     @Override
-    public Double getValue() throws IOException {
+    public String getSeriesAttribute(String key) throws IOException {
+        checkState();
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public Map<String, String> getSeriesAttributes() throws IOException {
+        checkState();
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public LocalDateTime getObsPeriod() throws IOException {
+        checkState();
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public Double getObsValue() throws IOException {
+        checkState();
         throw new IllegalStateException();
     }
 
     @Override
     public void close() throws IOException {
+        closed = true;
+    }
+
+    private void checkState() throws IOException {
+        if (closed) {
+            throw new IOException("Cursor closed");
+        }
     }
 }

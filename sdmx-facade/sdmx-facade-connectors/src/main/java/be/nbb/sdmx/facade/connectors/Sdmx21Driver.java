@@ -17,26 +17,29 @@
 package be.nbb.sdmx.facade.connectors;
 
 import be.nbb.sdmx.facade.DataCursor;
+import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.driver.SdmxDriver;
 import be.nbb.sdmx.facade.driver.WsEntryPoint;
 import be.nbb.sdmx.facade.util.HasCache;
+import be.nbb.sdmx.facade.repo.Series;
 import be.nbb.sdmx.facade.util.SdmxMediaType;
-import be.nbb.sdmx.facade.util.XMLStreamCompactDataCursor21;
+import be.nbb.sdmx.facade.xml.stream.SdmxXmlStreams;
 import it.bancaditalia.oss.sdmx.api.DataFlowStructure;
 import it.bancaditalia.oss.sdmx.api.Dataflow;
-import it.bancaditalia.oss.sdmx.api.GenericSDMXClient;
 import it.bancaditalia.oss.sdmx.client.RestSdmxClient;
 import it.bancaditalia.oss.sdmx.exceptions.SdmxException;
+import it.bancaditalia.oss.sdmx.exceptions.SdmxIOException;
 import java.io.IOException;
 import java.io.Reader;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
 import org.openide.util.lookup.ServiceProvider;
 
 /**
@@ -48,13 +51,10 @@ public final class Sdmx21Driver implements SdmxDriver, HasCache {
 
     private static final String PREFIX = "sdmx:sdmx21:";
 
+    private final XMLInputFactory xml = XMLInputFactory.newInstance();
+
     @lombok.experimental.Delegate
-    private final SdmxDriverSupport support = SdmxDriverSupport.of(PREFIX, new SdmxDriverSupport.ClientSupplier() {
-        @Override
-        public GenericSDMXClient getClient(URL endpoint, Map<?, ?> info) throws MalformedURLException {
-            return new ExtRestSdmxClient(endpoint, Sdmx21Config.load(info));
-        }
-    });
+    private final SdmxDriverSupport support = SdmxDriverSupport.of(PREFIX, (u, i, l) -> new Sdmx21Client(u, Sdmx21Config.load(i), l, xml));
 
     @Override
     public List<WsEntryPoint> getDefaultEntryPoints() {
@@ -72,12 +72,6 @@ public final class Sdmx21Driver implements SdmxDriver, HasCache {
                 .description("Istituto Nazionale di Statistica")
                 .endpoint("http://sdmx.istat.it/SDMXWS/rest")
                 .supportsCompression(true)
-                .seriesKeysOnlySupported(true)
-                .build());
-        result.add(b.clear()
-                .name("INSEE")
-                .description("Institut national de la statistique et des études économiques")
-                .endpoint("http://www.bdm.insee.fr/series/sdmx")
                 .seriesKeysOnlySupported(true)
                 .build());
         result.add(b.clear()
@@ -173,27 +167,37 @@ public final class Sdmx21Driver implements SdmxDriver, HasCache {
         }
     }
 
-    private final static class ExtRestSdmxClient extends RestSdmxClient implements HasDataCursor, HasSeriesKeysOnlySupported {
+    private final static class Sdmx21Client extends RestSdmxClient implements HasDataCursor, HasSeriesKeysOnlySupported {
 
         private final Sdmx21Config config;
         private final XMLInputFactory factory;
 
-        private ExtRestSdmxClient(URL endpoint, Sdmx21Config config) {
+        private Sdmx21Client(URL endpoint, Sdmx21Config config, LanguagePriorityList langs, XMLInputFactory factory) {
             super("", endpoint, config.isNeedsCredentials(), config.isNeedsURLEncoding(), config.isSupportsCompression());
+            this.languages = Util.fromLanguages(langs);
             this.config = config;
-            this.factory = XMLInputFactory.newInstance();
+            this.factory = factory;
         }
 
         @Override
         public DataCursor getDataCursor(Dataflow dataflow, DataFlowStructure dsd, Key resource, boolean serieskeysonly) throws SdmxException, IOException {
             String query = buildDataQuery(dataflow, resource.toString(), null, null, serieskeysonly, null, false);
-            Reader stream = runQuery(query, SdmxMediaType.STRUCTURE_SPECIFIC_DATA_21);
-            return XMLStreamCompactDataCursor21.compactData21(factory, stream, Util.toDataStructure(dsd));
+            // FIXME: avoid in-memory copy
+            List<Series> data = runQuery((r, l) -> parse(r, Util.toDataStructure(dsd)), query, SdmxMediaType.STRUCTURE_SPECIFIC_DATA_21);
+            return Series.asCursor(data, resource);
         }
 
         @Override
         public boolean isSeriesKeysOnlySupported() {
             return config.isSeriesKeysOnlySupported();
+        }
+
+        private List<Series> parse(Reader xmlReader, DataStructure dsd) throws XMLStreamException, SdmxException {
+            try {
+                return Series.copyOf(SdmxXmlStreams.compactData21(dsd).get(factory, xmlReader));
+            } catch (IOException ex) {
+                throw new SdmxIOException("Cannot parse compact data 21", ex);
+            }
         }
     }
     //</editor-fold>

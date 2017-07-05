@@ -18,17 +18,16 @@ package be.nbb.sdmx.facade.file;
 
 import be.nbb.sdmx.facade.file.impl.XMLStreamSdmxDecoder;
 import be.nbb.sdmx.facade.DataCursor;
-import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.TimeFormat;
+import be.nbb.sdmx.facade.LanguagePriorityList;
+import be.nbb.sdmx.facade.Frequency;
+import be.nbb.sdmx.facade.samples.SdmxSource;
+import be.nbb.sdmx.facade.tck.ConnectionAssert;
 import java.io.File;
 import java.io.IOException;
 import javax.xml.stream.XMLInputFactory;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
@@ -45,36 +44,39 @@ public class FileSdmxConnectionTest {
 
     @Test
     public void testCompactData21() throws IOException {
-        File compact21 = TestResources.COMPACT21_FILE.copyTo(temp);
+        File compact21 = temp.newFile();
+        SdmxSource.OTHER_COMPACT21.copyTo(compact21.toPath());
 
-        FileSdmxConnection conn = new FileSdmxConnection(compact21, factory, decoder);
+        SdmxFile file = new SdmxFile(compact21, null);
 
-        DataflowRef flowRef = DataflowRef.parse(compact21.getName());
+        FileSdmxConnection conn = new FileSdmxConnection(file, LanguagePriorityList.ANY, factory, decoder);
 
-        assertEquals(1, conn.getDataflows().size());
-        assertEquals(7, conn.getDataStructure(flowRef).getDimensions().size());
+        assertThat(conn.getDataflows()).hasSize(1);
+        assertThat(conn.getDataStructure(file.getDataflowRef()).getDimensions()).hasSize(7);
 
         Key key = Key.of("A", "BEL", "1", "0", "0", "0", "OVGD");
 
-        try (DataCursor cursor = conn.getData(flowRef, Key.ALL, false)) {
-            assertTrue(cursor.nextSeries());
-            assertEquals(key, cursor.getKey());
-            assertEquals(TimeFormat.YEARLY, cursor.getTimeFormat());
+        try (DataCursor o = conn.getData(file.getDataflowRef(), Key.ALL, false)) {
+            assertThat(o.nextSeries()).isTrue();
+            assertThat(o.getSeriesKey()).isEqualTo(key);
+            assertThat(o.getSeriesFrequency()).isEqualTo(Frequency.ANNUAL);
             int indexObs = -1;
-            while (cursor.nextObs()) {
+            while (o.nextObs()) {
                 switch (++indexObs) {
                     case 0:
-                        assertThat(cursor.getPeriod()).isEqualTo("1960-01-01");
-                        assertEquals(92.0142, cursor.getValue(), 0d);
+                        assertThat(o.getObsPeriod()).isEqualTo("1960-01-01T00:00:00");
+                        assertThat(o.getObsValue()).isEqualTo(92.0142);
                         break;
                     case 56:
-                        assertThat(cursor.getPeriod()).isEqualTo("2016-01-01");
-                        assertEquals(386.5655, cursor.getValue(), 0d);
+                        assertThat(o.getObsPeriod()).isEqualTo("2016-01-01T00:00:00");
+                        assertThat(o.getObsValue()).isEqualTo(386.5655);
                         break;
                 }
             }
-            assertEquals(56, indexObs);
-            assertFalse(cursor.nextSeries());
+            assertThat(indexObs).isEqualTo(56);
+            assertThat(o.nextSeries()).isFalse();
         }
+
+        ConnectionAssert.assertCompliance(() -> new FileSdmxConnection(file, LanguagePriorityList.ANY, factory, decoder), file.getDataflowRef());
     }
 }

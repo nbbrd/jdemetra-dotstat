@@ -18,7 +18,8 @@ package be.nbb.sdmx.facade;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
@@ -32,17 +33,23 @@ public interface DataCursor extends Closeable {
 
     boolean nextSeries() throws IOException;
 
-    boolean nextObs() throws IOException;
+    @Nonnull
+    Key getSeriesKey() throws IOException, IllegalStateException;
 
     @Nonnull
-    Key getKey() throws IOException;
+    Frequency getSeriesFrequency() throws IOException, IllegalStateException;
+
+    @Nullable
+    String getSeriesAttribute(@Nonnull String key) throws IOException, IllegalStateException;
 
     @Nonnull
-    TimeFormat getTimeFormat() throws IOException;
+    Map<String, String> getSeriesAttributes() throws IOException, IllegalStateException;
+
+    boolean nextObs() throws IOException, IllegalStateException;
 
     @Nullable
-    Date getPeriod() throws IOException;
+    LocalDateTime getObsPeriod() throws IOException, IllegalStateException;
 
     @Nullable
-    Double getValue() throws IOException;
+    Double getObsValue() throws IOException, IllegalStateException;
 }

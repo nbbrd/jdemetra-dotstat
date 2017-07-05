@@ -16,16 +16,8 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.facade.Dataflow;
-import be.nbb.sdmx.facade.Dimension;
-import ec.nbdemetra.db.DimensionsEditor;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
-import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.driver.SdmxDriver;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import com.google.common.base.Converter;
-import com.google.common.base.Optional;
-import com.google.common.cache.CacheBuilder;
 import ec.nbdemetra.db.DbProviderBuddy;
 import ec.nbdemetra.ui.BeanHandler;
 import ec.nbdemetra.ui.Config;
@@ -37,46 +29,45 @@ import ec.tss.tsproviders.TsProviders;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tss.tsproviders.utils.Params;
 import ec.util.completion.AutoCompletionSource;
-import ec.util.completion.AutoCompletionSource.Behavior;
-import ec.util.completion.ext.QuickAutoCompletionSource;
-import ec.util.completion.swing.CustomListCellRenderer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
-import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.ServiceProvider;
 import be.nbb.sdmx.facade.util.HasCache;
+import ec.tstoolkit.utilities.GuavaCaches;
+import internal.sdmx.SdmxAutoCompletion;
+import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.Callable;
 
 /**
  *
  * @author Philippe Charles
  */
+@Deprecated
 @ServiceProvider(service = IDataSourceProviderBuddy.class)
 public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> implements IConfigurable {
 
     private final Configurator<DotStatProviderBuddy> configurator;
-    private final SdmxConnectionSupplier supplier;
     private final ListCellRenderer tableRenderer;
     private final ListCellRenderer columnRenderer;
+    private final ConcurrentMap autoCompletionCache;
 
     public DotStatProviderBuddy() {
         this.configurator = createConfigurator();
-        this.supplier = SdmxDriverManager.getDefault();
-        this.tableRenderer = new DataflowRenderer();
-        this.columnRenderer = new DimensionRenderer();
-        initDriverCache();
+        this.tableRenderer = SdmxAutoCompletion.getFlowsRenderer();
+        this.columnRenderer = SdmxAutoCompletion.getDimensionsRenderer();
+        this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
+        initDriverCache(GuavaCaches.softValuesCacheAsMap());
     }
 
-    private static void initDriverCache() {
-        ConcurrentMap cache = CacheBuilder.newBuilder().softValues().build().asMap();
-        for (SdmxDriver o : SdmxDriverManager.getDefault().getDrivers()) {
-            if (o instanceof HasCache) {
-                ((HasCache) o).setCache(cache);
-            }
-        }
+    private static void initDriverCache(ConcurrentMap cache) {
+        SdmxDriverManager.getDefault().getDrivers().stream()
+                .filter(o -> (o instanceof HasCache))
+                .forEach(o -> ((HasCache) o).setCache(cache));
     }
 
     @Override
@@ -107,19 +98,24 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
                 .cellRenderer(getTableRenderer(bean))
                 .name("Dataset")
                 .add();
-        withDimColumns(b, bean);
+        b.withAutoCompletion()
+                .select(bean, "dimColumns")
+                .source(getColumnSource(bean))
+                .separator(",")
+                .defaultValueSupplier(getDefaultDimColumnsSupplier(bean))
+                .cellRenderer(getColumnRenderer(bean))
+                .display("Dimensions")
+                .add();
         return b;
     }
 
-    protected NodePropertySetBuilder withDimColumns(NodePropertySetBuilder b, DotStatBean bean) {
-        return b.with(String.class)
-                .select(bean, "dimColumns")
-                .editor(DimensionsEditor.class)
-                .attribute(DimensionsEditor.SOURCE_ATTRIBUTE, getColumnSource(bean))
-                .attribute(DimensionsEditor.CELL_RENDERER_ATTRIBUTE, getColumnRenderer(bean))
-                .attribute(DimensionsEditor.SEPARATOR_ATTRIBUTE, ",")
-                .display("Dimensions")
-                .add();
+    private Callable<String> getDefaultDimColumnsSupplier(DotStatBean bean) {
+        Optional<DotStatProvider> provider = lookupProvider();
+        if (provider.isPresent()) {
+            DotStatProvider o = provider.get();
+            return () -> SdmxAutoCompletion.getDefaultDimensionsAsString(o.getConnectionSupplier(), o.getLanguages(), bean::getDbName, bean::getTableName, autoCompletionCache, ",");
+        }
+        return () -> "";
     }
 
     @Override
@@ -133,7 +129,12 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
     @Override
     protected AutoCompletionSource getTableSource(DotStatBean bean) {
-        return new DataflowSource(supplier, bean);
+        Optional<DotStatProvider> provider = lookupProvider();
+        if (provider.isPresent()) {
+            DotStatProvider o = provider.get();
+            return SdmxAutoCompletion.onFlows(o.getConnectionSupplier(), o.getLanguages(), bean::getDbName, autoCompletionCache);
+        }
+        return super.getTableSource(bean);
     }
 
     @Override
@@ -143,7 +144,12 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
     @Override
     protected AutoCompletionSource getColumnSource(DotStatBean bean) {
-        return new DimensionSource(supplier, bean);
+        Optional<DotStatProvider> provider = lookupProvider();
+        if (provider.isPresent()) {
+            DotStatProvider o = provider.get();
+            return SdmxAutoCompletion.onDimensions(o.getConnectionSupplier(), o.getLanguages(), bean::getDbName, bean::getTableName, autoCompletionCache);
+        }
+        return super.getColumnSource(bean);
     }
 
     @Override
@@ -167,117 +173,46 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
         return config;
     }
 
-    //<editor-fold defaultstate="collapsed" desc="Renderers">
-    private static final class DataflowRenderer extends CustomListCellRenderer<Dataflow> {
-
-        @Override
-        protected String getValueAsString(Dataflow value) {
-            return value.getLabel();
-        }
-
-        @Override
-        protected String toToolTipText(String term, JList list, Dataflow value, int index, boolean isSelected, boolean cellHasFocus) {
-            return value.getFlowRef().toString();
-        }
-    }
-
-    private static final class DimensionRenderer extends CustomListCellRenderer<Dimension> {
-
-        @Override
-        protected String getValueAsString(Dimension value) {
-            return value.getId();
-        }
-    }
-    //</editor-fold>
-
-    //<editor-fold defaultstate="collapsed" desc="Auto completion sources">    
-    private static abstract class DotStatAutoCompletionSource<T> extends QuickAutoCompletionSource<T> {
-
-        protected final SdmxConnectionSupplier supplier;
-        protected final DotStatBean bean;
-
-        public DotStatAutoCompletionSource(SdmxConnectionSupplier supplier, DotStatBean bean) {
-            this.supplier = supplier;
-            this.bean = bean;
-        }
-
-        abstract protected Iterable<T> getAllValues(SdmxConnection c) throws Exception;
-
-        @Override
-        protected Iterable<T> getAllValues() throws Exception {
-            try (SdmxConnection conn = supplier.getConnection(bean.getDbName())) {
-                return getAllValues(conn);
-            }
-        }
-
-        @Override
-        public Behavior getBehavior(String term) {
-            return Behavior.ASYNC;
-        }
-    }
-
-    private static final class DataflowSource extends DotStatAutoCompletionSource<Dataflow> {
-
-        public DataflowSource(SdmxConnectionSupplier supplier, DotStatBean bean) {
-            super(supplier, bean);
-        }
-
-        @Override
-        protected Iterable<Dataflow> getAllValues(SdmxConnection c) throws Exception {
-            return c.getDataflows();
-        }
-
-        @Override
-        protected boolean matches(TermMatcher termMatcher, Dataflow input) {
-            return termMatcher.matches(input.getLabel())
-                    || termMatcher.matches(input.getFlowRef().getId());
-        }
-
-        @Override
-        protected String valueToString(Dataflow value) {
-            return value.getFlowRef().toString();
-        }
-    }
-
-    private static final class DimensionSource extends DotStatAutoCompletionSource<Dimension> {
-
-        public DimensionSource(SdmxConnectionSupplier supplier, DotStatBean bean) {
-            super(supplier, bean);
-        }
-
-        @Override
-        protected Iterable<Dimension> getAllValues(SdmxConnection c) throws Exception {
-            return c.getDataStructure(bean.getFlowRef()).getDimensions();
-        }
-
-        @Override
-        protected boolean matches(TermMatcher termMatcher, Dimension input) {
-            return termMatcher.matches(input.getId())
-                    || termMatcher.matches(String.valueOf(input.getPosition()));
-        }
-
-        @Override
-        protected String valueToString(Dimension value) {
-            return value.getId();
-        }
-
-        @Override
-        public int compare(Dimension left, Dimension right) {
-            return Integer.compare(left.getPosition(), right.getPosition());
-        }
-    }
-    //</editor-fold>
-
     //<editor-fold defaultstate="collapsed" desc="Configuration">
     private static Configurator<DotStatProviderBuddy> createConfigurator() {
-        return new BuddyConfigHandler().toConfigurator(new BuddyConfigConverter());
+        return new BuddyConfigHandler().toConfigurator(BuddyConfig.converter());
     }
 
     @lombok.Data
     public static final class BuddyConfig {
 
-        private String preferredLanguage;
-        private boolean displayCodes;
+        String preferredLanguage;
+        boolean displayCodes;
+
+        public static Converter<BuddyConfig, Config> converter() {
+            return new BuddyConfigConverter();
+        }
+
+        private static final class BuddyConfigConverter extends Converter<BuddyConfig, Config> {
+
+            private final IParam<Config, String> prefferedLanguageParam = Params.onString("en", "preferredLanguage");
+            private final IParam<Config, Boolean> displayCodesParam = Params.onBoolean(false, "displayCodes");
+
+            @Override
+            protected Config doForward(BuddyConfig a) {
+                Config.Builder result = Config.builder(BuddyConfig.class.getName(), "INSTANCE", "20150225");
+                prefferedLanguageParam.set(result, a.getPreferredLanguage());
+                displayCodesParam.set(result, a.isDisplayCodes());
+                return result.build();
+            }
+
+            @Override
+            protected BuddyConfig doBackward(Config b) {
+                BuddyConfig result = new BuddyConfig();
+                result.setPreferredLanguage(prefferedLanguageParam.get(b));
+                result.setDisplayCodes(displayCodesParam.get(b));
+                return result;
+            }
+        }
+    }
+
+    private static Optional<DotStatProvider> lookupProvider() {
+        return TsProviders.lookup(DotStatProvider.class, DotStatProvider.NAME).toJavaUtil();
     }
 
     private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, DotStatProviderBuddy> {
@@ -285,43 +220,19 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
         @Override
         public BuddyConfig loadBean(DotStatProviderBuddy resource) {
             BuddyConfig result = new BuddyConfig();
-            Optional<DotStatProvider> provider = TsProviders.lookup(DotStatProvider.class, DotStatProvider.NAME);
-            if (provider.isPresent()) {
-                result.setPreferredLanguage(provider.get().getPreferredLanguage());
-                result.setDisplayCodes(provider.get().isDisplayCodes());
-            }
+            lookupProvider().ifPresent(o -> {
+                result.setPreferredLanguage(o.getPreferredLanguage());
+                result.setDisplayCodes(o.isDisplayCodes());
+            });
             return result;
         }
 
         @Override
         public void storeBean(DotStatProviderBuddy resource, BuddyConfig bean) {
-            Optional<DotStatProvider> provider = TsProviders.lookup(DotStatProvider.class, DotStatProvider.NAME);
-            if (provider.isPresent()) {
-                provider.get().setPreferredLanguage(bean.getPreferredLanguage());
-                provider.get().setDisplayCodes(bean.isDisplayCodes());
-            }
-        }
-    }
-
-    private static final class BuddyConfigConverter extends Converter<BuddyConfig, Config> {
-
-        private final IParam<Config, String> prefferedLanguageParam = Params.onString("en", "preferredLanguage");
-        private final IParam<Config, Boolean> displayCodesParam = Params.onBoolean(false, "displayCodes");
-
-        @Override
-        protected Config doForward(BuddyConfig a) {
-            Config.Builder result = Config.builder(BuddyConfig.class.getName(), "INSTANCE", "20150225");
-            prefferedLanguageParam.set(result, a.getPreferredLanguage());
-            displayCodesParam.set(result, a.isDisplayCodes());
-            return result.build();
-        }
-
-        @Override
-        protected BuddyConfig doBackward(Config b) {
-            BuddyConfig result = new BuddyConfig();
-            result.setPreferredLanguage(prefferedLanguageParam.get(b));
-            result.setDisplayCodes(displayCodesParam.get(b));
-            return result;
+            lookupProvider().ifPresent(o -> {
+                o.setPreferredLanguage(bean.getPreferredLanguage());
+                o.setDisplayCodes(bean.isDisplayCodes());
+            });
         }
     }
     //</editor-fold>

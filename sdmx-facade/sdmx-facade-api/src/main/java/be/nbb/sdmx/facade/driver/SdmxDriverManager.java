@@ -16,6 +16,7 @@
  */
 package be.nbb.sdmx.facade.driver;
 
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import java.io.IOException;
@@ -27,8 +28,7 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
 /**
@@ -46,21 +46,22 @@ public final class SdmxDriverManager implements SdmxConnectionSupplier {
     }
 
     @Override
-    public SdmxConnection getConnection(String name) throws IOException {
+    public SdmxConnection getConnection(String name, LanguagePriorityList languages) throws IOException {
         WsEntryPoint wsEntryPoint = entryPointByName.get(name);
-        if (wsEntryPoint != null) {
-            URI uri = wsEntryPoint.getUri();
+        if (wsEntryPoint == null) {
+            throw new IOException("Cannot find entry point for '" + name + "'");
+        }
+        URI uri = wsEntryPoint.getUri();
+        try {
             for (SdmxDriver o : drivers) {
-                try {
-                    if (o.acceptsURI(uri)) {
-                        return o.connect(uri, wsEntryPoint.getProperties());
-                    }
-                } catch (IOException ex) {
-                    Logger.getLogger(SdmxDriverManager.class.getName()).log(Level.SEVERE, null, ex);
+                if (o.acceptsURI(uri)) {
+                    return o.connect(uri, wsEntryPoint.getProperties(), languages);
                 }
             }
+        } catch (RuntimeException ex) {
+            throw new IOException("Failed to connect to '" + name + "'", ex);
         }
-        throw new IOException(name);
+        throw new IOException("Failed to find a suitable driver for '" + name + "'");
     }
 
     @Nonnull
@@ -80,9 +81,7 @@ public final class SdmxDriverManager implements SdmxConnectionSupplier {
 
     public void setEntryPoints(@Nonnull List<WsEntryPoint> list) {
         entryPointByName.clear();
-        for (WsEntryPoint o : list) {
-            entryPointByName.put(o.getName(), o);
-        }
+        list.forEach(o -> entryPointByName.put(o.getName(), o));
     }
 
     @Nonnull
@@ -97,17 +96,21 @@ public final class SdmxDriverManager implements SdmxConnectionSupplier {
 
         private static SdmxDriverManager instanciate() {
             SdmxDriverManager result = new SdmxDriverManager();
-            List<SdmxDriver> drivers = new ArrayList<>();
-            for (SdmxDriver o : ServiceLoader.load(SdmxDriver.class)) {
-                drivers.add(o);
-            }
-            result.setDrivers(drivers);
-            List<WsEntryPoint> entryPoints = new ArrayList<>();
-            for (SdmxDriver o : result.getDrivers()) {
-                entryPoints.addAll(o.getDefaultEntryPoints());
-            }
-            result.setEntryPoints(entryPoints);
+            result.setDrivers(getDrivers());
+            result.setEntryPoints(getEntryPoints(result.getDrivers()));
             return result;
+        }
+
+        private static List<SdmxDriver> getDrivers() {
+            List<SdmxDriver> result = new ArrayList<>();
+            ServiceLoader.load(SdmxDriver.class).forEach(result::add);
+            return result;
+        }
+
+        private static List<WsEntryPoint> getEntryPoints(List<SdmxDriver> drivers) {
+            return drivers.stream()
+                    .flatMap(o -> o.getDefaultEntryPoints().stream())
+                    .collect(Collectors.toList());
         }
     }
     //</editor-fold>

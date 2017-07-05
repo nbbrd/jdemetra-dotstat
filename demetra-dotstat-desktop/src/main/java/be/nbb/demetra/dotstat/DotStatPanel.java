@@ -16,14 +16,15 @@
  */
 package be.nbb.demetra.dotstat;
 
+import be.nbb.demetra.sdmx.webservice.SdmxWebServiceProvider;
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import be.nbb.sdmx.facade.driver.WsEntryPoint;
-import com.google.common.base.Optional;
 import ec.nbdemetra.ui.completion.JAutoCompletionService;
 import ec.nbdemetra.ui.nodes.AbstractNodeBuilder;
 import ec.nbdemetra.ui.properties.NodePropertySetBuilder;
-import ec.nbdemetra.ui.properties.OpenIdePropertySheetBeanEditor;
+import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
 import ec.tss.tsproviders.TsProviders;
 import ec.util.various.swing.FontAwesome;
 import ec.util.various.swing.ext.FontAwesomeUtils;
@@ -31,8 +32,7 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.beans.BeanInfo;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyVetoException;
-import java.beans.VetoableChangeListener;
+import java.util.Optional;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.netbeans.api.actions.Editable;
@@ -58,14 +58,11 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         removeButton.setEnabled(false);
         editButton.setEnabled(false);
         resetButton.setEnabled(false);
-        em.addVetoableChangeListener(new VetoableChangeListener() {
-            @Override
-            public void vetoableChange(PropertyChangeEvent evt) throws PropertyVetoException {
-                if (ExplorerManager.PROP_SELECTED_NODES.equals(evt.getPropertyName())) {
-                    Node[] nodes = (Node[]) evt.getNewValue();
+        em.addVetoableChangeListener((PropertyChangeEvent evt) -> {
+            if (ExplorerManager.PROP_SELECTED_NODES.equals(evt.getPropertyName())) {
+                Node[] nodes = (Node[]) evt.getNewValue();
 //                    removeButton.setEnabled(nodes.length == 1);
-                    editButton.setEnabled(nodes.length == 1);
-                }
+                editButton.setEnabled(nodes.length == 1);
             }
         });
         JAutoCompletionService.forPathBind(JAutoCompletionService.LOCALE_PATH, preferedLangTextBox);
@@ -201,28 +198,34 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         return em;
     }
 
-    void load() {
-        Optional<DotStatProvider> provider = TsProviders.lookup(DotStatProvider.class, DotStatProvider.NAME);
-        if (provider.isPresent()) {
-            preferedLangTextBox.setText(provider.get().getPreferredLanguage());
-            displayCodesCheckBox.setSelected(provider.get().isDisplayCodes());
-            SdmxConnectionSupplier connectionSupplier = provider.get().getConnectionSupplier();
-            if (connectionSupplier instanceof SdmxDriverManager) {
-                AbstractNodeBuilder b = new AbstractNodeBuilder();
-                for (WsEntryPoint o : ((SdmxDriverManager) connectionSupplier).getEntryPoints()) {
-                    b.add(new ConfigNode(o));
-                }
-                em.setRootContext(b.name("hello").build());
-            }
+    private static Optional<SdmxWebServiceProvider> lookupProvider() {
+        return TsProviders.lookup(SdmxWebServiceProvider.class, SdmxWebServiceProvider.NAME).toJavaUtil();
+    }
+
+    private void loadEntryPoints(SdmxConnectionSupplier supplier) {
+        if (supplier instanceof SdmxDriverManager) {
+            AbstractNodeBuilder b = new AbstractNodeBuilder();
+            ((SdmxDriverManager) supplier).getEntryPoints().forEach(x -> b.add(new ConfigNode(x)));
+            em.setRootContext(b.name("hello").build());
         }
     }
 
+    void load() {
+        lookupProvider().ifPresent(o -> {
+            preferedLangTextBox.setText(o.getLanguages().toString());
+            displayCodesCheckBox.setSelected(o.isDisplayCodes());
+            loadEntryPoints(o.getConnectionSupplier());
+        });
+    }
+
     void store() {
-        Optional<DotStatProvider> provider = TsProviders.lookup(DotStatProvider.class, DotStatProvider.NAME);
-        if (provider.isPresent()) {
-            provider.get().setPreferredLanguage(preferedLangTextBox.getText());
-            provider.get().setDisplayCodes(displayCodesCheckBox.isSelected());
-        }
+        lookupProvider().ifPresent(o -> {
+            try {
+                o.setLanguages(LanguagePriorityList.parse(preferedLangTextBox.getText()));
+            } catch (IllegalArgumentException ex) {
+            }
+            o.setDisplayCodes(displayCodesCheckBox.isSelected());
+        });
     }
 
     boolean valid() {
@@ -293,7 +296,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
         @Override
         public void edit() {
-            if (OpenIdePropertySheetBeanEditor.editNode(this, "Edit entry point", getIcon(BeanInfo.ICON_MONO_16x16))) {
+            if (new PropertySheetDialogBuilder().title("Edit entry point").icon(getIcon(BeanInfo.ICON_MONO_16x16)).editNode(this)) {
                 setDisplayName(getLookup().lookup(WsEntryPoint.class).getName());
             }
         }

@@ -18,16 +18,17 @@ package be.nbb.sdmx.facade.connectors;
 
 import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.TimeFormat;
+import be.nbb.sdmx.facade.Frequency;
 import be.nbb.sdmx.facade.util.ObsParser;
 import it.bancaditalia.oss.sdmx.api.PortableTimeSeries;
 import java.io.IOException;
-import java.util.Date;
-import java.util.HashMap;
+import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nonnull;
+import java.util.Objects;
+import be.nbb.sdmx.facade.util.FreqUtil;
+import static be.nbb.sdmx.facade.util.FreqUtil.TIME_FORMAT_CONCEPT;
 
 /**
  *
@@ -39,85 +40,118 @@ final class DataCursorAdapter implements DataCursor {
     private final ObsParser obs;
     private PortableTimeSeries current;
     private int index;
+    private boolean closed;
+    private boolean hasObs;
 
-    public DataCursorAdapter(List<PortableTimeSeries> data) {
+    DataCursorAdapter(List<PortableTimeSeries> data, ObsParser obs) {
         this.data = data.iterator();
-        this.obs = new ObsParser();
+        this.obs = obs;
+        this.closed = false;
+        this.hasObs = false;
     }
 
     @Override
     public boolean nextSeries() throws IOException {
+        checkState();
         boolean result = data.hasNext();
         if (result) {
             current = data.next();
-            obs.timeFormat(getTimeFormat(current));
+            obs.frequency(getFrequency(current));
             index = -1;
+        } else {
+            current = null;
         }
         return result;
     }
 
     @Override
     public boolean nextObs() throws IOException {
+        checkSeriesState();
         index++;
-        return index < current.getObservations().size();
+        return hasObs = (index < current.getObservations().size());
     }
 
     @Override
-    public Key getKey() throws IOException {
+    public Key getSeriesKey() throws IOException {
+        checkSeriesState();
         return parseKey(current);
     }
 
     @Override
-    public TimeFormat getTimeFormat() throws IOException {
-        return obs.getTimeFormat();
+    public Frequency getSeriesFrequency() throws IOException {
+        checkSeriesState();
+        return obs.getFrequency();
     }
 
     @Override
-    public Date getPeriod() throws IOException {
-        return obs.periodString(current.getTimeSlots().get(index)).getPeriod();
+    public String getSeriesAttribute(String key) throws IOException {
+        checkSeriesState();
+        Objects.requireNonNull(key);
+        return current.getAttribute(key);
     }
 
     @Override
-    public Double getValue() throws IOException {
-        return current.getObservations().get(index);
+    public Map<String, String> getSeriesAttributes() throws IOException {
+        checkSeriesState();
+        return current.getAttributesMap();
+    }
+
+    @Override
+    public LocalDateTime getObsPeriod() throws IOException {
+        checkObsState();
+        return obs.period(current.getTimeSlots().get(index)).parsePeriod();
+    }
+
+    @Override
+    public Double getObsValue() throws IOException {
+        checkObsState();
+        Object result = current.getObservations().get(index);
+        return result instanceof Double ? (Double) result : null;
     }
 
     @Override
     public void close() throws IOException {
+        closed = true;
+    }
+
+    private void checkState() throws IOException {
+        if (closed) {
+            throw new IOException("Cursor closed");
+        }
+    }
+
+    private void checkSeriesState() throws IOException, IllegalStateException {
+        checkState();
+        if (current == null) {
+            throw new IllegalStateException();
+        }
+    }
+
+    private void checkObsState() throws IOException, IllegalStateException {
+        checkSeriesState();
+        if (!hasObs) {
+            throw new IllegalStateException();
+        }
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private static TimeFormat getTimeFormat(PortableTimeSeries input) {
-        String value = splitKeyValue(input.getAttributes()).get("TIME_FORMAT");
+    private static Frequency getFrequency(PortableTimeSeries input) {
+        String value = input.getAttribute(TIME_FORMAT_CONCEPT);
         if (value != null) {
-            return TimeFormat.parseByTimeFormat(value);
+            return FreqUtil.parseByTimeFormat(value);
         }
         if (input.getFrequency() != null) {
-            return TimeFormat.parseByFrequencyCodeId(input.getFrequency());
+            return FreqUtil.parseByFreq(input.getFrequency());
         }
-        return TimeFormat.UNDEFINED;
+        return Frequency.UNDEFINED;
     }
 
-    private static Map<String, String> splitKeyValue(List<String> input) {
-        Map<String, String> result = new HashMap<>();
-        for (String o : input) {
-            String[] items = o.split("=");
-            result.put(items[0], items[1]);
+    private static Key parseKey(PortableTimeSeries ts) throws IOException {
+        Key result = Key.of(ts.getDimensionsMap().values());
+        if (!result.isSeries()) {
+            throw new IOException("Invalid series key '" + result + "'");
         }
         return result;
-    }
-
-    @Nonnull
-    private static Key parseKey(PortableTimeSeries ts) {
-        List<String> dimensions = ts.getDimensions();
-        if (dimensions.isEmpty()) {
-            return Key.ALL;
-        }
-        String[] result = new String[dimensions.size()];
-        for (int i = 0; i < result.length; i++) {
-            result[i] = dimensions.get(i).split("=")[1];
-        }
-        return Key.of(result);
     }
     //</editor-fold>
 }

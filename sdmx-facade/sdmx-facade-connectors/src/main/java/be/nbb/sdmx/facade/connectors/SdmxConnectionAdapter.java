@@ -23,6 +23,7 @@ import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.util.NoOpCursor;
+import be.nbb.sdmx.facade.util.ObsParser;
 import it.bancaditalia.oss.sdmx.api.DSDIdentifier;
 import it.bancaditalia.oss.sdmx.api.GenericSDMXClient;
 import it.bancaditalia.oss.sdmx.client.custom.DotStat;
@@ -42,13 +43,16 @@ import javax.annotation.Nonnull;
 class SdmxConnectionAdapter implements SdmxConnection {
 
     private final GenericSDMXClient client;
+    private boolean closed;
 
     public SdmxConnectionAdapter(GenericSDMXClient client) {
         this.client = client;
+        this.closed = false;
     }
 
     @Override
     final public Set<Dataflow> getDataflows() throws IOException {
+        checkState();
         Set<Dataflow> result = new HashSet<>();
         for (it.bancaditalia.oss.sdmx.api.Dataflow o : loadDataFlowsById().values()) {
             result.add(Util.toDataflow(o));
@@ -58,16 +62,22 @@ class SdmxConnectionAdapter implements SdmxConnection {
 
     @Override
     final public Dataflow getDataflow(DataflowRef flowRef) throws IOException {
+        checkState();
         return Util.toDataflow(loadDataflow(flowRef));
     }
 
     @Override
     final public DataStructure getDataStructure(DataflowRef flowRef) throws IOException {
+        checkState();
         return Util.toDataStructure(loadDataStructure(flowRef));
     }
 
     @Override
     final public DataCursor getData(DataflowRef flowRef, Key key, boolean serieskeysonly) throws IOException {
+        checkState();
+        if (serieskeysonly && !isSeriesKeysOnlySupported()) {
+            throw new IllegalStateException("serieskeysonly not supported");
+        }
         return loadData(flowRef, key, serieskeysonly);
     }
 
@@ -79,7 +89,13 @@ class SdmxConnectionAdapter implements SdmxConnection {
 
     @Override
     public void close() throws IOException {
-        // nothing to do
+        closed = true;
+    }
+
+    private void checkState() throws IOException {
+        if (closed) {
+            throw new IOException("Connection closed");
+        }
     }
 
     @Nonnull
@@ -87,7 +103,7 @@ class SdmxConnectionAdapter implements SdmxConnection {
         try {
             return client.getDataflows();
         } catch (SdmxException ex) {
-            throw new IOException("While getting dataflows", ex);
+            throw new IOException("Failed to get datasets", ex);
         }
     }
 
@@ -96,38 +112,35 @@ class SdmxConnectionAdapter implements SdmxConnection {
         try {
             return client.getDataflow(flowRef.getId(), flowRef.getAgencyId(), flowRef.getVersion());
         } catch (SdmxException ex) {
-            throw new IOException("While getting dataflow '" + flowRef + "'", ex);
+            throw new IOException("Failed to get details from dataset '" + flowRef + "'", ex);
         }
     }
 
     @Nonnull
     protected it.bancaditalia.oss.sdmx.api.DataFlowStructure loadDataStructure(DataflowRef flowRef) throws IOException {
+        it.bancaditalia.oss.sdmx.api.DSDIdentifier dsd = client instanceof DotStat
+                ? new DSDIdentifier(flowRef.getId(), flowRef.getAgencyId(), flowRef.getVersion())
+                : loadDataflow(flowRef).getDsdIdentifier();
         try {
-            it.bancaditalia.oss.sdmx.api.DSDIdentifier dsd = client instanceof DotStat
-                    ? new DSDIdentifier(flowRef.getId(), flowRef.getAgencyId(), flowRef.getVersion())
-                    : loadDataflow(flowRef).getDsdIdentifier();
             return client.getDataFlowStructure(dsd, true);
         } catch (SdmxException ex) {
-            throw new IOException("While getting datastructure for '" + flowRef + "'", ex);
+            throw new IOException("Failed to get data structure from dataset '" + flowRef + "'", ex);
         }
     }
 
     @Nonnull
     protected DataCursor loadData(DataflowRef flowRef, Key key, boolean serieskeysonly) throws IOException {
-        if (serieskeysonly && !isSeriesKeysOnlySupported()) {
-            throw new IllegalStateException("serieskeysonly not supported");
-        }
         it.bancaditalia.oss.sdmx.api.Dataflow dataflow = loadDataflow(flowRef);
         it.bancaditalia.oss.sdmx.api.DataFlowStructure dfs = loadDataStructure(flowRef);
         try {
             return client instanceof HasDataCursor
                     ? ((HasDataCursor) client).getDataCursor(dataflow, dfs, key, serieskeysonly)
-                    : new DataCursorAdapter(client.getTimeSeries(dataflow, dfs, key.toString(), null, null, serieskeysonly, null, false));
+                    : new DataCursorAdapter(client.getTimeSeries(dataflow, dfs, key.toString(), null, null, serieskeysonly, null, false), ObsParser.standard());
         } catch (SdmxException ex) {
             if (isNoResultMatchingQuery(ex)) {
                 return NoOpCursor.noOp();
             }
-            throw new IOException("While getting data for '" + flowRef + "' at '" + key + "'", ex);
+            throw new IOException("Failed to get data from dataset '" + flowRef + "' with key '" + key + "'", ex);
         }
     }
 

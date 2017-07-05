@@ -17,10 +17,6 @@
 package be.nbb.sdmx.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 /**
@@ -31,84 +27,113 @@ public class KeyTest {
 
     @Test
     public void testParse() {
-        Key key;
+        assertThat(Key.parse("")).satisfies(o -> {
+            assertThat(o.size()).isEqualTo(1);
+            assertThat(o.get(0)).isEqualTo("");
+            assertThat(o.toString()).isEqualTo("all");
+        });
 
-        key = Key.parse("");
-        assertEquals(1, key.getSize());
-        assertEquals("all", key.toString());
+        assertThat(Key.parse("LOCSTL04.AUS.M")).satisfies(o -> {
+            assertThat(o.size()).isEqualTo(3);
+            assertThat(o.get(0)).isEqualTo("LOCSTL04");
+            assertThat(o.get(1)).isEqualTo("AUS");
+            assertThat(o.get(2)).isEqualTo("M");
+            assertThat(o.toString()).isEqualTo("LOCSTL04.AUS.M");
+        });
 
-        key = Key.parse("LOCSTL04.AUS.M");
-        assertEquals(3, key.getSize());
-        assertEquals("LOCSTL04", key.getItem(0));
-        assertEquals("AUS", key.getItem(1));
-        assertEquals("M", key.getItem(2));
-        assertEquals("LOCSTL04.AUS.M", key.toString());
+        assertThat(Key.parse("LOCSTL04..M")).satisfies(o -> {
+            assertThat(o.size()).isEqualTo(3);
+            assertThat(o.get(0)).isEqualTo("LOCSTL04");
+            assertThat(o.get(1)).isEqualTo("");
+            assertThat(o.get(2)).isEqualTo("M");
+            assertThat(o.toString()).isEqualTo("LOCSTL04..M");
+        });
 
-        key = Key.parse("LOCSTL04..M");
-        assertEquals(3, key.getSize());
-        assertEquals("LOCSTL04", key.getItem(0));
-        assertEquals("", key.getItem(1));
-        assertEquals("M", key.getItem(2));
-        assertEquals("LOCSTL04..M", key.toString());
-
-        key = Key.parse("LOCSTL04..");
-        assertEquals(3, key.getSize());
-        assertEquals("LOCSTL04", key.getItem(0));
-        assertEquals("", key.getItem(1));
-        assertEquals("", key.getItem(2));
-        assertEquals("LOCSTL04..", key.toString());
+        assertThat(Key.parse("LOCSTL04..")).satisfies(o -> {
+            assertThat(o.size()).isEqualTo(3);
+            assertThat(o.get(0)).isEqualTo("LOCSTL04");
+            assertThat(o.get(1)).isEqualTo("");
+            assertThat(o.get(2)).isEqualTo("");
+            assertThat(o.toString()).isEqualTo("LOCSTL04..");
+        });
     }
 
     @Test
     public void testValueOf() {
-        Key key;
+        assertThat(Key.of()).satisfies(o -> {
+            assertThat(o.size()).isEqualTo(1);
+            assertThat(o.get(0)).isEqualTo("");
+            assertThat(o.toString()).isEqualTo("all");
+        });
 
-        key = Key.of();
-        assertEquals(1, key.getSize());
-        assertEquals("all", key.toString());
+        assertThat(Key.of("")).satisfies(o -> {
+            assertThat(o.size()).isEqualTo(1);
+            assertThat(o.get(0)).isEqualTo("");
+            assertThat(o.toString()).isEqualTo("all");
+        });
 
-        key = Key.of("");
-        assertEquals(1, key.getSize());
-        assertEquals("all", key.toString());
+        assertThat(Key.of("LOCSTL04", "AUS", "M")).satisfies(o -> {
+            assertThat(o.size()).isEqualTo(3);
+            assertThat(o.get(0)).isEqualTo("LOCSTL04");
+            assertThat(o.get(1)).isEqualTo("AUS");
+            assertThat(o.get(2)).isEqualTo("M");
+            assertThat(o.toString()).isEqualTo("LOCSTL04.AUS.M");
+        });
 
-        key = Key.of("LOCSTL04", "AUS", "M");
-        assertEquals(3, key.getSize());
-        assertEquals("LOCSTL04", key.getItem(0));
-        assertEquals("AUS", key.getItem(1));
-        assertEquals("M", key.getItem(2));
-        assertEquals("LOCSTL04.AUS.M", key.toString());
+        assertThat(Key.of("LOCSTL04", "", "M")).satisfies(o -> {
+            assertThat(o.size()).isEqualTo(3);
+            assertThat(o.get(0)).isEqualTo("LOCSTL04");
+            assertThat(o.get(1)).isEqualTo("");
+            assertThat(o.get(2)).isEqualTo("M");
+            assertThat(o.toString()).isEqualTo("LOCSTL04..M");
+        });
 
-        key = Key.of("LOCSTL04", "", "M");
-        assertEquals(3, key.getSize());
-        assertEquals("LOCSTL04", key.getItem(0));
-        assertEquals("", key.getItem(1));
-        assertEquals("M", key.getItem(2));
-        assertEquals("LOCSTL04..M", key.toString());
-
-        key = Key.of("LOCSTL04", "", "");
-        assertEquals(3, key.getSize());
-        assertEquals("LOCSTL04", key.getItem(0));
-        assertEquals("", key.getItem(1));
-        assertEquals("", key.getItem(2));
-        assertEquals("LOCSTL04..", key.toString());
+        assertThat(Key.of("LOCSTL04", "", "")).satisfies(o -> {
+            assertThat(o.size()).isEqualTo(3);
+            assertThat(o.get(0)).isEqualTo("LOCSTL04");
+            assertThat(o.get(1)).isEqualTo("");
+            assertThat(o.get(2)).isEqualTo("");
+            assertThat(o.toString()).isEqualTo("LOCSTL04..");
+        });
     }
 
     @Test
     public void testEquals() {
-        assertEquals(Key.of(""), Key.of(""));
-        assertEquals(Key.of("LOCSTL04", "AUS", "M"), Key.of("LOCSTL04", "AUS", "M"));
-        assertEquals(Key.of("LOCSTL04", "*", "M"), Key.of("LOCSTL04", "", "M"));
-        assertNotEquals(Key.of(""), Key.of("LOCSTL04", "AUS", "M"));
+        assertThat(Key.of("")).isEqualTo(Key.of(""));
+        assertThat(Key.of("LOCSTL04", "AUS", "M")).isEqualTo(Key.of("LOCSTL04", "AUS", "M"));
+        assertThat(Key.of("LOCSTL04", "", "M")).isEqualTo(Key.of("LOCSTL04", "*", "M"));
+        assertThat(Key.of("LOCSTL04", "AUS", "M")).isNotEqualTo(Key.of(""));
+    }
+
+    @Test
+    public void testIsSeries() {
+        assertThat(Key.ALL.isSeries()).isFalse();
+        assertThat(Key.of("LOCSTL04", "*").isSeries()).isFalse();
+        assertThat(Key.of("LOCSTL04", "AUS").isSeries()).isTrue();
     }
 
     @Test
     public void testContains() {
-        assertTrue(Key.of("").contains(Key.of("")));
-        assertTrue(Key.ALL.contains(Key.ALL));
-        assertTrue(Key.ALL.contains(Key.of("hello")));
-        assertFalse(Key.of("hello").contains(Key.ALL));
-        assertTrue(Key.of("LOCSTL04", "*", "M").contains(Key.of("LOCSTL04", "AUS", "M")));
-        assertFalse(Key.of("LOCSTL04", "AUS", "M").contains(Key.of("LOCSTL04", "*", "M")));
+        assertThat(Key.of("").contains(Key.of(""))).isTrue();
+        assertThat(Key.ALL.contains(Key.ALL)).isTrue();
+        assertThat(Key.ALL.contains(Key.of("hello", "world"))).isTrue();
+        assertThat(Key.of("hello").contains(Key.ALL)).isFalse();
+        assertThat(Key.of("LOCSTL04", "*", "M").contains(Key.of("LOCSTL04", "AUS", "M"))).isTrue();
+        assertThat(Key.of("LOCSTL04", "*").contains(Key.of("LOCSTL04", "AUS", "M"))).isFalse();
+        assertThat(Key.of("LOCSTL04", "AUS", "M").contains(Key.of("LOCSTL04", "*", "M"))).isFalse();
+        assertThat(Key.of("LOCSTL04", "AUS").contains(Key.of("LOCSTL04", "*", "M"))).isFalse();
+    }
+
+    @Test
+    public void testSupersedes() {
+        assertThat(Key.of("").supersedes(Key.of(""))).isFalse();
+        assertThat(Key.ALL.supersedes(Key.ALL)).isFalse();
+        assertThat(Key.ALL.supersedes(Key.of("hello", "world"))).isTrue();
+        assertThat(Key.of("hello").supersedes(Key.ALL)).isFalse();
+        assertThat(Key.of("LOCSTL04", "*", "M").supersedes(Key.of("LOCSTL04", "AUS", "M"))).isTrue();
+        assertThat(Key.of("LOCSTL04", "*").supersedes(Key.of("LOCSTL04", "AUS", "M"))).isFalse();
+        assertThat(Key.of("LOCSTL04", "AUS", "M").supersedes(Key.of("LOCSTL04", "*", "M"))).isFalse();
+        assertThat(Key.of("LOCSTL04", "AUS").supersedes(Key.of("LOCSTL04", "*", "M"))).isFalse();
     }
 
     @Test
@@ -117,6 +142,7 @@ public class KeyTest {
 
         b = Key.builder();
         assertThat(b.clear().toString()).isEqualTo("all");
+        assertThat(b.isDimension("hello")).isFalse();
 
         b = Key.builder("SECTOR", "REGION");
         assertThat(b.clear().put("SECTOR", "IND").put("REGION", "BE").toString()).isEqualTo("IND.BE");
@@ -124,5 +150,11 @@ public class KeyTest {
         assertThat(b.clear().put("SECTOR", "IND").toString()).isEqualTo("IND.");
         assertThat(b.clear().put("REGION", "BE").toString()).isEqualTo(".BE");
 //        assertThat(b.clear().toString()).isEqualTo("all");
+        assertThat(b.isDimension("hello")).isFalse();
+        assertThat(b.isDimension("SECTOR")).isTrue();
+
+        assertThat(b.clear().isSeries()).isFalse();
+        assertThat(b.clear().put("SECTOR", "IND").isSeries()).isFalse();
+        assertThat(b.clear().put("SECTOR", "IND").put("REGION", "BE").isSeries()).isTrue();
     }
 }

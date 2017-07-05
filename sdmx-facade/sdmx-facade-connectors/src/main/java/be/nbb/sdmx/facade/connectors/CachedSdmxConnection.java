@@ -16,12 +16,18 @@
  */
 package be.nbb.sdmx.facade.connectors;
 
+import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.DataflowRef;
+import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.LanguagePriorityList;
+import be.nbb.sdmx.facade.repo.SdmxRepository;
 import be.nbb.sdmx.facade.util.TtlCache;
-import be.nbb.sdmx.facade.util.TtlCache.Clock;
+import be.nbb.sdmx.facade.util.TypedId;
 import it.bancaditalia.oss.sdmx.api.DataFlowStructure;
+import it.bancaditalia.oss.sdmx.api.Dataflow;
 import it.bancaditalia.oss.sdmx.api.GenericSDMXClient;
 import java.io.IOException;
+import java.time.Clock;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
@@ -31,69 +37,79 @@ import java.util.concurrent.ConcurrentMap;
  */
 final class CachedSdmxConnection extends SdmxConnectionAdapter {
 
-    private final ConcurrentMap cache;
-    private final Clock clock;
-    private final long ttlInMillis;
-    private final String dataflowsKey;
-    private final String dataflowKey;
-    private final String dataflowStructureKey;
+    private final TtlCache cache;
+    private final TypedId<Map<String, Dataflow>> dataflowsKey;
+    private final TypedId<Dataflow> dataflowKey;
+    private final TypedId<DataFlowStructure> dataflowStructureKey;
+    private final TypedId<SdmxRepository> dataKey;
 
-    CachedSdmxConnection(GenericSDMXClient client, String host, ConcurrentMap cache, Clock clock, long ttlInMillis) {
+    CachedSdmxConnection(GenericSDMXClient client, String host, LanguagePriorityList languages, ConcurrentMap cache, Clock clock, long ttlInMillis) {
         super(client);
-        this.cache = cache;
-        this.clock = clock;
-        this.ttlInMillis = ttlInMillis;
-        this.dataflowsKey = "cache://" + host + "/flows";
-        this.dataflowKey = "cache://" + host + "/flow/";
-        this.dataflowStructureKey = "cache://" + host + "/struct/";
-    }
-
-    private <X> X get(String key) {
-        return (X) TtlCache.get(cache, key, clock);
-    }
-
-    private void put(String key, Object value) {
-        TtlCache.put(cache, key, value, ttlInMillis, clock);
+        this.cache = TtlCache.of(cache, clock, ttlInMillis);
+        String base = host + languages.toString();
+        this.dataflowsKey = TypedId.of("flows://" + base);
+        this.dataflowKey = TypedId.of("flow://" + base + "/");
+        this.dataflowStructureKey = TypedId.of("struct://" + base + "/");
+        this.dataKey = TypedId.of("data://" + base + "/");
     }
 
     @Override
-    protected Map<String, it.bancaditalia.oss.sdmx.api.Dataflow> loadDataFlowsById() throws IOException {
-        Map<String, it.bancaditalia.oss.sdmx.api.Dataflow> result = get(dataflowsKey);
+    protected Map<String, Dataflow> loadDataFlowsById() throws IOException {
+        Map<String, Dataflow> result = cache.get(dataflowsKey);
         if (result == null) {
             result = super.loadDataFlowsById();
-            put(dataflowsKey, result);
+            cache.put(dataflowsKey, result);
         }
         return result;
     }
 
     @Override
-    protected it.bancaditalia.oss.sdmx.api.Dataflow loadDataflow(DataflowRef flowRef) throws IOException {
+    protected Dataflow loadDataflow(DataflowRef flowRef) throws IOException {
         // check if dataflow has been already loaded by #loadDataFlowsById
-        Map<String, it.bancaditalia.oss.sdmx.api.Dataflow> dataFlows = get(dataflowsKey);
+        Map<String, Dataflow> dataFlows = cache.get(dataflowsKey);
         if (dataFlows != null) {
-            it.bancaditalia.oss.sdmx.api.Dataflow tmp = dataFlows.get(flowRef.getId());
+            Dataflow tmp = dataFlows.get(flowRef.getId());
             if (tmp != null) {
                 return tmp;
             }
         }
 
-        String key = dataflowKey + flowRef.toString();
-        it.bancaditalia.oss.sdmx.api.Dataflow result = get(key);
+        TypedId<Dataflow> id = dataflowKey.with(flowRef);
+        Dataflow result = cache.get(id);
         if (result == null) {
             result = super.loadDataflow(flowRef);
-            put(key, result);
+            cache.put(id, result);
         }
         return result;
     }
 
     @Override
     protected DataFlowStructure loadDataStructure(DataflowRef flowRef) throws IOException {
-        String key = dataflowStructureKey + flowRef.toString();
-        it.bancaditalia.oss.sdmx.api.DataFlowStructure result = get(key);
+        TypedId<DataFlowStructure> id = dataflowStructureKey.with(flowRef);
+        DataFlowStructure result = cache.get(id);
         if (result == null) {
             result = super.loadDataStructure(flowRef);
-            put(key, result);
+            cache.put(id, result);
         }
         return result;
+    }
+
+    @Override
+    protected DataCursor loadData(DataflowRef flowRef, Key key, boolean serieskeysonly) throws IOException {
+        if (serieskeysonly) {
+            TypedId<SdmxRepository> id = dataKey.with(flowRef);
+            SdmxRepository result = cache.get(id);
+            if (result == null || key.supersedes(Key.parse(result.getName()))) {
+                try (DataCursor cursor = super.loadData(flowRef, key, true)) {
+                    result = SdmxRepository.builder()
+                            .copyOf(flowRef, cursor)
+                            .name(key.toString())
+                            .build();
+                }
+                cache.put(id, result);
+            }
+            return result.asConnection().getData(flowRef, key, true);
+        }
+        return super.loadData(flowRef, key, serieskeysonly);
     }
 }
