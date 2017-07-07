@@ -23,11 +23,11 @@ import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.Frequency;
+import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import be.nbb.sdmx.facade.repo.SdmxRepository;
 import be.nbb.sdmx.facade.repo.Obs;
-import be.nbb.sdmx.facade.repo.SdmxRepositorySupplier;
+import be.nbb.sdmx.facade.repo.SdmxRepositoryDriver;
 import be.nbb.sdmx.facade.repo.Series;
 import ec.tss.TsMoniker;
 import ec.tss.tsproviders.DataSet;
@@ -110,7 +110,11 @@ public class SdmxWebServiceProviderTest {
         return o.encodeBean(result);
     }
 
-    private static SdmxConnectionSupplier getCustomSupplier() {
+    private static SdmxDriverManager getCustomSupplier() {
+        return SdmxDriverManager.of(SdmxRepositoryDriver.of(getCustomRepo()));
+    }
+
+    private static SdmxRepository getCustomRepo() {
         DataStructure conjStruct = DataStructure.builder()
                 .ref(DataStructureRef.of("NBB", "RES1", "1.0"))
                 .dimension(Dimension.builder().id("REGION").position(1).label("Region").code("BE", "Belgium").code("FR", "France").build())
@@ -121,14 +125,14 @@ public class SdmxWebServiceProviderTest {
                 .build();
         Dataflow conj = Dataflow.of(DataflowRef.parse("CONJ"), conjStruct.getRef(), "Conjoncture");
 
-        return SdmxRepositorySupplier.of(SdmxRepository.builder()
+        return SdmxRepository.builder()
                 .name("world")
                 .dataStructure(conjStruct)
                 .dataflow(conj)
                 .data(conj.getFlowRef(), Series.builder().key(Key.of("BE", "IND")).frequency(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 1)).build())
                 .data(conj.getFlowRef(), Series.builder().key(Key.of("BE", "XXX")).frequency(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 2)).build())
                 .data(conj.getFlowRef(), Series.builder().key(Key.of("FR", "IND")).frequency(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 3)).build())
-                .build());
+                .build();
     }
 
     private static List<Obs> toSeries(TsFrequency freq, int seed) {
