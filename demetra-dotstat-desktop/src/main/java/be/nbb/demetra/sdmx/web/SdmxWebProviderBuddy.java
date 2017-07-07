@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.sdmx.webservice;
+package be.nbb.demetra.sdmx.web;
 
 import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
 import be.nbb.demetra.dotstat.DotStatProviderBuddy.BuddyConfig;
@@ -58,12 +58,12 @@ import org.openide.util.lookup.ServiceProvider;
  * @since 2.2.0
  */
 @ServiceProvider(service = IDataSourceProviderBuddy.class, supersedes = "be.nbb.demetra.dotstat.DotStatProviderBuddy")
-public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBuddy, IConfigurable {
+public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, IConfigurable {
 
-    private final Configurator<SdmxWebServiceProviderBuddy> configurator;
+    private final Configurator<SdmxWebProviderBuddy> configurator;
     private final ConcurrentMap autoCompletionCache;
 
-    public SdmxWebServiceProviderBuddy() {
+    public SdmxWebProviderBuddy() {
         this.configurator = createConfigurator();
         this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
         initDriverCache(GuavaCaches.softValuesCacheAsMap());
@@ -71,7 +71,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
 
     @Override
     public String getProviderName() {
-        return SdmxWebServiceProvider.NAME;
+        return SdmxWebProvider.NAME;
     }
 
     @Override
@@ -99,14 +99,14 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
 
     @Override
     public boolean editBean(String title, Object bean) throws IntrospectionException {
-        if (bean instanceof SdmxWebServiceBean) {
-            Optional<SdmxWebServiceProvider> provider = lookupProvider();
+        if (bean instanceof SdmxWebBean) {
+            Optional<SdmxWebProvider> provider = lookupProvider();
             if (provider.isPresent()) {
-                SdmxWebServiceProvider o = provider.get();
+                SdmxWebProvider o = provider.get();
                 return new PropertySheetDialogBuilder()
                         .title(title)
                         .icon(getIcon(BeanInfo.ICON_COLOR_16x16, false))
-                        .editSheet(createSheet((SdmxWebServiceBean) bean, o.getConnectionSupplier(), o.getLanguages(), autoCompletionCache));
+                        .editSheet(createSheet((SdmxWebBean) bean, o.getConnectionSupplier(), o.getLanguages(), autoCompletionCache));
             }
         }
         return IDataSourceProviderBuddy.super.editBean(title, bean);
@@ -129,18 +129,18 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private static Optional<SdmxWebServiceProvider> lookupProvider() {
-        return TsProviders.lookup(SdmxWebServiceProvider.class, SdmxWebServiceProvider.NAME).toJavaUtil();
+    private static Optional<SdmxWebProvider> lookupProvider() {
+        return TsProviders.lookup(SdmxWebProvider.class, SdmxWebProvider.NAME).toJavaUtil();
     }
 
-    private static Configurator<SdmxWebServiceProviderBuddy> createConfigurator() {
+    private static Configurator<SdmxWebProviderBuddy> createConfigurator() {
         return new BuddyConfigHandler().toConfigurator(BuddyConfig.converter());
     }
 
-    private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, SdmxWebServiceProviderBuddy> {
+    private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, SdmxWebProviderBuddy> {
 
         @Override
-        public BuddyConfig loadBean(SdmxWebServiceProviderBuddy resource) {
+        public BuddyConfig loadBean(SdmxWebProviderBuddy resource) {
             BuddyConfig result = new BuddyConfig();
             lookupProvider().ifPresent(o -> {
                 result.setPreferredLanguage(o.getLanguages().toString());
@@ -150,7 +150,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
         }
 
         @Override
-        public void storeBean(SdmxWebServiceProviderBuddy resource, BuddyConfig bean) {
+        public void storeBean(SdmxWebProviderBuddy resource, BuddyConfig bean) {
             lookupProvider().ifPresent(o -> {
                 try {
                     o.setLanguages(LanguagePriorityList.parse(bean.getPreferredLanguage()));
@@ -169,7 +169,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
 
     @NbBundle.Messages({
         "bean.cache.description=Mechanism used to improve performance."})
-    private static Sheet createSheet(SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, LanguagePriorityList languages, ConcurrentMap cache) {
+    private static Sheet createSheet(SdmxWebBean bean, SdmxConnectionSupplier supplier, LanguagePriorityList languages, ConcurrentMap cache) {
         Sheet result = new Sheet();
         NodePropertySetBuilder b = new NodePropertySetBuilder();
         result.put(withSource(b.reset("Source"), bean, supplier, languages, cache).build());
@@ -183,7 +183,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
         "bean.source.description=The identifier of the service that provides data.",
         "bean.flow.display=Dataflow",
         "bean.flow.description=The identifier of a specific dataflow.",})
-    private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, LanguagePriorityList languages, ConcurrentMap cache) {
+    private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxWebBean bean, SdmxConnectionSupplier supplier, LanguagePriorityList languages, ConcurrentMap cache) {
         b.withAutoCompletion()
                 .select(bean, "source")
                 .servicePath(SdmxWsAutoCompletionService.PATH)
@@ -206,7 +206,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
         "bean.labelAttribute.display=Series label attribute",
         "bean.labelAttribute.description=An optional attribute that carries the label of time series."
     })
-    private static NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxWebServiceBean bean, SdmxConnectionSupplier supplier, LanguagePriorityList languages, ConcurrentMap cache) {
+    private static NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxWebBean bean, SdmxConnectionSupplier supplier, LanguagePriorityList languages, ConcurrentMap cache) {
         b.withAutoCompletion()
                 .select(bean, "dimensions", List.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)
                 .source(SdmxAutoCompletion.onDimensions(supplier, languages, bean::getSource, bean::getFlow, cache))
@@ -229,7 +229,7 @@ public final class SdmxWebServiceProviderBuddy implements IDataSourceProviderBud
         "bean.cacheDepth.description=The data retrieval depth. It is always more performant to get one big chunk of data instead of several smaller parts. The downside of it is the increase of memory usage. Setting this value to zero disables the cache.",
         "bean.cacheTtl.display=Time to live",
         "bean.cacheTtl.description=The lifetime of the data stored in the cache. Setting this value to zero disables the cache."})
-    private static NodePropertySetBuilder withCache(NodePropertySetBuilder b, SdmxWebServiceBean bean) {
+    private static NodePropertySetBuilder withCache(NodePropertySetBuilder b, SdmxWebBean bean) {
         b.withInt()
                 .select(bean, "cacheDepth")
                 .display(Bundle.bean_cacheDepth_display())

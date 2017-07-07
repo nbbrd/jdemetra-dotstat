@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.sdmx.webservice;
+package be.nbb.demetra.sdmx.web;
 
 import be.nbb.demetra.dotstat.DotStatProvider;
 import be.nbb.sdmx.facade.DataStructure;
@@ -23,11 +23,11 @@ import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.Frequency;
+import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import be.nbb.sdmx.facade.repo.SdmxRepository;
 import be.nbb.sdmx.facade.repo.Obs;
-import be.nbb.sdmx.facade.repo.SdmxRepositorySupplier;
+import be.nbb.sdmx.facade.repo.SdmxRepositoryDriver;
 import be.nbb.sdmx.facade.repo.Series;
 import ec.tss.TsMoniker;
 import ec.tss.tsproviders.DataSet;
@@ -49,17 +49,17 @@ import java.time.ZoneId;
  *
  * @author Philippe Charles
  */
-public class SdmxWebServiceProviderTest {
+public class SdmxWebProviderTest {
 
     @Test
     public void testEquivalence() throws IOException {
         IDataSourceLoaderAssert.assertThat(getProvider())
-                .isEquivalentTo(getPreviousProvider(), SdmxWebServiceProviderTest::getSampleDataSource);
+                .isEquivalentTo(getPreviousProvider(), SdmxWebProviderTest::getSampleDataSource);
     }
 
     @Test
     public void testTspCompliance() {
-        IDataSourceLoaderAssert.assertCompliance(SdmxWebServiceProviderTest::getProvider, o -> {
+        IDataSourceLoaderAssert.assertCompliance(SdmxWebProviderTest::getProvider, o -> {
             return o.newBean();
         });
     }
@@ -68,7 +68,7 @@ public class SdmxWebServiceProviderTest {
     public void testMonikerUri() {
         String uri = "demetra://tsprovider/DOTSTAT/20150203/SERIES?cacheDepth=2&cacheTtl=360000&dbName=ECB&dimColumns=CURRENCY%2CCURRENCY_DENOM%2CEXR_SUFFIX%2CEXR_TYPE%2CFREQ&tableName=ECB%2CEXR%2C1.0#CURRENCY=CHF&CURRENCY_DENOM=EUR&EXR_SUFFIX=A&EXR_TYPE=SP00&FREQ=M";
 
-        SdmxWebServiceBean bean = new SdmxWebServiceBean();
+        SdmxWebBean bean = new SdmxWebBean();
         bean.setSource("ECB");
         bean.setFlow("ECB,EXR,1.0");
         bean.setDimensions(Arrays.asList("CURRENCY", "CURRENCY_DENOM", "EXR_SUFFIX", "EXR_TYPE", "FREQ"));
@@ -76,7 +76,7 @@ public class SdmxWebServiceProviderTest {
         bean.setCacheTtl(Duration.ofMinutes(6));
 
         DataSource.Builder dataSource = DataSource.builder("DOTSTAT", "20150203");
-        new SdmxWebServiceParam.V1().set(dataSource, bean);
+        new SdmxWebParam.V1().set(dataSource, bean);
         DataSet expected = DataSet.builder(dataSource.build(), DataSet.Kind.SERIES)
                 .put("CURRENCY", "CHF")
                 .put("CURRENCY_DENOM", "EUR")
@@ -85,13 +85,13 @@ public class SdmxWebServiceProviderTest {
                 .put("FREQ", "M")
                 .build();
 
-        try (SdmxWebServiceProvider p = new SdmxWebServiceProvider()) {
+        try (SdmxWebProvider p = new SdmxWebProvider()) {
             assertThat(p.toDataSet(new TsMoniker("DOTSTAT", uri))).isEqualTo(expected);
         }
     }
 
-    private static SdmxWebServiceProvider getProvider() {
-        SdmxWebServiceProvider result = new SdmxWebServiceProvider();
+    private static SdmxWebProvider getProvider() {
+        SdmxWebProvider result = new SdmxWebProvider();
         result.setConnectionSupplier(getCustomSupplier());
         return result;
     }
@@ -110,7 +110,11 @@ public class SdmxWebServiceProviderTest {
         return o.encodeBean(result);
     }
 
-    private static SdmxConnectionSupplier getCustomSupplier() {
+    private static SdmxDriverManager getCustomSupplier() {
+        return SdmxDriverManager.of(SdmxRepositoryDriver.of(getCustomRepo()));
+    }
+
+    private static SdmxRepository getCustomRepo() {
         DataStructure conjStruct = DataStructure.builder()
                 .ref(DataStructureRef.of("NBB", "RES1", "1.0"))
                 .dimension(Dimension.builder().id("REGION").position(1).label("Region").code("BE", "Belgium").code("FR", "France").build())
@@ -121,14 +125,14 @@ public class SdmxWebServiceProviderTest {
                 .build();
         Dataflow conj = Dataflow.of(DataflowRef.parse("CONJ"), conjStruct.getRef(), "Conjoncture");
 
-        return SdmxRepositorySupplier.of(SdmxRepository.builder()
+        return SdmxRepository.builder()
                 .name("world")
                 .dataStructure(conjStruct)
                 .dataflow(conj)
                 .data(conj.getFlowRef(), Series.builder().key(Key.of("BE", "IND")).frequency(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 1)).build())
                 .data(conj.getFlowRef(), Series.builder().key(Key.of("BE", "XXX")).frequency(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 2)).build())
                 .data(conj.getFlowRef(), Series.builder().key(Key.of("FR", "IND")).frequency(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 3)).build())
-                .build());
+                .build();
     }
 
     private static List<Obs> toSeries(TsFrequency freq, int seed) {

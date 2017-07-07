@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.sdmx.webservice;
+package be.nbb.demetra.sdmx.web;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -37,13 +37,13 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Philippe Charles
  */
-interface SdmxWebServiceParam extends IParam<DataSource, SdmxWebServiceBean> {
+interface SdmxWebParam extends IParam<DataSource, SdmxWebBean> {
 
     String getVersion();
 
     IParam<DataSet, CubeId> getCubeIdParam(CubeId root);
 
-    final class V1 implements SdmxWebServiceParam {
+    final class V1 implements SdmxWebParam {
 
         private final Splitter dimensionSplitter = Splitter.on(',').trimResults().omitEmptyStrings();
         private final Joiner dimensionJoiner = Joiner.on(',');
@@ -61,8 +61,8 @@ interface SdmxWebServiceParam extends IParam<DataSource, SdmxWebServiceBean> {
         }
 
         @Override
-        public SdmxWebServiceBean defaultValue() {
-            SdmxWebServiceBean result = new SdmxWebServiceBean();
+        public SdmxWebBean defaultValue() {
+            SdmxWebBean result = new SdmxWebBean();
             result.setSource(dbName.defaultValue());
             result.setFlow(flowRef.defaultValue());
             result.setDimensions(dimensionIds.defaultValue());
@@ -73,8 +73,8 @@ interface SdmxWebServiceParam extends IParam<DataSource, SdmxWebServiceBean> {
         }
 
         @Override
-        public SdmxWebServiceBean get(DataSource dataSource) {
-            SdmxWebServiceBean result = new SdmxWebServiceBean();
+        public SdmxWebBean get(DataSource dataSource) {
+            SdmxWebBean result = new SdmxWebBean();
             result.setSource(dbName.get(dataSource));
             result.setFlow(flowRef.get(dataSource));
             result.setDimensions(dimensionIds.get(dataSource));
@@ -85,7 +85,7 @@ interface SdmxWebServiceParam extends IParam<DataSource, SdmxWebServiceBean> {
         }
 
         @Override
-        public void set(IConfig.Builder<?, DataSource> builder, SdmxWebServiceBean value) {
+        public void set(IConfig.Builder<?, DataSource> builder, SdmxWebBean value) {
             dbName.set(builder, value.getSource());
             flowRef.set(builder, value.getFlow());
             dimensionIds.set(builder, value.getDimensions());
