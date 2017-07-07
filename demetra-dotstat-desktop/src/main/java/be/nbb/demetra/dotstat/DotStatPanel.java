@@ -16,7 +16,7 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.demetra.sdmx.webservice.SdmxWebServiceProvider;
+import be.nbb.demetra.sdmx.web.SdmxWebProvider;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
@@ -198,8 +198,8 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         return em;
     }
 
-    private static Optional<SdmxWebServiceProvider> lookupProvider() {
-        return TsProviders.lookup(SdmxWebServiceProvider.class, SdmxWebServiceProvider.NAME).toJavaUtil();
+    private static Optional<SdmxWebProvider> lookupProvider() {
+        return TsProviders.lookup(SdmxWebProvider.class, SdmxWebProvider.NAME).toJavaUtil();
     }
 
     private void loadEntryPoints(SdmxConnectionSupplier supplier) {

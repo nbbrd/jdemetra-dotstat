@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.sdmx.webservice;
+package be.nbb.demetra.sdmx.web;
 
 import be.nbb.demetra.sdmx.HasSdmxProperties;
 import internal.sdmx.SdmxCubeAccessor;
@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
  * @since 2.2.0
  */
 @ServiceProvider(service = ITsProvider.class, supersedes = "be.nbb.demetra.dotstat.DotStatProvider")
-public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxProperties {
+public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperties {
 
     public static final String NAME = "DOTSTAT";
 
@@ -67,7 +67,7 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxP
     private final HasDataMoniker monikerSupport;
 
     @lombok.experimental.Delegate
-    private final HasDataSourceBean<SdmxWebServiceBean> beanSupport;
+    private final HasDataSourceBean<SdmxWebBean> beanSupport;
 
     @lombok.experimental.Delegate(excludes = HasTsCursor.class)
     private final CubeSupport cubeSupport;
@@ -75,14 +75,14 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxP
     @lombok.experimental.Delegate
     private final ITsProvider tsSupport;
 
-    public SdmxWebServiceProvider() {
+    public SdmxWebProvider() {
         this.connectionSupplier = new AtomicReference<>(SdmxDriverManager.getDefault());
         this.languages = new AtomicReference<>(LanguagePriorityList.ANY);
         this.displayCodes = new AtomicBoolean(false);
 
         Cache<DataSource, SdmxCubeItems> cache = GuavaCaches.softValuesCache();
         Logger logger = LoggerFactory.getLogger(NAME);
-        SdmxWebServiceParam beanParam = new SdmxWebServiceParam.V1();
+        SdmxWebParam beanParam = new SdmxWebParam.V1();
 
         this.mutableListSupport = HasDataSourceMutableList.of(NAME, logger, cache::invalidate);
         this.monikerSupport = HasDataMoniker.usingUri(NAME);
@@ -139,7 +139,7 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxP
         private final Cache<DataSource, SdmxCubeItems> cache;
         private final AtomicReference<SdmxConnectionSupplier> supplier;
         private final AtomicReference<LanguagePriorityList> languages;
-        private final SdmxWebServiceParam param;
+        private final SdmxWebParam param;
 
         @Override
         public CubeAccessor getAccessor(DataSource dataSource) throws IOException {
@@ -156,8 +156,8 @@ public final class SdmxWebServiceProvider implements IDataSourceLoader, HasSdmxP
             return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(supplier.get(), languages.get(), param, dataSource));
         }
 
-        private static SdmxCubeItems of(SdmxConnectionSupplier supplier, LanguagePriorityList languages, SdmxWebServiceParam param, DataSource dataSource) throws IllegalArgumentException, IOException {
-            SdmxWebServiceBean bean = param.get(dataSource);
+        private static SdmxCubeItems of(SdmxConnectionSupplier supplier, LanguagePriorityList languages, SdmxWebParam param, DataSource dataSource) throws IllegalArgumentException, IOException {
+            SdmxWebBean bean = param.get(dataSource);
 
             DataflowRef flow = DataflowRef.parse(bean.getFlow());
 

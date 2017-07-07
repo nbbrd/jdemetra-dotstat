@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.sdmx.webservice;
+package be.nbb.demetra.sdmx.web;
 
 import be.nbb.demetra.dotstat.DotStatProvider;
 import be.nbb.sdmx.facade.DataStructure;
@@ -49,17 +49,17 @@ import java.time.ZoneId;
  *
  * @author Philippe Charles
  */
-public class SdmxWebServiceProviderTest {
+public class SdmxWebProviderTest {
 
     @Test
     public void testEquivalence() throws IOException {
         IDataSourceLoaderAssert.assertThat(getProvider())
-                .isEquivalentTo(getPreviousProvider(), SdmxWebServiceProviderTest::getSampleDataSource);
+                .isEquivalentTo(getPreviousProvider(), SdmxWebProviderTest::getSampleDataSource);
     }
 
     @Test
     public void testTspCompliance() {
-        IDataSourceLoaderAssert.assertCompliance(SdmxWebServiceProviderTest::getProvider, o -> {
+        IDataSourceLoaderAssert.assertCompliance(SdmxWebProviderTest::getProvider, o -> {
             return o.newBean();
         });
     }
@@ -68,7 +68,7 @@ public class SdmxWebServiceProviderTest {
     public void testMonikerUri() {
         String uri = "demetra://tsprovider/DOTSTAT/20150203/SERIES?cacheDepth=2&cacheTtl=360000&dbName=ECB&dimColumns=CURRENCY%2CCURRENCY_DENOM%2CEXR_SUFFIX%2CEXR_TYPE%2CFREQ&tableName=ECB%2CEXR%2C1.0#CURRENCY=CHF&CURRENCY_DENOM=EUR&EXR_SUFFIX=A&EXR_TYPE=SP00&FREQ=M";
 
-        SdmxWebServiceBean bean = new SdmxWebServiceBean();
+        SdmxWebBean bean = new SdmxWebBean();
         bean.setSource("ECB");
         bean.setFlow("ECB,EXR,1.0");
         bean.setDimensions(Arrays.asList("CURRENCY", "CURRENCY_DENOM", "EXR_SUFFIX", "EXR_TYPE", "FREQ"));
@@ -76,7 +76,7 @@ public class SdmxWebServiceProviderTest {
         bean.setCacheTtl(Duration.ofMinutes(6));
 
         DataSource.Builder dataSource = DataSource.builder("DOTSTAT", "20150203");
-        new SdmxWebServiceParam.V1().set(dataSource, bean);
+        new SdmxWebParam.V1().set(dataSource, bean);
         DataSet expected = DataSet.builder(dataSource.build(), DataSet.Kind.SERIES)
                 .put("CURRENCY", "CHF")
                 .put("CURRENCY_DENOM", "EUR")
@@ -85,13 +85,13 @@ public class SdmxWebServiceProviderTest {
                 .put("FREQ", "M")
                 .build();
 
-        try (SdmxWebServiceProvider p = new SdmxWebServiceProvider()) {
+        try (SdmxWebProvider p = new SdmxWebProvider()) {
             assertThat(p.toDataSet(new TsMoniker("DOTSTAT", uri))).isEqualTo(expected);
         }
     }
 
-    private static SdmxWebServiceProvider getProvider() {
-        SdmxWebServiceProvider result = new SdmxWebServiceProvider();
+    private static SdmxWebProvider getProvider() {
+        SdmxWebProvider result = new SdmxWebProvider();
         result.setConnectionSupplier(getCustomSupplier());
         return result;
     }
