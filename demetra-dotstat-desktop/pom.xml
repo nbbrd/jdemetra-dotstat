@@ -8,12 +8,13 @@
     <packaging>nbm</packaging>
 
     <name>Demetra - DotStat - Desktop</name>
-    <description>DotStat extension for JDemetra+</description>
+    <description>SDMX extension for JDemetra+</description>
+    <url>https://github.com/nbbrd/jdemetra-dotstat</url>
 
     <organization>
         <name>National Bank of Belgium</name>
     </organization>
-    <url>https://github.com/nbbrd/jdemetra-dotstat</url>
+
     <licenses>
         <license>
             <name>European Union Public Licence (EUPL)</name>
@@ -24,8 +25,8 @@
     <properties>
         <!-- build -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jdk.version>1.8</jdk.version>
-        <maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
         <nbm-maven-plugin.version>3.14</nbm-maven-plugin.version>
         <!-- dependencies -->
@@ -133,7 +134,7 @@
 
     <repositories>
         <repository>
-            <id>netbeans</id>
+            <id>netbeans-releases</id>
             <url>http://bits.netbeans.org/maven2/</url>
         </repository>        
         <repository>
@@ -144,15 +145,6 @@
   
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven-compiler-plugin.version}</version>
-                <configuration>
-                    <source>${jdk.version}</source>
-                    <target>${jdk.version}</target>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
