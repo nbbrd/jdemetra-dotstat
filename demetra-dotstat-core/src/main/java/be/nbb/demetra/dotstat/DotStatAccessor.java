@@ -20,32 +20,36 @@ import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.SdmxConnection;
 import com.google.common.base.Converter;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbSeries;
 import ec.tss.tsproviders.db.DbSetId;
 import ec.tstoolkit.design.VisibleForTesting;
+import internal.sdmx.SdmxQueryUtil;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nonnull;
 
 /**
  *
  * @author Philippe Charles
  */
+@Deprecated
 final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
 
     private final SdmxConnectionSupplier supplier;
+    private final LanguagePriorityList languages;
 
-    public DotStatAccessor(@Nonnull DotStatBean dbBean, @Nonnull SdmxConnectionSupplier supplier) {
+    DotStatAccessor(DotStatBean dbBean, SdmxConnectionSupplier supplier, LanguagePriorityList languages) {
         super(dbBean);
         this.supplier = supplier;
+        this.languages = languages;
     }
 
     @Override
@@ -64,28 +68,28 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
 
     @Override
     protected List<DbSetId> getAllSeries(DbSetId ref) throws Exception {
-        try (SdmxConnection conn = supplier.getConnection(dbBean.getDbName())) {
+        try (SdmxConnection conn = supplier.getConnection(dbBean.getDbName(), languages)) {
             return getAllSeries(conn, dbBean.getFlowRef(), ref);
         }
     }
 
     @Override
     protected List<DbSeries> getAllSeriesWithData(DbSetId ref) throws Exception {
-        try (SdmxConnection conn = supplier.getConnection(dbBean.getDbName())) {
+        try (SdmxConnection conn = supplier.getConnection(dbBean.getDbName(), languages)) {
             return getAllSeriesWithData(conn, dbBean.getFlowRef(), ref);
         }
     }
 
     @Override
     protected DbSeries getSeriesWithData(DbSetId ref) throws Exception {
-        try (SdmxConnection conn = supplier.getConnection(dbBean.getDbName())) {
+        try (SdmxConnection conn = supplier.getConnection(dbBean.getDbName(), languages)) {
             return getSeriesWithData(conn, dbBean.getFlowRef(), ref);
         }
     }
 
     @Override
     protected List<String> getChildren(DbSetId ref) throws Exception {
-        try (SdmxConnection conn = supplier.getConnection(dbBean.getDbName())) {
+        try (SdmxConnection conn = supplier.getConnection(dbBean.getDbName(), languages)) {
             return getChildren(conn, dbBean.getFlowRef(), ref);
         }
     }
@@ -99,10 +103,10 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
 
         Key colKey = converter.convert(ref);
-        try (TsCursor<Key, IOException> cursor = DotStatUtil.getAllSeries(conn, flowRef, colKey)) {
+        try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeries(conn, flowRef, colKey, SdmxQueryUtil.NO_LABEL)) {
             ImmutableList.Builder<DbSetId> result = ImmutableList.builder();
             while (cursor.nextSeries()) {
-                result.add(converter.reverse().convert(cursor.getKey()));
+                result.add(converter.reverse().convert(cursor.getSeriesId()));
             }
             return result.build();
         }
@@ -112,10 +116,10 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
 
         Key colKey = converter.convert(ref);
-        try (TsCursor<Key, IOException> cursor = DotStatUtil.getAllSeriesWithData(conn, flowRef, colKey)) {
+        try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeriesWithData(conn, flowRef, colKey, SdmxQueryUtil.NO_LABEL)) {
             ImmutableList.Builder<DbSeries> result = ImmutableList.builder();
             while (cursor.nextSeries()) {
-                result.add(new DbSeries(converter.reverse().convert(cursor.getKey()), cursor.getData()));
+                result.add(new DbSeries(converter.reverse().convert(cursor.getSeriesId()), cursor.getSeriesData()));
             }
             return result.build();
         }
@@ -125,13 +129,13 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
 
         Key seriesKey = converter.convert(ref);
-        return new DbSeries(ref, DotStatUtil.getSeriesWithData(conn, flowRef, seriesKey));
+        return new DbSeries(ref, SdmxQueryUtil.getSeriesWithData(conn, flowRef, seriesKey));
     }
 
     private static List<String> getChildren(SdmxConnection conn, DataflowRef flowRef, DbSetId ref) throws IOException {
         Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
         int dimensionPosition = dimensionById(conn.getDataStructure(flowRef)).get(ref.getColumn(ref.getLevel())).getPosition();
-        return DotStatUtil.getChildren(conn, flowRef, converter.convert(ref), dimensionPosition);
+        return SdmxQueryUtil.getChildren(conn, flowRef, converter.convert(ref), dimensionPosition);
     }
 
     @VisibleForTesting
@@ -180,7 +184,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
 
         public DbSetId getId(Key o) {
             for (int i = 0; i < indices.length; i++) {
-                dimValues[i] = o.getItem(indices[i]);
+                dimValues[i] = o.get(indices[i]);
             }
             return ref.child(dimValues);
         }
@@ -188,11 +192,6 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
 
     @VisibleForTesting
     static Map<String, Dimension> dimensionById(DataStructure ds) {
-        return Maps.uniqueIndex(ds.getDimensions(), new Function<Dimension, String>() {
-            @Override
-            public String apply(Dimension input) {
-                return input.getId();
-            }
-        });
+        return Maps.uniqueIndex(ds.getDimensions(), Dimension::getId);
     }
 }

@@ -16,13 +16,12 @@
  */
 package be.nbb.sdmx.facade.connectors;
 
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import static be.nbb.sdmx.facade.connectors.Util.NEEDS_CREDENTIALS;
 import be.nbb.sdmx.facade.driver.SdmxDriver;
 import be.nbb.sdmx.facade.driver.WsEntryPoint;
 import be.nbb.sdmx.facade.util.HasCache;
-import it.bancaditalia.oss.sdmx.api.GenericSDMXClient;
 import it.bancaditalia.oss.sdmx.client.custom.RestSdmx20Client;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
@@ -39,22 +38,18 @@ public final class Sdmx20Driver implements SdmxDriver, HasCache {
     private static final String PREFIX = "sdmx:sdmx20:";
 
     @lombok.experimental.Delegate
-    private final SdmxDriverSupport support = SdmxDriverSupport.of(PREFIX, new SdmxDriverSupport.ClientSupplier() {
-        @Override
-        public GenericSDMXClient getClient(URL endpoint, Map<?, ?> info) throws MalformedURLException {
-            return new CustomClient(endpoint, info);
-        }
-    });
+    private final SdmxDriverSupport support = SdmxDriverSupport.of(PREFIX, Sdmx20Client::new);
 
     @Override
     public List<WsEntryPoint> getDefaultEntryPoints() {
         return Collections.emptyList();
     }
 
-    private static final class CustomClient extends RestSdmx20Client {
+    private static final class Sdmx20Client extends RestSdmx20Client {
 
-        public CustomClient(URL endpoint, Map<?, ?> info) {
+        private Sdmx20Client(URL endpoint, Map<?, ?> info, LanguagePriorityList langs) {
             super("", endpoint, NEEDS_CREDENTIALS.get(info, false), null, "compact_v2");
+            this.languages = Util.fromLanguages(langs);
         }
     }
 }

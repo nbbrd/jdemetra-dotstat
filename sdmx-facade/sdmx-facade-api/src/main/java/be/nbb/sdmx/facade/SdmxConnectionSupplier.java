@@ -28,5 +28,5 @@ import javax.annotation.concurrent.ThreadSafe;
 public interface SdmxConnectionSupplier {
 
     @Nonnull
-    SdmxConnection getConnection(@Nonnull String name) throws IOException;
+    SdmxConnection getConnection(@Nonnull String name, @Nonnull LanguagePriorityList languages) throws IOException;
 }

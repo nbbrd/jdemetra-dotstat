@@ -16,13 +16,14 @@
  */
 package be.nbb.demetra.dotstat;
 
+import be.nbb.demetra.sdmx.HasSdmxProperties;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.driver.SdmxDriverManager;
-import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import ec.tss.ITsProvider;
 import ec.tss.TsAsyncMode;
@@ -31,9 +32,9 @@ import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbBean;
 import ec.tss.tsproviders.db.DbProvider;
-import it.bancaditalia.oss.sdmx.util.Configuration;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.openide.util.lookup.ServiceProvider;
@@ -43,22 +44,25 @@ import org.slf4j.LoggerFactory;
  *
  * @author Philippe Charles
  */
+@Deprecated
 @ServiceProvider(service = ITsProvider.class)
-public final class DotStatProvider extends DbProvider<DotStatBean> {
+public final class DotStatProvider extends DbProvider<DotStatBean> implements HasSdmxProperties {
 
     public static final String NAME = "DOTSTAT", VERSION = "20150203";
-    private SdmxConnectionSupplier supplier;
+    private final AtomicReference<SdmxConnectionSupplier> connectionSupplier;
+    private final AtomicReference<LanguagePriorityList> languages;
     private boolean displayCodes;
 
     public DotStatProvider() {
         super(LoggerFactory.getLogger(DotStatProvider.class), NAME, TsAsyncMode.Once);
-        this.supplier = SdmxDriverManager.getDefault();
+        this.connectionSupplier = new AtomicReference<>(SdmxDriverManager.getDefault());
+        this.languages = new AtomicReference<>(LanguagePriorityList.ANY);
         this.displayCodes = false;
     }
 
     @Override
     protected DbAccessor<DotStatBean> loadFromBean(DotStatBean bean) throws Exception {
-        return new DotStatAccessor(bean, supplier).memoize();
+        return new DotStatAccessor(bean, connectionSupplier.get(), languages.get()).memoize();
     }
 
     @Override
@@ -73,16 +77,16 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
 
     @Override
     public String getDisplayName() {
-        return "DotStat";
+        return "SDMX Web Services";
     }
 
     @Override
     public String getDisplayName(DataSource dataSource) {
         DotStatBean bean = decodeBean(dataSource);
         if (!displayCodes) {
-            try (SdmxConnection conn = supplier.getConnection(bean.getDbName())) {
+            try (SdmxConnection conn = connect(bean.getDbName())) {
                 return String.format("%s ~ %s", bean.getDbName(), conn.getDataflow(bean.getFlowRef()).getLabel());
-            } catch (IOException ex) {
+            } catch (IOException | RuntimeException ex) {
             }
         }
         return bean.getTableName();
@@ -91,7 +95,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
     @Override
     public String getDisplayName(DataSet dataSet) {
         DotStatBean bean = decodeBean(dataSet.getDataSource());
-        try (SdmxConnection conn = supplier.getConnection(bean.getDbName())) {
+        try (SdmxConnection conn = connect(bean.getDbName())) {
             DataStructure dfs = conn.getDataStructure(bean.getFlowRef());
             Key.Builder b = Key.builder(dfs);
             for (Dimension o : dfs.getDimensions()) {
@@ -101,19 +105,18 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
                 }
             }
             return b.toString();
-        } catch (IOException ex) {
+        } catch (IOException | RuntimeException ex) {
         }
         return super.getDisplayName(dataSet);
     }
 
     @Override
     public String getDisplayNodeName(DataSet dataSet) {
-        Optional<Map.Entry<String, String>> optionalNodeDim = getNodeDimension(dataSet);
-        if (optionalNodeDim.isPresent()) {
-            Map.Entry<String, String> nodeDim = optionalNodeDim.get();
+        Map.Entry<String, String> nodeDim = getNodeDimension(dataSet);
+        if (nodeDim != null) {
             if (!displayCodes) {
                 DotStatBean bean = decodeBean(dataSet.getDataSource());
-                try (SdmxConnection conn = supplier.getConnection(bean.getDbName())) {
+                try (SdmxConnection conn = connect(bean.getDbName())) {
                     DataStructure dfs = conn.getDataStructure(bean.getFlowRef());
                     for (Dimension o : dfs.getDimensions()) {
                         if (o.getId().equals(nodeDim.getKey())) {
@@ -121,7 +124,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
                         }
                     }
                     return nodeDim.getValue();
-                } catch (IOException ex) {
+                } catch (IOException | RuntimeException ex) {
                 }
             }
             return nodeDim.getValue();
@@ -134,22 +137,42 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
         return support.checkBean(bean, DotStatBean.class).toDataSource(NAME, VERSION);
     }
 
-    @Nonnull
+    @Override
     public SdmxConnectionSupplier getConnectionSupplier() {
-        return supplier;
+        return connectionSupplier.get();
     }
 
-    public void setConnectionSupplier(@Nullable SdmxConnectionSupplier supplier) {
-        this.supplier = supplier != null ? supplier : SdmxDriverManager.getDefault();
+    @Override
+    public void setConnectionSupplier(SdmxConnectionSupplier connectionSupplier) {
+        SdmxConnectionSupplier old = this.connectionSupplier.get();
+        if (this.connectionSupplier.compareAndSet(old, connectionSupplier != null ? connectionSupplier : SdmxDriverManager.getDefault())) {
+            clearCache();
+        }
+    }
+
+    @Override
+    public LanguagePriorityList getLanguages() {
+        return languages.get();
+    }
+
+    @Override
+    public void setLanguages(LanguagePriorityList languages) {
+        LanguagePriorityList old = this.languages.get();
+        if (this.languages.compareAndSet(old, languages != null ? languages : LanguagePriorityList.ANY)) {
+            clearCache();
+        }
     }
 
     @Nonnull
     public String getPreferredLanguage() {
-        return Configuration.getLang();
+        return getLanguages().toString();
     }
 
     public void setPreferredLanguage(@Nullable String lang) {
-        Configuration.setLang(lang != null ? lang : "en");
+        try {
+            setLanguages(lang != null ? LanguagePriorityList.parse(lang) : null);
+        } catch (IllegalArgumentException ex) {
+        }
     }
 
     public boolean isDisplayCodes() {
@@ -160,7 +183,12 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
         this.displayCodes = displayCodes;
     }
 
-    private static Optional<Map.Entry<String, String>> getNodeDimension(DataSet dataSet) {
+    private SdmxConnection connect(String name) throws IOException {
+        return connectionSupplier.get().getConnection(name, languages.get());
+    }
+
+    @Nullable
+    private static Map.Entry<String, String> getNodeDimension(DataSet dataSet) {
         String[] dimColumns = DbBean.getDimArray(dataSet.getDataSource());
         int length = dimColumns.length;
         while (length > 0 && dataSet.get(dimColumns[length - 1]) == null) {
@@ -171,7 +199,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> {
             dimValues[i] = dataSet.get(dimColumns[i]);
         }
         return length > 0
-                ? Optional.<Map.Entry<String, String>>of(Maps.immutableEntry(dimColumns[length - 1], dimValues[length - 1]))
-                : Optional.<Map.Entry<String, String>>absent();
+                ? Maps.immutableEntry(dimColumns[length - 1], dimValues[length - 1])
+                : null;
     }
 }

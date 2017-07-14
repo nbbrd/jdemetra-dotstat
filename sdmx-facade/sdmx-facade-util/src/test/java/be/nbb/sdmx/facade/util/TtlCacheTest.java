@@ -16,7 +16,9 @@
  */
 package be.nbb.sdmx.facade.util;
 
-import be.nbb.sdmx.facade.util.TtlCache.Clock;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,21 +33,16 @@ public class TtlCacheTest {
     @Test
     public void test() {
         ConcurrentMap cache = new ConcurrentHashMap();
-        assertThat(TtlCache.get(cache, "KEY1", of(1000))).isNull();
+        assertThat((String) TtlCache.get(cache, "KEY1", of(1000))).isNull();
         TtlCache.put(cache, "KEY1", "VALUE1", 10, of(1000));
-        assertThat(TtlCache.get(cache, "KEY1", of(1009))).isEqualTo("VALUE1");
-        assertThat(TtlCache.get(cache, "KEY1", of(1010))).isNull();
-        assertThat(TtlCache.get(cache, "KEY2", of(1009))).isNull();
+        assertThat((String) TtlCache.get(cache, "KEY1", of(1009))).isEqualTo("VALUE1");
+        assertThat((String) TtlCache.get(cache, "KEY1", of(1010))).isNull();
+        assertThat((String) TtlCache.get(cache, "KEY2", of(1009))).isNull();
         TtlCache.put(cache, "KEY1", "VALUE2", 10, of(1009));
-        assertThat(TtlCache.get(cache, "KEY1", of(1010))).isEqualTo("VALUE2");
+        assertThat((String) TtlCache.get(cache, "KEY1", of(1010))).isEqualTo("VALUE2");
     }
 
-    private static Clock of(final long value) {
-        return new Clock() {
-            @Override
-            public long currentTimeMillis() {
-                return value;
-            }
-        };
+    private static Clock of(long value) {
+        return Clock.fixed(Instant.ofEpochMilli(value), ZoneId.systemDefault());
     }
 }

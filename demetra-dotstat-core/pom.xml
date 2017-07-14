@@ -4,16 +4,17 @@
 
     <groupId>be.nbb.demetra</groupId>
     <artifactId>demetra-dotstat-core</artifactId>
-    <version>2.1.1</version>
+    <version>2.2.0</version>
     <packaging>jar</packaging>
     
     <name>Demetra - DotStat - Core</name>
-    <description>DotStat extension for JDemetra+</description>
+    <description>SDMX extension for JDemetra+</description>
+    <url>https://github.com/nbbrd/jdemetra-dotstat</url>
 
     <organization>
         <name>National Bank of Belgium</name>
     </organization>
-    <url>https://github.com/nbbrd/jdemetra-dotstat</url>
+
     <licenses>
         <license>
             <name>European Union Public Licence (EUPL)</name>
@@ -24,12 +25,10 @@
     <properties>
         <!-- build -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jdk.version>1.7</jdk.version>
-        <maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
         <!-- dependencies -->
-        <demetra.version>2.1.0</demetra.version>
-        <lombok.version>1.16.2</lombok.version>
-        <netbeans.version>RELEASE802</netbeans.version>
+        <demetra.version>2.2.0</demetra.version>
     </properties>
 
     <dependencyManagement>
@@ -46,16 +45,19 @@
 
     <dependencies>
         <!-- compile only -->
+        <dependency>     
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-openide-util-lookup</artifactId>
-            <version>${netbeans.version}</version>
             <scope>provided</scope>
         </dependency>
         <!-- compile and runtime -->
@@ -75,6 +77,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>be.nbb.sdmx</groupId>
+            <artifactId>sdmx-facade-file</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>demetra-jdbc</artifactId>
         </dependency>
@@ -84,11 +91,27 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>eu.europa.ec.joinup.sat</groupId>
+            <artifactId>demetra-tck</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>eu.europa.ec.joinup.sat</groupId>
+            <artifactId>demetra-sdmx</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>be.nbb.sdmx</groupId>
+            <artifactId>sdmx-facade-samples</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     
     <repositories>
         <repository>
-            <id>netbeans</id>
+            <id>netbeans-releases</id>
             <url>http://bits.netbeans.org/maven2/</url>
         </repository>        
         <repository>
@@ -96,18 +119,4 @@
             <url>https://joinup.ec.europa.eu/nexus/content/repositories/releases/</url>
         </repository>
     </repositories>
-    
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven-compiler-plugin.version}</version>
-                <configuration>
-                    <source>${jdk.version}</source>
-                    <target>${jdk.version}</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>    
 </project>

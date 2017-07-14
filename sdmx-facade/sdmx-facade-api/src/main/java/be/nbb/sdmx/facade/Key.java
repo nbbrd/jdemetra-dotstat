@@ -17,6 +17,7 @@
 package be.nbb.sdmx.facade;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnegative;
@@ -43,12 +44,12 @@ public final class Key {
     }
 
     @Nonnegative
-    public int getSize() {
+    public int size() {
         return items.length;
     }
 
     @Nonnull
-    public String getItem(@Nonnegative int index) throws IndexOutOfBoundsException {
+    public String get(@Nonnegative int index) throws IndexOutOfBoundsException {
         return items[index];
     }
 
@@ -56,13 +57,32 @@ public final class Key {
         return WILDCARD.equals(items[index]);
     }
 
-    public boolean contains(@Nonnull Key input) {
-        for (int i = 0; i < getSize(); i++) {
-            if (!isWildcard(i) && !getItem(i).equals(input.getItem(i))) {
+    public boolean isSeries() {
+        for (int i = 0; i < items.length; i++) {
+            if (isWildcard(i)) {
                 return false;
             }
         }
         return true;
+    }
+
+    public boolean contains(@Nonnull Key input) {
+        if (this == ALL) {
+            return true;
+        }
+        if (size() != input.size()) {
+            return false;
+        }
+        for (int i = 0; i < size(); i++) {
+            if (!isWildcard(i) && !get(i).equals(input.get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean supersedes(@Nonnull Key that) {
+        return !equals(that) && contains(that);
     }
 
     @Override
@@ -90,13 +110,18 @@ public final class Key {
     }
 
     @Nonnull
+    public static Key of(@Nonnull Collection<String> input) {
+        return input.isEmpty() ? ALL : ofInternal(input.toArray(new String[input.size()]));
+    }
+
+    @Nonnull
     public static Key of(@Nonnull String... input) {
-        if (input.length == 0) {
-            return ALL;
-        }
-        String[] result = new String[input.length];
+        return input.length == 0 ? ALL : ofInternal(input.clone());
+    }
+
+    private static Key ofInternal(String[] result) {
         for (int i = 0; i < result.length; i++) {
-            String item = input[i];
+            String item = result[i];
             if (item == null) {
                 item = WILDCARD;
             } else {
@@ -115,9 +140,7 @@ public final class Key {
     @Nonnull
     public static Builder builder(@Nonnull DataStructure dfs) {
         Map<String, Integer> index = new HashMap<>();
-        for (Dimension o : dfs.getDimensions()) {
-            index.put(o.getId(), o.getPosition() - 1);
-        }
+        dfs.getDimensions().forEach(o -> index.put(o.getId(), o.getPosition() - 1));
         return new BuilderImpl(index);
     }
 
@@ -140,6 +163,10 @@ public final class Key {
 
         @Nonnull
         String getItem(@Nonnegative int index) throws IndexOutOfBoundsException;
+
+        boolean isDimension(@Nullable String id);
+
+        boolean isSeries();
 
         @Nonnull
         Builder put(@Nullable String id, @Nullable String value);
@@ -192,6 +219,21 @@ public final class Key {
         @Override
         public String getItem(int index) throws IndexOutOfBoundsException {
             return items[index];
+        }
+
+        @Override
+        public boolean isDimension(String id) {
+            return index.containsKey(id);
+        }
+
+        @Override
+        public boolean isSeries() {
+            for (String item : items) {
+                if (WILDCARD.equals(item)) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         @Override

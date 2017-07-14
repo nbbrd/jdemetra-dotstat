@@ -29,7 +29,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import be.nbb.sdmx.facade.file.SdmxDecoder.FileType;
+import be.nbb.sdmx.facade.file.SdmxDecoder.DataType;
+import java.util.Collection;
 
 /**
  *
@@ -39,7 +40,7 @@ final class CustomDataStructureBuilder {
 
     private final LinkedHashMap<String, Set<String>> dimensions = new LinkedHashMap();
     private final LinkedHashMap<String, Set<String>> attributes = new LinkedHashMap();
-    private FileType fileType = FileType.UNKNOWN;
+    private DataType fileType = DataType.UNKNOWN;
     private DataStructureRef ref = null;
     private String timeDimensionId = null;
     private String primaryMeasureId = null;
@@ -57,7 +58,7 @@ final class CustomDataStructureBuilder {
     }
 
     @Nonnull
-    public CustomDataStructureBuilder fileType(@Nonnull FileType fileType) {
+    public CustomDataStructureBuilder fileType(@Nonnull DataType fileType) {
         this.fileType = fileType;
         return this;
     }
@@ -66,7 +67,7 @@ final class CustomDataStructureBuilder {
     public CustomDataStructureBuilder refId(@Nonnull String refId) {
         return ref(DataStructureRef.of(null, refId, null));
     }
-    
+
     @Nonnull
     public CustomDataStructureBuilder ref(@Nonnull DataStructureRef ref) {
         this.ref = ref;
@@ -91,23 +92,15 @@ final class CustomDataStructureBuilder {
                 .ref(ref)
                 .dimensions(guessDimensions())
                 .label(ref.getId())
-                .timeDimensionId(timeDimensionId != null ? timeDimensionId : guessTimeDimensionId())
-                .primaryMeasureId(primaryMeasureId != null ? primaryMeasureId : guessPrimaryMeasureId())
+                .timeDimensionId(timeDimensionId != null ? timeDimensionId : "TIME_PERIOD")
+                .primaryMeasureId(primaryMeasureId != null ? primaryMeasureId : "OBS_VALUE")
                 .build();
-    }
-
-    private String guessTimeDimensionId() {
-        return attributes.containsKey("TIME_FORMAT") ? "TIME_FORMAT" : dimensions.containsKey("FREQ") ? "FREQ" : "";
-    }
-
-    private String guessPrimaryMeasureId() {
-        return "OBS_VALUE";
     }
 
     private Set<Dimension> guessDimensions() {
         Set<Dimension> result = new LinkedHashSet<>();
         int position = 1;
-        boolean needsFiltering = fileType.equals(FileType.COMPACT20) || fileType.equals(FileType.COMPACT21);
+        boolean needsFiltering = fileType.equals(DataType.COMPACT20) || fileType.equals(DataType.COMPACT21);
         for (Entry<String, Set<String>> item : dimensions.entrySet()) {
             if (needsFiltering && isAttribute(item)) {
                 continue;
@@ -121,12 +114,7 @@ final class CustomDataStructureBuilder {
         if (item.getKey().contains("TITLE")) {
             return true;
         }
-        for (String o : item.getValue()) {
-            if (WHITE_SPACE_PATTERN.matcher(o).find()) {
-                return true;
-            }
-        }
-        return false;
+        return item.getValue().stream().anyMatch(o -> WHITE_SPACE_PATTERN.matcher(o).find());
     }
 
     private static final Pattern WHITE_SPACE_PATTERN = Pattern.compile("\\s+");
@@ -144,14 +132,12 @@ final class CustomDataStructureBuilder {
         return dimension(name, pos, Arrays.asList(values));
     }
 
-    static Dimension dimension(String name, int pos, Iterable<String> values) {
+    static Dimension dimension(String name, int pos, Collection<String> values) {
         Dimension.Builder result = Dimension.builder()
                 .id(name)
                 .position(pos)
                 .label(name);
-        for (String o : values) {
-            result.code(o, o);
-        }
+        values.forEach(o -> result.code(o, o));
         return result.build();
     }
 }
