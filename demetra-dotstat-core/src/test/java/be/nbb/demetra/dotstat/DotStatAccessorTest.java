@@ -23,6 +23,7 @@ import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.LanguagePriorityList;
+import be.nbb.sdmx.facade.QueryParameters;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.connectors.TestResource;
 import be.nbb.sdmx.facade.repo.SdmxRepositoryManager;
@@ -99,7 +100,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKeyFromTs() throws Exception {
-        try (DataCursor o = supplier.getConnection("NBB", LanguagePriorityList.ANY).getData(DataflowRef.of("NBB", "TEST_DATASET", null), Key.ALL, true)) {
+        try (DataCursor o = supplier.getConnection("NBB", LanguagePriorityList.ANY).getData(DataflowRef.of("NBB", "TEST_DATASET", null), Key.ALL, QueryParameters.SERIES_KEYS_ONLY)) {
             o.nextSeries();
             assertThat(o.getSeriesKey()).isEqualTo(Key.parse("LOCSTL04.AUS.M"));
         }
