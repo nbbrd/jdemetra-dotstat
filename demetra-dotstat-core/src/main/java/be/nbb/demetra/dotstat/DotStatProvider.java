@@ -23,7 +23,7 @@ import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
-import be.nbb.sdmx.facade.driver.SdmxDriverManager;
+import be.nbb.sdmx.facade.web.SdmxWebManager;
 import com.google.common.collect.Maps;
 import ec.tss.ITsProvider;
 import ec.tss.TsAsyncMode;
@@ -55,7 +55,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
 
     public DotStatProvider() {
         super(LoggerFactory.getLogger(DotStatProvider.class), NAME, TsAsyncMode.Once);
-        this.connectionSupplier = new AtomicReference<>(SdmxDriverManager.getDefault());
+        this.connectionSupplier = new AtomicReference<>(SdmxWebManager.ofServiceLoader());
         this.languages = new AtomicReference<>(LanguagePriorityList.ANY);
         this.displayCodes = false;
     }
@@ -145,7 +145,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     @Override
     public void setConnectionSupplier(SdmxConnectionSupplier connectionSupplier) {
         SdmxConnectionSupplier old = this.connectionSupplier.get();
-        if (this.connectionSupplier.compareAndSet(old, connectionSupplier != null ? connectionSupplier : SdmxDriverManager.getDefault())) {
+        if (this.connectionSupplier.compareAndSet(old, connectionSupplier != null ? connectionSupplier : SdmxWebManager.ofServiceLoader())) {
             clearCache();
         }
     }

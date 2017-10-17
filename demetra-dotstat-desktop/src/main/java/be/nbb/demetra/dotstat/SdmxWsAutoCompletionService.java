@@ -16,7 +16,7 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.facade.driver.SdmxDriverManager;
+import be.nbb.demetra.sdmx.web.SdmxWebProviderBuddy;
 import ec.nbdemetra.ui.completion.JAutoCompletionService;
 import ec.util.completion.AutoCompletionSource;
 import ec.util.completion.swing.JAutoCompletion;
@@ -34,7 +34,7 @@ public final class SdmxWsAutoCompletionService extends JAutoCompletionService {
 
     public static final String PATH = "JAutoCompletionService/SdmxWs";
 
-    private final AutoCompletionSource source = SdmxAutoCompletion.onEntryPoints(SdmxDriverManager.getDefault());
+    private final AutoCompletionSource source = SdmxAutoCompletion.onEntryPoints(SdmxWebProviderBuddy.getDefaultManager());
     private final ListCellRenderer renderer = SdmxAutoCompletion.getEntryPointsRenderer();
 
     @Override

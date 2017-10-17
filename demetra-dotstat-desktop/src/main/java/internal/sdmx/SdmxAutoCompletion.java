@@ -22,8 +22,8 @@ import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
-import be.nbb.sdmx.facade.driver.SdmxDriverManager;
-import be.nbb.sdmx.facade.driver.WsEntryPoint;
+import be.nbb.sdmx.facade.web.SdmxWebManager;
+import be.nbb.sdmx.facade.web.WebEntryPoint;
 import be.nbb.sdmx.facade.util.UnexpectedIOException;
 import com.google.common.base.Strings;
 import ec.util.completion.AutoCompletionSource;
@@ -49,17 +49,17 @@ import javax.swing.ListCellRenderer;
 @lombok.experimental.UtilityClass
 public class SdmxAutoCompletion {
 
-    public AutoCompletionSource onEntryPoints(SdmxDriverManager manager) {
+    public AutoCompletionSource onEntryPoints(SdmxWebManager manager) {
         return ExtAutoCompletionSource
                 .builder(o -> manager.getEntryPoints())
                 .behavior(AutoCompletionSource.Behavior.SYNC)
                 .postProcessor(SdmxAutoCompletion::filterAndSortEntryPoints)
-                .valueToString(WsEntryPoint::getName)
+                .valueToString(WebEntryPoint::getName)
                 .build();
     }
 
     public ListCellRenderer getEntryPointsRenderer() {
-        return CustomListCellRenderer.of(WsEntryPoint::getDescription, WsEntryPoint::getName);
+        return CustomListCellRenderer.of(WebEntryPoint::getDescription, WebEntryPoint::getName);
     }
 
     public AutoCompletionSource onFlows(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source, ConcurrentMap cache) {
@@ -103,11 +103,11 @@ public class SdmxAutoCompletion {
                 .collect(Collectors.joining(delimiter));
     }
 
-    private List<WsEntryPoint> filterAndSortEntryPoints(List<WsEntryPoint> allValues, String term) {
+    private List<WebEntryPoint> filterAndSortEntryPoints(List<WebEntryPoint> allValues, String term) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return allValues.stream()
                 .filter(o -> filter.test(o.getDescription()) || filter.test(o.getUri().toString()))
-                .sorted(Comparator.comparing(WsEntryPoint::getDescription))
+                .sorted(Comparator.comparing(WebEntryPoint::getDescription))
                 .collect(Collectors.toList());
     }
 

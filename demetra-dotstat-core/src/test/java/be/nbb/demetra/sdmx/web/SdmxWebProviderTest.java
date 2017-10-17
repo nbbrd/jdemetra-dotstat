@@ -24,10 +24,10 @@ import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.Frequency;
-import be.nbb.sdmx.facade.driver.SdmxDriverManager;
+import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.repo.SdmxRepository;
 import be.nbb.sdmx.facade.repo.Obs;
-import be.nbb.sdmx.facade.repo.SdmxRepositoryDriver;
+import be.nbb.sdmx.facade.repo.SdmxRepositoryManager;
 import be.nbb.sdmx.facade.repo.Series;
 import ec.tss.TsMoniker;
 import ec.tss.tsproviders.DataSet;
@@ -110,8 +110,8 @@ public class SdmxWebProviderTest {
         return o.encodeBean(result);
     }
 
-    private static SdmxDriverManager getCustomSupplier() {
-        return SdmxDriverManager.of(SdmxRepositoryDriver.of(getCustomRepo()));
+    private static SdmxConnectionSupplier getCustomSupplier() {
+        return SdmxRepositoryManager.builder().repository(getCustomRepo()).build();
     }
 
     private static SdmxRepository getCustomRepo() {

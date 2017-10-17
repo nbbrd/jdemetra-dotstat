@@ -21,7 +21,7 @@ import internal.sdmx.SdmxCubeAccessor;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
-import be.nbb.sdmx.facade.driver.SdmxDriverManager;
+import be.nbb.sdmx.facade.web.SdmxWebManager;
 import com.google.common.cache.Cache;
 import ec.tss.ITsProvider;
 import ec.tss.tsproviders.DataSet;
@@ -76,7 +76,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
     private final ITsProvider tsSupport;
 
     public SdmxWebProvider() {
-        this.connectionSupplier = new AtomicReference<>(SdmxDriverManager.getDefault());
+        this.connectionSupplier = new AtomicReference<>(SdmxWebManager.ofServiceLoader());
         this.languages = new AtomicReference<>(LanguagePriorityList.ANY);
         this.displayCodes = new AtomicBoolean(false);
 
@@ -104,7 +104,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
     @Override
     public void setConnectionSupplier(SdmxConnectionSupplier connectionSupplier) {
         SdmxConnectionSupplier old = this.connectionSupplier.get();
-        if (this.connectionSupplier.compareAndSet(old, connectionSupplier != null ? connectionSupplier : SdmxDriverManager.getDefault())) {
+        if (this.connectionSupplier.compareAndSet(old, connectionSupplier != null ? connectionSupplier : SdmxWebManager.ofServiceLoader())) {
             clearCache();
         }
     }

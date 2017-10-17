@@ -23,9 +23,9 @@ import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.LanguagePriorityList;
+import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.connectors.TestResource;
-import be.nbb.sdmx.facade.driver.SdmxDriverManager;
-import be.nbb.sdmx.facade.repo.SdmxRepositoryDriver;
+import be.nbb.sdmx.facade.repo.SdmxRepositoryManager;
 import com.google.common.base.Joiner;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbSeries;
@@ -44,11 +44,10 @@ import org.junit.Test;
  */
 public class DotStatAccessorTest {
 
-    private final SdmxDriverManager supplier = SdmxDriverManager.of(SdmxRepositoryDriver.builder()
-            .prefix("")
+    private final SdmxConnectionSupplier supplier = SdmxRepositoryManager.builder()
             .repository(TestResource.nbb())
             .repository(TestResource.ecb())
-            .build());
+            .build();
 
     private static DotStatBean nbbBean() {
         DotStatBean result = new DotStatBean();

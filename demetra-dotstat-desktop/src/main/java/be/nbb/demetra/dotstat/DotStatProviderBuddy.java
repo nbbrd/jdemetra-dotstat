@@ -16,7 +16,6 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.facade.driver.SdmxDriverManager;
 import com.google.common.base.Converter;
 import ec.nbdemetra.db.DbProviderBuddy;
 import ec.nbdemetra.ui.BeanHandler;
@@ -36,7 +35,6 @@ import javax.swing.ListCellRenderer;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.ServiceProvider;
-import be.nbb.sdmx.facade.util.HasCache;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxAutoCompletion;
 import java.time.Duration;
@@ -61,13 +59,6 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
         this.tableRenderer = SdmxAutoCompletion.getFlowsRenderer();
         this.columnRenderer = SdmxAutoCompletion.getDimensionsRenderer();
         this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
-        initDriverCache(GuavaCaches.softValuesCacheAsMap());
-    }
-
-    private static void initDriverCache(ConcurrentMap cache) {
-        SdmxDriverManager.getDefault().getDrivers().stream()
-                .filter(o -> (o instanceof HasCache))
-                .forEach(o -> ((HasCache) o).setCache(cache));
     }
 
     @Override
