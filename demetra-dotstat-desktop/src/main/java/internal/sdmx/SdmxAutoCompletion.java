@@ -23,7 +23,7 @@ import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.web.SdmxWebManager;
-import be.nbb.sdmx.facade.web.WebEntryPoint;
+import be.nbb.sdmx.facade.web.SdmxWebEntryPoint;
 import be.nbb.sdmx.facade.util.UnexpectedIOException;
 import com.google.common.base.Strings;
 import ec.util.completion.AutoCompletionSource;
@@ -54,12 +54,12 @@ public class SdmxAutoCompletion {
                 .builder(o -> manager.getEntryPoints())
                 .behavior(AutoCompletionSource.Behavior.SYNC)
                 .postProcessor(SdmxAutoCompletion::filterAndSortEntryPoints)
-                .valueToString(WebEntryPoint::getName)
+                .valueToString(SdmxWebEntryPoint::getName)
                 .build();
     }
 
     public ListCellRenderer getEntryPointsRenderer() {
-        return CustomListCellRenderer.of(WebEntryPoint::getDescription, WebEntryPoint::getName);
+        return CustomListCellRenderer.of(SdmxWebEntryPoint::getDescription, SdmxWebEntryPoint::getName);
     }
 
     public AutoCompletionSource onFlows(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source, ConcurrentMap cache) {
@@ -103,11 +103,11 @@ public class SdmxAutoCompletion {
                 .collect(Collectors.joining(delimiter));
     }
 
-    private List<WebEntryPoint> filterAndSortEntryPoints(List<WebEntryPoint> allValues, String term) {
+    private List<SdmxWebEntryPoint> filterAndSortEntryPoints(List<SdmxWebEntryPoint> allValues, String term) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return allValues.stream()
                 .filter(o -> filter.test(o.getDescription()) || filter.test(o.getUri().toString()))
-                .sorted(Comparator.comparing(WebEntryPoint::getDescription))
+                .sorted(Comparator.comparing(SdmxWebEntryPoint::getDescription))
                 .collect(Collectors.toList());
     }
 

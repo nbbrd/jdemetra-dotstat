@@ -22,8 +22,7 @@ import be.nbb.demetra.dotstat.SdmxWsAutoCompletionService;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.web.SdmxWebManager;
-import be.nbb.sdmx.facade.util.HasCache;
-import be.nbb.sdmx.facade.web.SdmxWebDriver;
+import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import ec.nbdemetra.db.DbIcon;
@@ -70,10 +69,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
 
     private static SdmxWebManager createManager() {
         SdmxWebManager result = SdmxWebManager.of(Lookup.getDefault().lookupAll(SdmxWebDriver.class));
-        ConcurrentMap<?, ?> cache = GuavaCaches.softValuesCacheAsMap();
-        result.getDrivers().stream()
-                .filter(HasCache.class::isInstance)
-                .forEach(o -> ((HasCache) o).setCache(cache));
+        result.setCache(GuavaCaches.softValuesCacheAsMap());
         return result;
     }
 

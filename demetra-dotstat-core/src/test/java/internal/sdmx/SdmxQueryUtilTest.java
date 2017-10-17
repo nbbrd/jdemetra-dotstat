@@ -19,7 +19,7 @@ package internal.sdmx;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.connectors.TestResource;
+import internal.connectors.TestResource;
 import be.nbb.sdmx.facade.repo.SdmxRepository;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tstoolkit.timeseries.simplets.TsData;
