@@ -80,7 +80,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
     private final ITsProvider tsSupport;
 
     public SdmxFileProvider() {
-        this.connectionSupplier = new AtomicReference<>(new SdmxFileManager());
+        this.connectionSupplier = new AtomicReference<>(SdmxFileManager.of());
         this.languages = new AtomicReference<>(LanguagePriorityList.ANY);
 
         Logger logger = LoggerFactory.getLogger(NAME);
@@ -113,7 +113,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
     @Override
     public void setConnectionSupplier(SdmxConnectionSupplier connectionSupplier) {
         SdmxConnectionSupplier old = this.connectionSupplier.get();
-        if (this.connectionSupplier.compareAndSet(old, connectionSupplier != null ? connectionSupplier : new SdmxFileManager())) {
+        if (this.connectionSupplier.compareAndSet(old, connectionSupplier != null ? connectionSupplier : SdmxFileManager.of())) {
             clearCache();
         }
     }
