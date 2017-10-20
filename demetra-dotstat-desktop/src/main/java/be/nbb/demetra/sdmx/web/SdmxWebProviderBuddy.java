@@ -21,8 +21,8 @@ import be.nbb.demetra.dotstat.DotStatProviderBuddy.BuddyConfig;
 import be.nbb.demetra.dotstat.SdmxWsAutoCompletionService;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
-import be.nbb.sdmx.facade.driver.SdmxDriverManager;
-import be.nbb.sdmx.facade.util.HasCache;
+import be.nbb.sdmx.facade.web.SdmxWebManager;
+import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import ec.nbdemetra.db.DbIcon;
@@ -49,6 +49,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.nodes.Sheet;
 import org.openide.util.ImageUtilities;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 
@@ -60,13 +61,24 @@ import org.openide.util.lookup.ServiceProvider;
 @ServiceProvider(service = IDataSourceProviderBuddy.class, supersedes = "be.nbb.demetra.dotstat.DotStatProviderBuddy")
 public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, IConfigurable {
 
+    private static final SdmxWebManager WEB_MANAGER = createManager();
+
+    public static SdmxWebManager getDefaultManager() {
+        return WEB_MANAGER;
+    }
+
+    private static SdmxWebManager createManager() {
+        SdmxWebManager result = SdmxWebManager.of(Lookup.getDefault().lookupAll(SdmxWebDriver.class));
+        result.setCache(GuavaCaches.softValuesCacheAsMap());
+        return result;
+    }
+
     private final Configurator<SdmxWebProviderBuddy> configurator;
     private final ConcurrentMap autoCompletionCache;
 
     public SdmxWebProviderBuddy() {
         this.configurator = createConfigurator();
         this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
-        initDriverCache(GuavaCaches.softValuesCacheAsMap());
     }
 
     @Override
@@ -159,12 +171,6 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
                 o.setDisplayCodes(bean.isDisplayCodes());
             });
         }
-    }
-
-    private static void initDriverCache(ConcurrentMap cache) {
-        SdmxDriverManager.getDefault().getDrivers().stream()
-                .filter(o -> (o instanceof HasCache))
-                .forEach(o -> ((HasCache) o).setCache(cache));
     }
 
     @NbBundle.Messages({

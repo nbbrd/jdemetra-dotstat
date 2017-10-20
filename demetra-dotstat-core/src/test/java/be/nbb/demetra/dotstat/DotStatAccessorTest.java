@@ -23,9 +23,10 @@ import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.connectors.TestResource;
-import be.nbb.sdmx.facade.driver.SdmxDriverManager;
-import be.nbb.sdmx.facade.repo.SdmxRepositoryDriver;
+import be.nbb.sdmx.facade.DataQuery;
+import be.nbb.sdmx.facade.SdmxConnectionSupplier;
+import internal.connectors.TestResource;
+import be.nbb.sdmx.facade.repo.SdmxRepositoryManager;
 import com.google.common.base.Joiner;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbSeries;
@@ -44,11 +45,10 @@ import org.junit.Test;
  */
 public class DotStatAccessorTest {
 
-    private final SdmxDriverManager supplier = SdmxDriverManager.of(SdmxRepositoryDriver.builder()
-            .prefix("")
+    private final SdmxConnectionSupplier supplier = SdmxRepositoryManager.builder()
             .repository(TestResource.nbb())
             .repository(TestResource.ecb())
-            .build());
+            .build();
 
     private static DotStatBean nbbBean() {
         DotStatBean result = new DotStatBean();
@@ -80,7 +80,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKey() throws Exception {
-        DataStructure dfs = supplier.getConnection("NBB", LanguagePriorityList.ANY).getDataStructure(DataflowRef.of("NBB", "TEST_DATASET", null));
+        DataStructure dfs = supplier.getConnection("NBB").getDataStructure(DataflowRef.of("NBB", "TEST_DATASET", null));
         Map<String, Dimension> dimById = DotStatAccessor.dimensionById(dfs);
 
         // default ordering of dimensions
@@ -100,7 +100,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKeyFromTs() throws Exception {
-        try (DataCursor o = supplier.getConnection("NBB", LanguagePriorityList.ANY).getData(DataflowRef.of("NBB", "TEST_DATASET", null), Key.ALL, true)) {
+        try (DataCursor o = supplier.getConnection("NBB").getData(DataflowRef.of("NBB", "TEST_DATASET", null), DataQuery.of(Key.ALL, true))) {
             o.nextSeries();
             assertThat(o.getSeriesKey()).isEqualTo(Key.parse("LOCSTL04.AUS.M"));
         }

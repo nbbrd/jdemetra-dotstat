@@ -19,6 +19,7 @@ package be.nbb.sdmx.facade.tck;
 import internal.io.ConsumerWithIO;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.DataQuery;
 import be.nbb.sdmx.facade.SdmxConnection;
 import java.io.IOException;
 import java.util.concurrent.Callable;
@@ -51,7 +52,7 @@ public final class ConnectionAssert {
             s.fail("Subsequent calls to #close must not raise exception", ex);
         }
 
-        assertState(s, supplier, o -> o.getData(ref, Key.ALL, false), "getData(DataFlowRef, Key, boolean)");
+        assertState(s, supplier, o -> o.getData(ref, DataQuery.of(Key.ALL, false)), "getData(DataFlowRef, DataQuery)");
         assertState(s, supplier, o -> o.getDataStructure(ref), "getDataStructure(DataFlowRef)");
         assertState(s, supplier, o -> o.getDataflow(ref), "getDataflow(DataFlowRef)");
         assertState(s, supplier, SdmxConnection::getDataflows, "getDataflows()");
@@ -59,12 +60,12 @@ public final class ConnectionAssert {
 
     @SuppressWarnings("null")
     private static void assertNonnull(SoftAssertions s, SdmxConnection conn, DataflowRef ref) {
-        s.assertThatThrownBy(() -> conn.getData(null, Key.ALL, false))
-                .as("Expecting 'getData(DataFlowRef, Key, boolean)' to raise NPE when called with null flowRef")
+        s.assertThatThrownBy(() -> conn.getData(null, DataQuery.of(Key.ALL, false)))
+                .as("Expecting 'getData(DataFlowRef, DataQuery)' to raise NPE when called with null flowRef")
                 .isInstanceOf(NullPointerException.class);
 
-        s.assertThatThrownBy(() -> conn.getData(ref, null, false))
-                .as("Expecting 'getData(DataFlowRef, Key, boolean)' to raise NPE when called with null key")
+        s.assertThatThrownBy(() -> conn.getData(ref, null))
+                .as("Expecting 'getData(DataFlowRef, DataQuery)' to raise NPE when called with null query")
                 .isInstanceOf(NullPointerException.class);
 
         s.assertThatThrownBy(() -> conn.getDataStructure(null))

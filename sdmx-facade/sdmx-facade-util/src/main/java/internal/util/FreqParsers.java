@@ -28,12 +28,8 @@ import java.util.function.Function;
 @lombok.experimental.UtilityClass
 public class FreqParsers {
 
-    public Frequency parseByTimeFormat(Function<String, String> attributes) {
-        String value = attributes.apply(FreqUtil.TIME_FORMAT_CONCEPT);
-        return value != null ? FreqUtil.parseByTimeFormat(value) : Frequency.UNDEFINED;
-    }
-
-    public Frequency parseByFreq(Key.Builder key, int index) {
-        return FreqUtil.parseByFreq(key.getItem(index));
+    public Frequency parseSdmx20(Key.Builder key, Function<String, String> attributes) {
+        String code = attributes.apply(FreqUtil.TIME_FORMAT_CONCEPT);
+        return code != null ? FreqUtil.parseByTimeFormat(code) : Frequency.UNDEFINED;
     }
 }

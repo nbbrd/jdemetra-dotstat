@@ -48,7 +48,7 @@ public class SdmxFileProviderTest {
     private static File createTemp(ByteSource bytes, String prefix, String suffix) throws IOException {
         File result = File.createTempFile(prefix, suffix);
         result.deleteOnExit();
-        bytes.copyTo(result.toPath());
+        bytes.copyTo(result);
         return result;
     }
 

@@ -73,7 +73,7 @@
         </dependency>
         <dependency>
             <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-connectors</artifactId>
+            <artifactId>sdmx-facade-web</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

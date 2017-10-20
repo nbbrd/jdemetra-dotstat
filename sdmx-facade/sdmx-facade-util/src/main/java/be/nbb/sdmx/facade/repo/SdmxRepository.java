@@ -21,7 +21,7 @@ import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.DataQuery;
 import be.nbb.sdmx.facade.SdmxConnection;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,7 +57,8 @@ public class SdmxRepository {
     @lombok.NonNull
     Map<DataflowRef, List<Series>> data;
 
-    boolean seriesKeysOnlySupported;
+    @lombok.Builder.Default
+    boolean seriesKeysOnlySupported = true;
 
     @Nonnull
     public SdmxConnection asConnection() {
@@ -68,35 +69,36 @@ public class SdmxRepository {
                 seriesKeysOnlySupported);
     }
 
+    @Nonnull
+    public DataCursor getData(@Nonnull DataflowRef flowRef, @Nonnull DataQuery query) throws IOException {
+        Objects.requireNonNull(flowRef);
+        Objects.requireNonNull(query);
+        List<Series> col = data.get(flowRef);
+        if (col != null) {
+            return Series.asCursor(col, query.getKey());
+        }
+        throw new IOException("Data not found");
+    }
+
     public static final class Builder {
 
-        private boolean seriesKeysOnlySupported = true;
+        private final Map<DataflowRef, List<Series>> data = new HashMap<>();
 
         @Nonnull
         public Builder clearData() {
-            if (this.data == null) {
-                this.data.clear();
-            }
+            this.data.clear();
             return this;
         }
 
         @Nonnull
         public Builder data(@Nonnull DataflowRef flowRef, @Nonnull Series series) {
-            if (this.data == null) {
-                this.data = new HashMap<>();
-            }
             data.computeIfAbsent(flowRef, o -> new ArrayList<>()).add(series);
             return this;
         }
 
         @Nonnull
         public Builder data(@Nonnull DataflowRef flowRef, @Nonnull List<Series> list) {
-            if (!list.isEmpty()) {
-                if (this.data == null) {
-                    this.data = new HashMap<>();
-                }
-                data.computeIfAbsent(flowRef, o -> new ArrayList<>()).addAll(list);
-            }
+            data.computeIfAbsent(flowRef, o -> new ArrayList<>()).addAll(list);
             return this;
         }
 
@@ -151,13 +153,13 @@ public class SdmxRepository {
         }
 
         @Override
-        public DataCursor getData(DataflowRef flowRef, Key key, boolean serieskeysonly) throws IOException {
+        public DataCursor getData(DataflowRef flowRef, DataQuery query) throws IOException {
             checkState();
             Objects.requireNonNull(flowRef);
-            Objects.requireNonNull(key);
+            Objects.requireNonNull(query);
             List<Series> col = data.get(flowRef);
             if (col != null) {
-                return Series.asCursor(col, key);
+                return Series.asCursor(col, query.getKey());
             }
             throw new IOException("Data not found");
         }
