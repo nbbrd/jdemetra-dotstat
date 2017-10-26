@@ -88,7 +88,7 @@ public class SdmxQueryUtil {
     private final OptionalTsData MISSING_DATA = OptionalTsData.absent("No results matching the query");
 
     private TsCursor<Key> request(SdmxConnection conn, DataflowRef flowRef, Key key, String labelAttribute, boolean seriesKeysOnly) throws IOException {
-        return new SdmxDataAdapter(key, conn.getData(flowRef, DataQuery.of(key, seriesKeysOnly)), labelAttribute);
+        return new SdmxDataAdapter(key, conn.getDataCursor(flowRef, DataQuery.of(key, seriesKeysOnly)), labelAttribute);
     }
 
     private TsCursor<Key> computeKeys(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
