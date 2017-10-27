@@ -178,8 +178,9 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     }
 
     private static IteratorWithIO<CubeId> getChildren(SdmxConnection conn, DataflowRef flowRef, CubeId ref) throws IOException {
-        Converter<CubeId, Key> converter = getConverter(conn.getStructure(flowRef), ref);
-        int dimensionPosition = dimensionById(conn.getStructure(flowRef)).get(ref.getDimensionId(ref.getLevel())).getPosition();
+        DataStructure dsd = conn.getStructure(flowRef);
+        Converter<CubeId, Key> converter = getConverter(dsd, ref);
+        int dimensionPosition = dimensionById(dsd).get(ref.getDimensionId(ref.getLevel())).getPosition();
         List<String> children = SdmxQueryUtil.getChildren(conn, flowRef, converter.convert(ref), dimensionPosition);
         return IteratorWithIO.from(children.iterator()).transform(ref::child);
     }

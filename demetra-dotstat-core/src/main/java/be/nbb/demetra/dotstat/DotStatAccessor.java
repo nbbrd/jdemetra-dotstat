@@ -133,8 +133,9 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
     }
 
     private static List<String> getChildren(SdmxConnection conn, DataflowRef flowRef, DbSetId ref) throws IOException {
-        Converter<DbSetId, Key> converter = getConverter(conn.getStructure(flowRef), ref);
-        int dimensionPosition = dimensionById(conn.getStructure(flowRef)).get(ref.getColumn(ref.getLevel())).getPosition();
+        DataStructure dsd = conn.getStructure(flowRef);
+        Converter<DbSetId, Key> converter = getConverter(dsd, ref);
+        int dimensionPosition = dimensionById(dsd).get(ref.getColumn(ref.getLevel())).getPosition();
         return SdmxQueryUtil.getChildren(conn, flowRef, converter.convert(ref), dimensionPosition);
     }
 
