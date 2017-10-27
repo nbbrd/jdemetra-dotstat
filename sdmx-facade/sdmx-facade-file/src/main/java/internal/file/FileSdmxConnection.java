@@ -26,7 +26,9 @@ import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.DataQueryDetail;
 import be.nbb.sdmx.facade.DataQuery;
 import be.nbb.sdmx.facade.SdmxConnection;
+import be.nbb.sdmx.facade.Series;
 import be.nbb.sdmx.facade.file.SdmxFile;
+import be.nbb.sdmx.facade.util.SeriesSupport;
 import be.nbb.sdmx.facade.xml.stream.SdmxXmlStreams;
 import be.nbb.sdmx.facade.xml.stream.XMLStream;
 import java.io.IOException;
@@ -34,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.xml.stream.XMLInputFactory;
 
 /**
@@ -61,13 +64,13 @@ class FileSdmxConnection implements SdmxConnection {
     }
 
     @Override
-    final public Set<Dataflow> getDataflows() throws IOException {
+    final public Set<Dataflow> getFlows() throws IOException {
         checkState();
         return Collections.singleton(dataflow);
     }
 
     @Override
-    final public Dataflow getDataflow(DataflowRef flowRef) throws IOException {
+    final public Dataflow getFlow(DataflowRef flowRef) throws IOException {
         checkState();
         Objects.requireNonNull(flowRef);
         checkFlowRef(flowRef);
@@ -75,7 +78,7 @@ class FileSdmxConnection implements SdmxConnection {
     }
 
     @Override
-    final public DataStructure getDataStructure(DataflowRef flowRef) throws IOException {
+    final public DataStructure getStructure(DataflowRef flowRef) throws IOException {
         checkState();
         Objects.requireNonNull(flowRef);
         checkFlowRef(flowRef);
@@ -83,12 +86,17 @@ class FileSdmxConnection implements SdmxConnection {
     }
 
     @Override
-    final public DataCursor getData(DataflowRef flowRef, DataQuery query) throws IOException {
+    final public DataCursor getCursor(DataflowRef flowRef, DataQuery query) throws IOException {
         checkState();
         Objects.requireNonNull(flowRef);
         Objects.requireNonNull(query);
         checkFlowRef(flowRef);
         return loadData(decode(), flowRef, query.getKey(), query.getDetail().equals(DataQueryDetail.SERIES_KEYS_ONLY));
+    }
+
+    @Override
+    public Stream<Series> getStream(DataflowRef flowRef, DataQuery query) throws IOException {
+        return SeriesSupport.asStream(() -> getCursor(flowRef, query));
     }
 
     @Override
@@ -131,7 +139,7 @@ class FileSdmxConnection implements SdmxConnection {
     }
 
     private void checkFlowRef(DataflowRef flowRef) throws IOException {
-        if (!this.dataflow.getFlowRef().contains(flowRef)) {
+        if (!this.dataflow.getRef().contains(flowRef)) {
             throw new IOException("Invalid flowref '" + flowRef + "'");
         }
     }

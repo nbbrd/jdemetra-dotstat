@@ -16,11 +16,14 @@
  */
 package be.nbb.sdmx.facade.repo;
 
+import be.nbb.sdmx.facade.Series;
+import be.nbb.sdmx.facade.Obs;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.Frequency;
 import be.nbb.sdmx.facade.tck.ConnectionAssert;
 import be.nbb.sdmx.facade.tck.DataCursorAssert;
+import be.nbb.sdmx.facade.util.SeriesSupport;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,7 +42,7 @@ public class SdmxRepositoryTest {
 
     @Test
     public void testDataCursorCompliance() {
-        DataCursorAssert.assertCompliance(() -> Series.asCursor(Collections.singletonList(series), Key.ALL));
+        DataCursorAssert.assertCompliance(() -> SeriesSupport.asCursor(Collections.singletonList(series), Key.ALL));
     }
 
     @Test
@@ -48,6 +51,6 @@ public class SdmxRepositoryTest {
     }
 
     private final DataflowRef xyz = DataflowRef.parse("XYZ");
-    private final Series series = Series.builder().key(Key.of("BE")).frequency(Frequency.MONTHLY).obs(Obs.of(LocalDateTime.now(), Math.PI)).meta("hello", "world").build();
+    private final Series series = Series.builder().key(Key.of("BE")).freq(Frequency.MONTHLY).obs(Obs.of(LocalDateTime.now(), Math.PI)).meta("hello", "world").build();
     private final SdmxRepository repo = SdmxRepository.builder().name("test").data(xyz, series).build();
 }

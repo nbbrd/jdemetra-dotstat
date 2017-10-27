@@ -17,7 +17,6 @@
 package be.nbb.demetra.dotstat;
 
 import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
-import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.DataflowRef;
@@ -25,6 +24,7 @@ import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.DataQuery;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
+import be.nbb.sdmx.facade.Series;
 import internal.connectors.TestResource;
 import be.nbb.sdmx.facade.repo.SdmxRepositoryManager;
 import com.google.common.base.Joiner;
@@ -80,7 +80,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKey() throws Exception {
-        DataStructure dfs = supplier.getConnection("NBB").getDataStructure(DataflowRef.of("NBB", "TEST_DATASET", null));
+        DataStructure dfs = supplier.getConnection("NBB").getStructure(DataflowRef.of("NBB", "TEST_DATASET", null));
         Map<String, Dimension> dimById = DotStatAccessor.dimensionById(dfs);
 
         // default ordering of dimensions
@@ -100,10 +100,9 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKeyFromTs() throws Exception {
-        try (DataCursor o = supplier.getConnection("NBB").getData(DataflowRef.of("NBB", "TEST_DATASET", null), DataQuery.of(Key.ALL, true))) {
-            o.nextSeries();
-            assertThat(o.getSeriesKey()).isEqualTo(Key.parse("LOCSTL04.AUS.M"));
-        }
+        assertThat(supplier.getConnection("NBB")
+                .getStream(DataflowRef.of("NBB", "TEST_DATASET", null), DataQuery.of(Key.ALL, true))
+                .map(Series::getKey)).contains(Key.parse("LOCSTL04.AUS.M"));
     }
 
     @Test

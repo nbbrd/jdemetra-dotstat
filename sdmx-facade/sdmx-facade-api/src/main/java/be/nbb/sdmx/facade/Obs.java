@@ -16,24 +16,19 @@
  */
 package be.nbb.sdmx.facade;
 
-import javax.annotation.Nonnull;
+import java.time.LocalDateTime;
+import javax.annotation.Nullable;
 
 /**
- * Abstract identifier of a resource.
  *
  * @author Philippe Charles
  */
-public interface ResourceRef {
+@lombok.Value(staticConstructor = "of")
+public class Obs {
 
-    public static final String ALL_AGENCIES = "all";
-    public static final String LATEST_VERSION = "latest";
+    @Nullable
+    LocalDateTime period;
 
-    @Nonnull
-    String getAgency();
-
-    @Nonnull
-    String getId();
-
-    @Nonnull
-    String getVersion();
+    @Nullable
+    Double value;
 }

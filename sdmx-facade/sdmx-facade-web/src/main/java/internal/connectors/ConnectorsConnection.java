@@ -24,10 +24,13 @@ import be.nbb.sdmx.facade.DataQueryDetail;
 import be.nbb.sdmx.facade.DataQuery;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnection;
+import be.nbb.sdmx.facade.Series;
+import be.nbb.sdmx.facade.util.SeriesSupport;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
 /**
@@ -62,33 +65,38 @@ final class ConnectorsConnection implements SdmxConnection {
     }
 
     @Override
-    public Set<Dataflow> getDataflows() throws IOException {
+    public Set<Dataflow> getFlows() throws IOException {
         checkState();
         return resource.loadDataFlowsById().values().stream()
-                .map(Util::toDataflow)
+                .map(Util::toFlow)
                 .collect(Collectors.toSet());
     }
 
     @Override
-    public Dataflow getDataflow(DataflowRef flowRef) throws IOException {
+    public Dataflow getFlow(DataflowRef flowRef) throws IOException {
         checkState();
-        return Util.toDataflow(resource.loadDataflow(flowRef));
+        return Util.toFlow(resource.loadDataflow(flowRef));
     }
 
     @Override
-    public DataStructure getDataStructure(DataflowRef flowRef) throws IOException {
+    public DataStructure getStructure(DataflowRef flowRef) throws IOException {
         checkState();
-        return Util.toDataStructure(resource.loadDataStructure(flowRef));
+        return Util.toStructure(resource.loadDataStructure(flowRef));
     }
 
     @Override
-    public DataCursor getData(DataflowRef flowRef, DataQuery query) throws IOException {
+    public DataCursor getCursor(DataflowRef flowRef, DataQuery query) throws IOException {
         checkState();
         boolean serieskeysonly = query.getDetail().equals(DataQueryDetail.SERIES_KEYS_ONLY);
         if (serieskeysonly && !isSeriesKeysOnlySupported()) {
             throw new IllegalStateException("serieskeysonly not supported");
         }
         return resource.loadData(flowRef, query.getKey(), serieskeysonly);
+    }
+
+    @Override
+    public Stream<Series> getStream(DataflowRef flowRef, DataQuery query) throws IOException {
+        return SeriesSupport.asStream(() -> getCursor(flowRef, query));
     }
 
     @Override

@@ -14,11 +14,13 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.sdmx.facade.repo;
+package be.nbb.sdmx.facade.util;
 
 import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.Frequency;
 import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.Obs;
+import be.nbb.sdmx.facade.Series;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -26,32 +28,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
 /**
  *
  * @author Philippe Charles
  */
-@lombok.Value
-@lombok.Builder(builderClassName = "Builder")
-public class Series {
-
-    @lombok.NonNull
-    Key key;
-
-    @lombok.NonNull
-    Frequency frequency;
-
-    @lombok.NonNull
-    @lombok.Singular(value = "obs")
-    List<Obs> obs;
-
-    @lombok.NonNull
-    @lombok.Singular(value = "meta")
-    Map<String, String> meta;
+@lombok.experimental.UtilityClass
+public class SeriesSupport {
 
     @Nonnull
-    public static List<Series> copyOf(@Nonnull DataCursor cursor) throws IOException {
+    public List<Series> copyOf(@Nonnull DataCursor cursor) throws IOException {
         if (!cursor.nextSeries()) {
             return Collections.emptyList();
         }
@@ -60,7 +48,7 @@ public class Series {
             return ((SeriesCursor) cursor).getRemainingItems();
         }
 
-        Series.Builder b = builder();
+        Series.Builder b = Series.builder();
         List<Series> result = new ArrayList<>();
         do {
             result.add(getSeries(b, cursor));
@@ -69,21 +57,33 @@ public class Series {
     }
 
     @Nonnull
-    public static DataCursor asCursor(@Nonnull List<Series> list, @Nonnull Key ref) {
+    public DataCursor asCursor(@Nonnull List<Series> list, @Nonnull Key ref) {
+        Objects.requireNonNull(list);
+        Objects.requireNonNull(ref);
         return new SeriesCursor(list, ref);
     }
 
-    //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private static Series getSeries(Series.Builder series, DataCursor cursor) throws IOException {
-        series.key(cursor.getSeriesKey())
-                .frequency(cursor.getSeriesFrequency())
+    @Nonnull
+    public Stream<Series> asStream(@Nonnull IO.Supplier<DataCursor> supplier) throws IOException {
+        return IO.stream(supplier, SeriesSupport::getDataStream);
+    }
+
+    @SuppressWarnings("null")
+    private Stream<Series> getDataStream(DataCursor cursor) {
+        Series.Builder builder = Series.builder();
+        return IO.streamNonnull(() -> cursor.nextSeries() ? getSeries(builder, cursor) : null);
+    }
+
+    private Series getSeries(Series.Builder builder, DataCursor cursor) throws IOException {
+        builder.key(cursor.getSeriesKey())
+                .freq(cursor.getSeriesFrequency())
                 .clearMeta()
                 .clearObs()
                 .meta(cursor.getSeriesAttributes());
         while (cursor.nextObs()) {
-            series.obs(Obs.of(cursor.getObsPeriod(), cursor.getObsValue()));
+            builder.obs(Obs.of(cursor.getObsPeriod(), cursor.getObsValue()));
         }
-        return series.build();
+        return builder.build();
     }
 
     private static final class SeriesCursor implements DataCursor {
@@ -132,7 +132,7 @@ public class Series {
         @Override
         public Frequency getSeriesFrequency() throws IOException {
             checkSeriesState();
-            return col.get(i).getFrequency();
+            return col.get(i).getFreq();
         }
 
         @Override
@@ -189,5 +189,4 @@ public class Series {
             }
         }
     }
-    //</editor-fold>
 }

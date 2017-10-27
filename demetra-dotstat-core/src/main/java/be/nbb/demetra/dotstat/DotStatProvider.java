@@ -85,7 +85,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
         DotStatBean bean = decodeBean(dataSource);
         if (!displayCodes) {
             try (SdmxConnection conn = connect(bean.getDbName())) {
-                return String.format("%s ~ %s", bean.getDbName(), conn.getDataflow(bean.getFlowRef()).getLabel());
+                return String.format("%s ~ %s", bean.getDbName(), conn.getFlow(bean.getFlowRef()).getLabel());
             } catch (IOException | RuntimeException ex) {
             }
         }
@@ -96,7 +96,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     public String getDisplayName(DataSet dataSet) {
         DotStatBean bean = decodeBean(dataSet.getDataSource());
         try (SdmxConnection conn = connect(bean.getDbName())) {
-            DataStructure dfs = conn.getDataStructure(bean.getFlowRef());
+            DataStructure dfs = conn.getStructure(bean.getFlowRef());
             Key.Builder b = Key.builder(dfs);
             for (Dimension o : dfs.getDimensions()) {
                 String value = dataSet.get(o.getId());
@@ -117,7 +117,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
             if (!displayCodes) {
                 DotStatBean bean = decodeBean(dataSet.getDataSource());
                 try (SdmxConnection conn = connect(bean.getDbName())) {
-                    DataStructure dfs = conn.getDataStructure(bean.getFlowRef());
+                    DataStructure dfs = conn.getStructure(bean.getFlowRef());
                     for (Dimension o : dfs.getDimensions()) {
                         if (o.getId().equals(nodeDim.getKey())) {
                             return o.getCodes().get(nodeDim.getValue());

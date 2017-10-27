@@ -81,23 +81,23 @@ public class SdmxQueryUtil {
             }
         }
 
-        return computeAllPossibleChildren(dimensionByIndex(conn.getDataStructure(flowRef)), dimensionPosition);
+        return computeAllPossibleChildren(dimensionByIndex(conn.getStructure(flowRef)), dimensionPosition);
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private final OptionalTsData MISSING_DATA = OptionalTsData.absent("No results matching the query");
 
     private TsCursor<Key> request(SdmxConnection conn, DataflowRef flowRef, Key key, String labelAttribute, boolean seriesKeysOnly) throws IOException {
-        return new SdmxDataAdapter(key, conn.getData(flowRef, DataQuery.of(key, seriesKeysOnly)), labelAttribute);
+        return new SdmxDataAdapter(key, conn.getCursor(flowRef, DataQuery.of(key, seriesKeysOnly)), labelAttribute);
     }
 
     private TsCursor<Key> computeKeys(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
-        List<Key> list = computeAllPossibleSeries(dimensionByIndex(conn.getDataStructure(flowRef)), key);
+        List<Key> list = computeAllPossibleSeries(dimensionByIndex(conn.getStructure(flowRef)), key);
         return TsCursor.from(list.iterator());
     }
 
     private TsCursor<Key> computeKeysAndRequestData(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
-        List<Key> list = computeAllPossibleSeries(dimensionByIndex(conn.getDataStructure(flowRef)), key);
+        List<Key> list = computeAllPossibleSeries(dimensionByIndex(conn.getStructure(flowRef)), key);
         Map<Key, OptionalTsData> dataByKey = dataByKey(conn, flowRef, key);
         return TsCursor.from(list.iterator(), o -> dataByKey.getOrDefault(o, MISSING_DATA));
     }

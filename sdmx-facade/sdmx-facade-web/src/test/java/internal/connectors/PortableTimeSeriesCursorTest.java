@@ -20,9 +20,9 @@ import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.Frequency;
 import be.nbb.sdmx.facade.samples.SdmxSource;
 import be.nbb.sdmx.facade.tck.DataCursorAssert;
-import be.nbb.sdmx.facade.repo.Obs;
-import be.nbb.sdmx.facade.repo.Series;
+import be.nbb.sdmx.facade.Obs;
 import be.nbb.sdmx.facade.util.ObsParser;
+import be.nbb.sdmx.facade.util.SeriesSupport;
 import it.bancaditalia.oss.sdmx.api.DataFlowStructure;
 import it.bancaditalia.oss.sdmx.api.PortableTimeSeries;
 import it.bancaditalia.oss.sdmx.util.LanguagePriorityList;
@@ -31,7 +31,6 @@ import java.time.LocalDate;
 import java.util.List;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -51,23 +50,21 @@ public class PortableTimeSeriesCursorTest {
 
     @Test
     public void test() throws IOException {
-        try (PortableTimeSeriesCursor cursor = new PortableTimeSeriesCursor(DATA, ObsParser.standard())) {
-            assertThat(Series.copyOf(cursor))
-                    .hasSize(120)
-                    .allMatch(o -> o.getFrequency().equals(Frequency.ANNUAL))
-                    .element(0)
-                    .satisfies(o -> {
-                        assertThat(o.getKey()).isEqualTo(Key.parse("A.DEU.1.0.319.0.UBLGE"));
-                        assertThat(o.getMeta())
-                                .hasSize(3)
-                                .containsEntry("EXT_UNIT", "Percentage of GDP at market prices (excessive deficit procedure)")
-                                .isNotEmpty();
-                        assertThat(o.getObs())
-                                .hasSize(25)
-                                .startsWith(Obs.of(LocalDate.of(1991, 1, 1).atStartOfDay(), -2.8574221))
-                                .endsWith(Obs.of(LocalDate.of(2015, 1, 1).atStartOfDay(), -0.1420473));
-                    });
-        }
+        assertThat(SeriesSupport.asStream(() -> new PortableTimeSeriesCursor(DATA, ObsParser.standard())))
+                .hasSize(120)
+                .allMatch(o -> o.getFreq().equals(Frequency.ANNUAL))
+                .element(0)
+                .satisfies(o -> {
+                    assertThat(o.getKey()).isEqualTo(Key.parse("A.DEU.1.0.319.0.UBLGE"));
+                    assertThat(o.getMeta())
+                            .hasSize(3)
+                            .containsEntry("EXT_UNIT", "Percentage of GDP at market prices (excessive deficit procedure)")
+                            .isNotEmpty();
+                    assertThat(o.getObs())
+                            .hasSize(25)
+                            .startsWith(Obs.of(LocalDate.of(1991, 1, 1).atStartOfDay(), -2.8574221))
+                            .endsWith(Obs.of(LocalDate.of(2015, 1, 1).atStartOfDay(), -0.1420473));
+                });
     }
 
     @Test

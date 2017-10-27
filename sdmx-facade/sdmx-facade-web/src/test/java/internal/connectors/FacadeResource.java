@@ -24,7 +24,8 @@ import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.samples.ByteSource;
 import be.nbb.sdmx.facade.samples.SdmxSource;
 import be.nbb.sdmx.facade.repo.SdmxRepository;
-import be.nbb.sdmx.facade.repo.Series;
+import be.nbb.sdmx.facade.Series;
+import be.nbb.sdmx.facade.util.SeriesSupport;
 import be.nbb.sdmx.facade.xml.stream.SdmxXmlStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -91,7 +92,7 @@ public class FacadeResource {
 
     List<Series> data20(XMLInputFactory f, ByteSource xml, DataStructure dsd) throws IOException {
         try (DataCursor c = SdmxXmlStreams.genericData20(dsd).get(f, xml.openReader())) {
-            return Series.copyOf(c);
+            return SeriesSupport.copyOf(c);
         }
     }
 
@@ -105,18 +106,18 @@ public class FacadeResource {
         // FIXME: no facade impl yet
         return ConnectorsResource.parse(xml, Util.fromLanguages(l), new it.bancaditalia.oss.sdmx.parser.v21.DataflowParser())
                 .stream()
-                .map(Util::toDataflow)
+                .map(Util::toFlow)
                 .collect(Collectors.toList());
     }
 
     List<Series> data21(XMLInputFactory f, ByteSource xml, DataStructure dsd) throws IOException {
         try (DataCursor c = SdmxXmlStreams.genericData21(dsd).get(f, xml.openReader())) {
-            return Series.copyOf(c);
+            return SeriesSupport.copyOf(c);
         }
     }
 
     private Dataflow asDataflow(DataStructure o) {
-        DataflowRef ref = DataflowRef.of(o.getRef().getAgencyId(), o.getRef().getId(), o.getRef().getVersion());
+        DataflowRef ref = DataflowRef.of(o.getRef().getAgency(), o.getRef().getId(), o.getRef().getVersion());
         return Dataflow.of(ref, o.getRef(), o.getLabel());
     }
 }

@@ -67,13 +67,13 @@ public class SdmxAutoCompletion {
                 .builder(o -> loadFlows(supplier, languages, source))
                 .behavior(o -> canLoadFlows(source) ? ASYNC : NONE)
                 .postProcessor(SdmxAutoCompletion::filterAndSortFlows)
-                .valueToString(o -> o.getFlowRef().toString())
+                .valueToString(o -> o.getRef().toString())
                 .cache(cache, o -> getFlowCacheKey(source, languages), SYNC)
                 .build();
     }
 
     public ListCellRenderer getFlowsRenderer() {
-        return CustomListCellRenderer.of(Dataflow::getLabel, o -> o.getFlowRef().toString());
+        return CustomListCellRenderer.of(Dataflow::getLabel, o -> o.getRef().toString());
     }
 
     public AutoCompletionSource onDimensions(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache) {
@@ -117,7 +117,7 @@ public class SdmxAutoCompletion {
 
     private List<Dataflow> loadFlows(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source) throws IOException {
         try (SdmxConnection c = supplier.getConnection(source.get(), languages)) {
-            return new ArrayList<>(c.getDataflows());
+            return new ArrayList<>(c.getFlows());
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);
         }
@@ -126,7 +126,7 @@ public class SdmxAutoCompletion {
     private List<Dataflow> filterAndSortFlows(List<Dataflow> values, String term) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return values.stream()
-                .filter(o -> filter.test(o.getLabel()) || filter.test(o.getFlowRef().getId()))
+                .filter(o -> filter.test(o.getLabel()) || filter.test(o.getRef().getId()))
                 .sorted(Comparator.comparing(Dataflow::getLabel))
                 .collect(Collectors.toList());
     }
@@ -141,7 +141,7 @@ public class SdmxAutoCompletion {
 
     private List<Dimension> loadDimensions(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source, Supplier<String> flow) throws IOException {
         try (SdmxConnection c = supplier.getConnection(source.get(), languages)) {
-            return new ArrayList<>(c.getDataStructure(DataflowRef.parse(flow.get())).getDimensions());
+            return new ArrayList<>(c.getStructure(DataflowRef.parse(flow.get())).getDimensions());
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);
         }
