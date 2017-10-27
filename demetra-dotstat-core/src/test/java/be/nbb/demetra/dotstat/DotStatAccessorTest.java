@@ -80,7 +80,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKey() throws Exception {
-        DataStructure dfs = supplier.getConnection("NBB").getDataStructure(DataflowRef.of("NBB", "TEST_DATASET", null));
+        DataStructure dfs = supplier.getConnection("NBB").getStructure(DataflowRef.of("NBB", "TEST_DATASET", null));
         Map<String, Dimension> dimById = DotStatAccessor.dimensionById(dfs);
 
         // default ordering of dimensions
@@ -101,7 +101,7 @@ public class DotStatAccessorTest {
     @Test
     public void testGetKeyFromTs() throws Exception {
         assertThat(supplier.getConnection("NBB")
-                .getDataStream(DataflowRef.of("NBB", "TEST_DATASET", null), DataQuery.of(Key.ALL, true))
+                .getStream(DataflowRef.of("NBB", "TEST_DATASET", null), DataQuery.of(Key.ALL, true))
                 .map(Series::getKey)).contains(Key.parse("LOCSTL04.AUS.M"));
     }
 

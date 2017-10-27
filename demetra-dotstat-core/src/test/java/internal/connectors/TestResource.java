@@ -55,7 +55,7 @@ public final class TestResource {
             result.dataflows(parse(SdmxSource.NBB_DATAFLOWS, l, new it.bancaditalia.oss.sdmx.parser.v20.DataStructureParser())
                     .stream()
                     .map(TestResource::toDataFlow)
-                    .filter(o -> o.getFlowRef().equals(flowRef))
+                    .filter(o -> o.getRef().equals(flowRef))
                     .collect(Collectors.toList()));
             DataStructure dsd = dataStructures.get(DataStructureRef.of("NBB", "TEST_DATASET", null));
             try (DataCursor cursor = SdmxXmlStreams.genericData20(dsd).get(SdmxSource.XIF, SdmxSource.NBB_DATA.openReader())) {
@@ -79,8 +79,8 @@ public final class TestResource {
             result.dataStructures(dataStructures.values());
             DataflowRef flowRef = DataflowRef.of("ECB", "AME", "1.0");
             result.dataflows(parse(SdmxSource.ECB_DATAFLOWS, l, new it.bancaditalia.oss.sdmx.parser.v21.DataflowParser()).stream()
-                    .map(Util::toDataflow)
-                    .filter(o -> o.getFlowRef().equals(flowRef))
+                    .map(Util::toFlow)
+                    .filter(o -> o.getRef().equals(flowRef))
                     .collect(Collectors.toList()));
             DataStructure dfs = dataStructures.get(DataStructureRef.of("ECB", "ECB_AME1", "1.0"));
             try (DataCursor cursor = SdmxXmlStreams.genericData21(dfs).get(SdmxSource.XIF, SdmxSource.ECB_DATA.openReader())) {
@@ -97,7 +97,7 @@ public final class TestResource {
 
     private static Map<DataStructureRef, DataStructure> toDataStructures(List<DataFlowStructure> input) {
         return input.stream()
-                .map(Util::toDataStructure)
+                .map(Util::toStructure)
                 .collect(Collectors.toMap(DataStructure::getRef, Function.identity()));
     }
 

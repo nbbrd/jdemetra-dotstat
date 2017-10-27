@@ -42,7 +42,7 @@ public class SdmxCubeItems {
 
     public static List<String> getDefaultDimIds(SdmxConnectionSupplier supplier, LanguagePriorityList languages, String source, DataflowRef flow) throws IOException {
         try (SdmxConnection conn = supplier.getConnection(source, languages)) {
-            return conn.getDataStructure(flow).getDimensions().stream().map(Dimension::getId).collect(Collectors.toList());
+            return conn.getStructure(flow).getDimensions().stream().map(Dimension::getId).collect(Collectors.toList());
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);
         }

@@ -100,7 +100,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
     }
 
     private static List<DbSetId> getAllSeries(SdmxConnection conn, DataflowRef flowRef, DbSetId ref) throws IOException {
-        Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
+        Converter<DbSetId, Key> converter = getConverter(conn.getStructure(flowRef), ref);
 
         Key colKey = converter.convert(ref);
         try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeries(conn, flowRef, colKey, SdmxQueryUtil.NO_LABEL)) {
@@ -113,7 +113,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
     }
 
     private static List<DbSeries> getAllSeriesWithData(SdmxConnection conn, DataflowRef flowRef, DbSetId ref) throws IOException {
-        Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
+        Converter<DbSetId, Key> converter = getConverter(conn.getStructure(flowRef), ref);
 
         Key colKey = converter.convert(ref);
         try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeriesWithData(conn, flowRef, colKey, SdmxQueryUtil.NO_LABEL)) {
@@ -126,15 +126,15 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
     }
 
     private static DbSeries getSeriesWithData(SdmxConnection conn, DataflowRef flowRef, DbSetId ref) throws IOException {
-        Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
+        Converter<DbSetId, Key> converter = getConverter(conn.getStructure(flowRef), ref);
 
         Key seriesKey = converter.convert(ref);
         return new DbSeries(ref, SdmxQueryUtil.getSeriesWithData(conn, flowRef, seriesKey));
     }
 
     private static List<String> getChildren(SdmxConnection conn, DataflowRef flowRef, DbSetId ref) throws IOException {
-        Converter<DbSetId, Key> converter = getConverter(conn.getDataStructure(flowRef), ref);
-        int dimensionPosition = dimensionById(conn.getDataStructure(flowRef)).get(ref.getColumn(ref.getLevel())).getPosition();
+        Converter<DbSetId, Key> converter = getConverter(conn.getStructure(flowRef), ref);
+        int dimensionPosition = dimensionById(conn.getStructure(flowRef)).get(ref.getColumn(ref.getLevel())).getPosition();
         return SdmxQueryUtil.getChildren(conn, flowRef, converter.convert(ref), dimensionPosition);
     }
 

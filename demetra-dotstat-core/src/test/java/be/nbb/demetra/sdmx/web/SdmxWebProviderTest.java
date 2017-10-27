@@ -129,9 +129,9 @@ public class SdmxWebProviderTest {
                 .name("world")
                 .dataStructure(conjStruct)
                 .dataflow(conj)
-                .data(conj.getFlowRef(), Series.builder().key(Key.of("BE", "IND")).frequency(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 1)).build())
-                .data(conj.getFlowRef(), Series.builder().key(Key.of("BE", "XXX")).frequency(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 2)).build())
-                .data(conj.getFlowRef(), Series.builder().key(Key.of("FR", "IND")).frequency(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 3)).build())
+                .data(conj.getRef(), Series.builder().key(Key.of("BE", "IND")).freq(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 1)).build())
+                .data(conj.getRef(), Series.builder().key(Key.of("BE", "XXX")).freq(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 2)).build())
+                .data(conj.getRef(), Series.builder().key(Key.of("FR", "IND")).freq(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 3)).build())
                 .build();
     }
 
