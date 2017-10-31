@@ -175,7 +175,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
         }
 
         private static SdmxFile getFile(HasFilePaths paths, File data, File structure) throws FileNotFoundException {
-            return new SdmxFile(paths.resolveFilePath(data), structure.toString().isEmpty() ? null : paths.resolveFilePath(structure));
+            return SdmxFile.of(paths.resolveFilePath(data), structure.toString().isEmpty() ? null : paths.resolveFilePath(structure));
         }
     }
 }
