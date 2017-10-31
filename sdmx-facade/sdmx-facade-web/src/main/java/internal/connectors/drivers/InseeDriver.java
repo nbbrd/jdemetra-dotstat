@@ -22,6 +22,7 @@ import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.web.SdmxWebEntryPoint;
 import be.nbb.sdmx.facade.Series;
 import be.nbb.sdmx.facade.util.HasCache;
+import be.nbb.sdmx.facade.util.SdmxFix;
 import be.nbb.sdmx.facade.util.SdmxMediaType;
 import be.nbb.sdmx.facade.util.SeriesSupport;
 import be.nbb.sdmx.facade.xml.stream.SdmxXmlStreams;
@@ -41,6 +42,9 @@ import internal.connectors.ConnectorsDriverSupport;
 import internal.connectors.Util;
 import internal.org.springframework.util.xml.XMLEventStreamReader;
 import internal.util.drivers.InseeDataFactory;
+import it.bancaditalia.oss.sdmx.api.Codelist;
+import it.bancaditalia.oss.sdmx.api.DSDIdentifier;
+import it.bancaditalia.oss.sdmx.api.Dimension;
 import it.bancaditalia.oss.sdmx.client.Parser;
 import java.net.URI;
 
@@ -56,20 +60,28 @@ public final class InseeDriver implements SdmxWebDriver, HasCache {
     @lombok.experimental.Delegate
     private final ConnectorsDriverSupport support = ConnectorsDriverSupport.of(PREFIX, (u, i, l) -> new InseeClient(u, l));
 
+    @SdmxFix(id = "INSEE#1", cause = "Fallback to http due to some servers that use root certificate unknown to jdk'")
     @Override
     public Collection<SdmxWebEntryPoint> getDefaultEntryPoints() {
         return ConnectorsDriverSupport.entry("INSEE", "Institut national de la statistique et des études économiques", "sdmx:insee:http://bdm.insee.fr/series/sdmx");
     }
 
-    //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private final static class InseeClient extends RestSdmxClient implements HasDataCursor, HasSeriesKeysOnlySupported {
 
+        @SdmxFix(id = "INSEE#2", cause = "Does not follow sdmx standard codes")
         private final InseeDataFactory dataFactory;
 
         private InseeClient(URI endpoint, LanguagePriorityList langs) {
             super("", endpoint, false, false, true);
             this.languages = Util.fromLanguages(langs);
             this.dataFactory = new InseeDataFactory();
+        }
+
+        @Override
+        public DataFlowStructure getDataFlowStructure(DSDIdentifier dsd, boolean full) throws SdmxException {
+            DataFlowStructure result = super.getDataFlowStructure(dsd, full);
+            fixMissingCodes(result);
+            return result;
         }
 
         @Override
@@ -81,6 +93,16 @@ public final class InseeDriver implements SdmxWebDriver, HasCache {
         @Override
         public boolean isSeriesKeysOnlySupported() {
             return true;
+        }
+
+        @SdmxFix(id = "INSEE#3", cause = "Some codes are missing in dsd even when requested with 'references=children'")
+        private void fixMissingCodes(DataFlowStructure dsd) throws SdmxException {
+            for (Dimension d : dsd.getDimensions()) {
+                Codelist freq = d.getCodeList();
+                if (freq.getCodes().isEmpty()) {
+                    freq.setCodes(super.getCodes(freq.getId(), freq.getAgency(), freq.getVersion()));
+                }
+            }
         }
 
         private List<Series> getData(Dataflow dataflow, DataFlowStructure dsd, Key resource, boolean serieskeysonly) throws SdmxException {
@@ -100,5 +122,4 @@ public final class InseeDriver implements SdmxWebDriver, HasCache {
             };
         }
     }
-    //</editor-fold>
 }
