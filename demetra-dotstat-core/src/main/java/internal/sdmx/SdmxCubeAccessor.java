@@ -94,7 +94,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     public TsCursor<CubeId> getSeriesWithData(CubeId ref) throws IOException {
         SdmxConnection conn = supplier.getConnection(source, languages);
         try {
-            return getSeriesWithDataCursor(conn, flowRef, ref).onClose(conn);
+            return getSeriesWithDataCursor(conn, flowRef, ref, labelAttribute).onClose(conn);
         } catch (IOException ex) {
             throw close(conn, ex);
         } catch (RuntimeException ex) {
@@ -168,11 +168,11 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         return cursor.transform(converter.reverse()::convert);
     }
 
-    private static TsCursor<CubeId> getSeriesWithDataCursor(SdmxConnection conn, DataflowRef flowRef, CubeId ref) throws IOException {
+    private static TsCursor<CubeId> getSeriesWithDataCursor(SdmxConnection conn, DataflowRef flowRef, CubeId ref, String labelAttribute) throws IOException {
         Converter<CubeId, Key> converter = getConverter(conn.getStructure(flowRef), ref);
 
         Key seriesKey = converter.convert(ref);
-        TsCursor<Key> cursor = TsCursor.singleton(seriesKey, SdmxQueryUtil.getSeriesWithData(conn, flowRef, seriesKey));
+        TsCursor<Key> cursor = SdmxQueryUtil.getSeriesWithData(conn, flowRef, seriesKey, labelAttribute);
 
         return cursor.transform(converter.reverse()::convert);
     }
