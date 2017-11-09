@@ -45,8 +45,8 @@ import lombok.AccessLevel;
 @lombok.AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SdmxCubeAccessor implements CubeAccessor {
 
-    public static SdmxCubeAccessor of(SdmxConnectionSupplier supplier, LanguagePriorityList languages, String source, DataflowRef flow, List<String> dimensions, String labelAttribute) {
-        return new SdmxCubeAccessor(supplier, languages, source, flow, CubeId.root(dimensions), labelAttribute);
+    public static SdmxCubeAccessor of(SdmxConnectionSupplier supplier, LanguagePriorityList languages, String source, DataflowRef flow, List<String> dimensions, String labelAttribute, String sourceLabel) {
+        return new SdmxCubeAccessor(supplier, languages, source, flow, CubeId.root(dimensions), labelAttribute, sourceLabel);
     }
 
     private final SdmxConnectionSupplier supplier;
@@ -55,6 +55,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     private final DataflowRef flowRef;
     private final CubeId root;
     private final String labelAttribute;
+    private final String sourceLabel;
 
     @Override
     public IOException testConnection() {
@@ -117,7 +118,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     @Override
     public String getDisplayName() throws IOException {
         try (SdmxConnection conn = supplier.getConnection(source, languages)) {
-            return String.format("%s ~ %s", source, conn.getFlow(flowRef).getLabel());
+            return String.format("%s ~ %s", sourceLabel, conn.getFlow(flowRef).getLabel());
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);
         }

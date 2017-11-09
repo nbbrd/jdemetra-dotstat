@@ -139,7 +139,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
                 dimensions = SdmxCubeItems.getDefaultDimIds(supplier, languages, bean.getSource(), flow);
             }
 
-            CubeAccessor accessor = SdmxCubeAccessor.of(supplier, languages, bean.getSource(), flow, dimensions, bean.getLabelAttribute())
+            CubeAccessor accessor = SdmxCubeAccessor.of(supplier, languages, bean.getSource(), flow, dimensions, bean.getLabelAttribute(), bean.getSource())
                     .bulk(bean.getCacheDepth(), GuavaCaches.ttlCacheAsMap(bean.getCacheTtl()));
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());

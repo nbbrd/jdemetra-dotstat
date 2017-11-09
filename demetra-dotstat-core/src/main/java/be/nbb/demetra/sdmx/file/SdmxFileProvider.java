@@ -39,6 +39,7 @@ import ec.tss.tsproviders.cursor.HasTsCursor;
 import ec.tss.tsproviders.utils.DataSourcePreconditions;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tstoolkit.utilities.GuavaCaches;
+import internal.file.SdmxFileUtil;
 import internal.sdmx.SdmxCubeItems;
 import internal.sdmx.SdmxPropertiesSupport;
 import java.io.File;
@@ -53,7 +54,7 @@ import org.slf4j.LoggerFactory;
  * @author Philippe Charles
  * @since 2.2.0
  */
-//@ServiceProvider(service = ITsProvider.class)
+//@org.openide.util.lookup.ServiceProvider(service = ITsProvider.class)
 public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
 
     private static final String NAME = "sdmx-file";
@@ -131,14 +132,14 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
             SdmxFile file = resolveFile(paths, bean.getFile(), bean.getStructureFile());
 
             String source = file.toString();
-            DataflowRef flow = file.getDataflowRef();
+            DataflowRef flow = SdmxFileUtil.asDataflowRef(file);
 
             List<String> dimensions = bean.getDimensions();
             if (dimensions.isEmpty()) {
                 dimensions = SdmxCubeItems.getDefaultDimIds(supplier, languages, source, flow);
             }
 
-            CubeAccessor accessor = SdmxCubeAccessor.of(supplier, languages, source, flow, dimensions, bean.getLabelAttribute());
+            CubeAccessor accessor = SdmxCubeAccessor.of(supplier, languages, source, flow, dimensions, bean.getLabelAttribute(), bean.getFile().getPath());
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());
 
