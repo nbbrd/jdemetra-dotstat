@@ -22,7 +22,7 @@ import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.file.SdmxFileManager;
-import be.nbb.sdmx.facade.file.SdmxFile;
+import be.nbb.sdmx.facade.file.SdmxFileSet;
 import com.google.common.cache.Cache;
 import ec.tss.ITsProvider;
 import ec.tss.tsproviders.DataSet;
@@ -129,10 +129,10 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
 
         private static SdmxCubeItems of(SdmxConnectionSupplier supplier, LanguagePriorityList languages, HasFilePaths paths, SdmxFileParam param, DataSource dataSource) throws IOException {
             SdmxFileBean bean = param.get(dataSource);
-            SdmxFile file = resolveFile(paths, bean.getFile(), bean.getStructureFile());
+            SdmxFileSet files = resolveFiles(paths, bean.getFile(), bean.getStructureFile());
 
-            String source = file.toString();
-            DataflowRef flow = SdmxFileUtil.asDataflowRef(file);
+            String source = files.toString();
+            DataflowRef flow = SdmxFileUtil.asDataflowRef(files);
 
             List<String> dimensions = bean.getDimensions();
             if (dimensions.isEmpty()) {
@@ -146,8 +146,8 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
             return new SdmxCubeItems(accessor, idParam);
         }
 
-        private static SdmxFile resolveFile(HasFilePaths paths, File data, File structure) throws FileNotFoundException {
-            return SdmxFile.of(paths.resolveFilePath(data), structure.toString().isEmpty() ? null : paths.resolveFilePath(structure));
+        private static SdmxFileSet resolveFiles(HasFilePaths paths, File data, File structure) throws FileNotFoundException {
+            return SdmxFileSet.of(paths.resolveFilePath(data), structure.toString().isEmpty() ? null : paths.resolveFilePath(structure));
         }
     }
 }
