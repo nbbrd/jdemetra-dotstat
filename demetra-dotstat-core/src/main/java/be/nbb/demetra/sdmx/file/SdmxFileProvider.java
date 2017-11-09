@@ -20,9 +20,11 @@ import be.nbb.demetra.sdmx.HasSdmxProperties;
 import internal.sdmx.SdmxCubeAccessor;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.LanguagePriorityList;
+import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.file.SdmxFileManager;
 import be.nbb.sdmx.facade.file.SdmxFileSet;
+import be.nbb.sdmx.facade.util.IO;
 import com.google.common.cache.Cache;
 import ec.tss.ITsProvider;
 import ec.tss.tsproviders.DataSet;
@@ -45,7 +47,6 @@ import internal.sdmx.SdmxPropertiesSupport;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +61,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
     private static final String NAME = "sdmx-file";
 
     @lombok.experimental.Delegate
-    private final SdmxPropertiesSupport properties;
+    private final HasSdmxProperties properties;
 
     @lombok.experimental.Delegate
     private final HasDataSourceMutableList mutableListSupport;
@@ -124,26 +125,36 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
 
         private SdmxCubeItems get(DataSource dataSource) throws IOException {
             DataSourcePreconditions.checkProvider(NAME, dataSource);
-            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(properties.getConnectionSupplier(), properties.getLanguages(), paths, param, dataSource));
+            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(properties, paths, param, dataSource));
         }
 
-        private static SdmxCubeItems of(SdmxConnectionSupplier supplier, LanguagePriorityList languages, HasFilePaths paths, SdmxFileParam param, DataSource dataSource) throws IOException {
+        private static SdmxCubeItems of(HasSdmxProperties properties, HasFilePaths paths, SdmxFileParam param, DataSource dataSource) throws IOException {
             SdmxFileBean bean = param.get(dataSource);
             SdmxFileSet files = resolveFiles(paths, bean.getFile(), bean.getStructureFile());
 
-            String source = files.toString();
             DataflowRef flow = SdmxFileUtil.asDataflowRef(files);
 
-            List<String> dimensions = bean.getDimensions();
-            if (dimensions.isEmpty()) {
-                dimensions = SdmxCubeItems.getDefaultDimIds(supplier, languages, source, flow);
-            }
+            IO.Supplier<SdmxConnection> conn = getSupplier(properties, files);
 
-            CubeAccessor accessor = SdmxCubeAccessor.of(supplier, languages, source, flow, dimensions, bean.getLabelAttribute(), bean.getFile().getPath());
+            CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), conn, flow);
+
+            CubeAccessor accessor = SdmxCubeAccessor.of(conn, flow, root, bean.getLabelAttribute(), bean.getFile().getPath());
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());
 
             return new SdmxCubeItems(accessor, idParam);
+        }
+
+        private static IO.Supplier<SdmxConnection> getSupplier(HasSdmxProperties properties, SdmxFileSet files) {
+            SdmxConnectionSupplier supplier = properties.getConnectionSupplier();
+            LanguagePriorityList languages = properties.getLanguages();
+
+            if (supplier instanceof SdmxFileManager) {
+                return () -> ((SdmxFileManager) supplier).getConnection(files, languages);
+            }
+
+            String name = SdmxFileUtil.toXml(files);
+            return () -> supplier.getConnection(name, languages);
         }
 
         private static SdmxFileSet resolveFiles(HasFilePaths paths, File data, File structure) throws FileNotFoundException {

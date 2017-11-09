@@ -18,9 +18,8 @@ package internal.sdmx;
 
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
+import be.nbb.sdmx.facade.util.IO;
 import be.nbb.sdmx.facade.util.UnexpectedIOException;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.cube.CubeAccessor;
@@ -40,9 +39,20 @@ public class SdmxCubeItems {
     CubeAccessor accessor;
     IParam<DataSet, CubeId> idParam;
 
-    public static List<String> getDefaultDimIds(SdmxConnectionSupplier supplier, LanguagePriorityList languages, String source, DataflowRef flow) throws IOException {
-        try (SdmxConnection conn = supplier.getConnection(source, languages)) {
-            return conn.getStructure(flow).getDimensions().stream().map(Dimension::getId).collect(Collectors.toList());
+    public static CubeId getOrLoadRoot(List<String> dimensions, IO.Supplier<SdmxConnection> supplier, DataflowRef flow) throws IOException {
+        return dimensions.isEmpty()
+                ? CubeId.root(loadDefaultDimIds(supplier, flow))
+                : CubeId.root(dimensions);
+    }
+
+    public static List<String> loadDefaultDimIds(IO.Supplier<SdmxConnection> supplier, DataflowRef flow) throws IOException {
+        try (SdmxConnection conn = supplier.getWithIO()) {
+            return conn
+                    .getStructure(flow)
+                    .getDimensions()
+                    .stream()
+                    .map(Dimension::getId)
+                    .collect(Collectors.toList());
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);
         }

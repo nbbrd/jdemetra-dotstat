@@ -30,7 +30,7 @@ import lombok.AccessLevel;
 @lombok.AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SdmxPropertiesSupport implements HasSdmxProperties {
 
-    public static SdmxPropertiesSupport of(Supplier<SdmxConnectionSupplier> defaultSupplier, Runnable onSupplierChange, Supplier<LanguagePriorityList> defaultLanguages, Runnable onLanguagesChange) {
+    public static HasSdmxProperties of(Supplier<SdmxConnectionSupplier> defaultSupplier, Runnable onSupplierChange, Supplier<LanguagePriorityList> defaultLanguages, Runnable onLanguagesChange) {
         return new SdmxPropertiesSupport(
                 defaultSupplier,
                 new AtomicReference<>(defaultSupplier.get()),
