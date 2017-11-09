@@ -16,17 +16,23 @@
  */
 package internal.sdmx;
 
+import be.nbb.demetra.sdmx.file.SdmxFileBean;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.SdmxConnection;
+import be.nbb.sdmx.facade.file.SdmxFileSet;
 import be.nbb.sdmx.facade.util.IO;
 import be.nbb.sdmx.facade.util.UnexpectedIOException;
 import ec.tss.tsproviders.DataSet;
+import ec.tss.tsproviders.HasFilePaths;
 import ec.tss.tsproviders.cube.CubeAccessor;
 import ec.tss.tsproviders.cube.CubeId;
 import ec.tss.tsproviders.utils.IParam;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -56,5 +62,21 @@ public class SdmxCubeItems {
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);
         }
+    }
+
+    public static Optional<SdmxFileSet> tryResolveFileSet(HasFilePaths paths, SdmxFileBean bean) {
+        try {
+            return Optional.of(resolveFileSet(paths, bean));
+        } catch (FileNotFoundException ex) {
+            return Optional.empty();
+        }
+    }
+
+    public static SdmxFileSet resolveFileSet(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {
+        return resolveFileSet(paths, bean.getFile(), bean.getStructureFile());
+    }
+
+    public static SdmxFileSet resolveFileSet(HasFilePaths paths, File data, File structure) throws FileNotFoundException {
+        return SdmxFileSet.of(paths.resolveFilePath(data), structure.toString().isEmpty() ? null : paths.resolveFilePath(structure));
     }
 }

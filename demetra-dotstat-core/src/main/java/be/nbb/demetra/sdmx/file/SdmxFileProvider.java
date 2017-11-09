@@ -45,8 +45,8 @@ import internal.file.SdmxFileUtil;
 import internal.sdmx.SdmxCubeItems;
 import internal.sdmx.SdmxPropertiesSupport;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,10 +55,10 @@ import org.slf4j.LoggerFactory;
  * @author Philippe Charles
  * @since 2.2.0
  */
-//@org.openide.util.lookup.ServiceProvider(service = ITsProvider.class)
+@ServiceProvider(service = ITsProvider.class)
 public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
 
-    private static final String NAME = "sdmx-file";
+    public static final String NAME = "sdmx-file";
 
     @lombok.experimental.Delegate
     private final HasSdmxProperties properties;
@@ -96,6 +96,11 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
     }
 
     @Override
+    public String getDisplayName() {
+        return "SDMX Files";
+    }
+
+    @Override
     public String getFileDescription() {
         return "SDMX file";
     }
@@ -130,7 +135,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
 
         private static SdmxCubeItems of(HasSdmxProperties properties, HasFilePaths paths, SdmxFileParam param, DataSource dataSource) throws IOException {
             SdmxFileBean bean = param.get(dataSource);
-            SdmxFileSet files = resolveFiles(paths, bean.getFile(), bean.getStructureFile());
+            SdmxFileSet files = SdmxCubeItems.resolveFileSet(paths, bean);
 
             DataflowRef flow = SdmxFileUtil.asDataflowRef(files);
 
@@ -155,10 +160,6 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
 
             String name = SdmxFileUtil.toXml(files);
             return () -> supplier.getConnection(name, languages);
-        }
-
-        private static SdmxFileSet resolveFiles(HasFilePaths paths, File data, File structure) throws FileNotFoundException {
-            return SdmxFileSet.of(paths.resolveFilePath(data), structure.toString().isEmpty() ? null : paths.resolveFilePath(structure));
         }
     }
 }
