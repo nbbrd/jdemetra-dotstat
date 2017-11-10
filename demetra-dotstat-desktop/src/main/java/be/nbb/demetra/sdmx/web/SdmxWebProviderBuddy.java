@@ -79,6 +79,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     public SdmxWebProviderBuddy() {
         this.configurator = createConfigurator();
         this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
+        lookupProvider().ifPresent(o -> o.setConnectionSupplier(WEB_MANAGER));
     }
 
     @Override

@@ -14,28 +14,21 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.sdmx;
+package internal.sdmx;
 
-import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.ThreadSafe;
+import ec.tss.ITsProvider;
+import ec.tss.tsproviders.sdmx.SdmxProvider;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author Philippe Charles
  */
-@ThreadSafe
-public interface HasSdmxProperties {
+@ServiceProvider(service = ITsProvider.class, supersedes = "ec.tss.tsproviders.sdmx.SdmxProvider")
+public final class LegacySdmxProvider extends SdmxProvider {
 
-    @Nonnull
-    SdmxConnectionSupplier getConnectionSupplier();
-
-    void setConnectionSupplier(@Nullable SdmxConnectionSupplier connectionSupplier);
-
-    @Nonnull
-    LanguagePriorityList getLanguages();
-
-    void setLanguages(@Nullable LanguagePriorityList languages);
+    @Override
+    public String getDisplayName() {
+        return "SDMX Files (deprecated)";
+    }
 }

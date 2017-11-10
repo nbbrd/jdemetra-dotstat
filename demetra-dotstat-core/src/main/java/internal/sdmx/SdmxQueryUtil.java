@@ -46,6 +46,7 @@ import javax.annotation.Nullable;
 public class SdmxQueryUtil {
 
     public final String NO_LABEL = null;
+    public final OptionalTsData MISSING_DATA = OptionalTsData.absent("No results matching the query");
 
     @Nonnull
     public TsCursor<Key> getAllSeries(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
@@ -62,10 +63,8 @@ public class SdmxQueryUtil {
     }
 
     @Nonnull
-    public OptionalTsData getSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref) throws IOException {
-        try (TsCursor<Key> cursor = request(conn, flowRef, ref, NO_LABEL, false)) {
-            return cursor.nextSeries() ? cursor.getSeriesData() : MISSING_DATA;
-        }
+    public TsCursor<Key> getSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
+        return request(conn, flowRef, ref, labelAttribute, false);
     }
 
     @Nonnull
@@ -85,8 +84,6 @@ public class SdmxQueryUtil {
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private final OptionalTsData MISSING_DATA = OptionalTsData.absent("No results matching the query");
-
     private TsCursor<Key> request(SdmxConnection conn, DataflowRef flowRef, Key key, String labelAttribute, boolean seriesKeysOnly) throws IOException {
         return new SdmxDataAdapter(key, conn.getCursor(flowRef, DataQuery.of(key, seriesKeysOnly)), labelAttribute);
     }

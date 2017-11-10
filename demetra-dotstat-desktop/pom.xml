@@ -113,6 +113,10 @@
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>nbdemetra-jdbc</artifactId>
         </dependency>
+        <dependency>
+            <groupId>eu.europa.ec.joinup.sat</groupId>
+            <artifactId>nbdemetra-sdmx</artifactId>
+        </dependency>
         
         <dependency>
             <groupId>be.nbb.demetra</groupId>

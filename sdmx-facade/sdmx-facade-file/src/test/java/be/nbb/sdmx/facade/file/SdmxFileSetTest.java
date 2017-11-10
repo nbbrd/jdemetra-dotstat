@@ -16,31 +16,31 @@
  */
 package be.nbb.sdmx.facade.file;
 
-import be.nbb.sdmx.facade.samples.SdmxSource;
-import be.nbb.sdmx.facade.tck.ConnectionSupplierAssert;
-import internal.file.SdmxFileUtil;
 import java.io.File;
-import java.io.IOException;
-import org.junit.Rule;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  *
  * @author Philippe Charles
  */
-public class SdmxFileManagerTest {
-
-    @Rule
-    public TemporaryFolder temp = new TemporaryFolder();
+public class SdmxFileSetTest {
 
     @Test
-    public void testCompliance() throws IOException {
-        File compact21 = temp.newFile();
-        SdmxSource.OTHER_COMPACT21.copyTo(compact21);
+    @SuppressWarnings("null")
+    public void testFactory() {
+        assertThatThrownBy(() -> SdmxFileSet.of(null, null)).isInstanceOf(NullPointerException.class);
 
-        SdmxFileSet files = SdmxFileSet.of(compact21, null);
+        assertThat(SdmxFileSet.of(data, null))
+                .hasFieldOrPropertyWithValue("data", data)
+                .hasFieldOrPropertyWithValue("structure", null);
 
-        ConnectionSupplierAssert.assertCompliance(SdmxFileManager.of(), SdmxFileUtil.toXml(files), "ko");
+        assertThat(SdmxFileSet.of(data, structure))
+                .hasFieldOrPropertyWithValue("data", data)
+                .hasFieldOrPropertyWithValue("structure", structure);
     }
+
+    private final File data = new File("a.xml");
+    private final File structure = new File("b.xml");
 }

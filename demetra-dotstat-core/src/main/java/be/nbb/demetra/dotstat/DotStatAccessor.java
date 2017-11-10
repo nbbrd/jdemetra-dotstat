@@ -129,7 +129,9 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         Converter<DbSetId, Key> converter = getConverter(conn.getStructure(flowRef), ref);
 
         Key seriesKey = converter.convert(ref);
-        return new DbSeries(ref, SdmxQueryUtil.getSeriesWithData(conn, flowRef, seriesKey));
+        try (TsCursor<Key> cursor = SdmxQueryUtil.getSeriesWithData(conn, flowRef, seriesKey, SdmxQueryUtil.NO_LABEL)) {
+            return new DbSeries(ref, cursor.nextSeries() ? cursor.getSeriesData() : SdmxQueryUtil.MISSING_DATA);
+        }
     }
 
     private static List<String> getChildren(SdmxConnection conn, DataflowRef flowRef, DbSetId ref) throws IOException {

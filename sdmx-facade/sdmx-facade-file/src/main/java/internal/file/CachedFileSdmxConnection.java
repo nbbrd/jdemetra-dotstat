@@ -20,14 +20,13 @@ import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.file.SdmxFile;
+import be.nbb.sdmx.facade.file.SdmxFileSet;
 import be.nbb.sdmx.facade.Series;
 import be.nbb.sdmx.facade.util.SeriesSupport;
 import be.nbb.sdmx.facade.util.TtlCache;
 import be.nbb.sdmx.facade.util.TypedId;
 import java.io.IOException;
 import java.time.Clock;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -47,10 +46,10 @@ public final class CachedFileSdmxConnection extends FileSdmxConnection {
     private final TypedId<SdmxDecoder.Info> decodeKey;
     private final TypedId<List<Series>> loadDataKey;
 
-    public CachedFileSdmxConnection(SdmxFile file, LanguagePriorityList languages, XMLInputFactory factory, SdmxDecoder decoder, ConcurrentMap cache) {
-        super(file, languages, factory, decoder);
+    public CachedFileSdmxConnection(SdmxFileSet files, LanguagePriorityList languages, XMLInputFactory factory, SdmxDecoder decoder, ConcurrentMap cache) {
+        super(files, languages, factory, decoder);
         this.cache = TtlCache.of(cache, CLOCK, DEFAULT_CACHE_TTL);
-        String base = file.toString() + languages.toString();
+        String base = SdmxFileUtil.toXml(files) + languages.toString();
         this.decodeKey = TypedId.of("decode://" + base);
         this.loadDataKey = TypedId.of("loadData://" + base);
     }
@@ -70,20 +69,11 @@ public final class CachedFileSdmxConnection extends FileSdmxConnection {
         if (serieskeysonly) {
             List<Series> result = cache.get(loadDataKey);
             if (result == null) {
-                result = copyOfKeys(super.loadData(entry, flowRef, key, true));
+                result = SeriesSupport.copyOfKeysAndMeta(super.loadData(entry, flowRef, key, true));
                 cache.put(loadDataKey, result);
             }
             return SeriesSupport.asCursor(result, key);
         }
         return super.loadData(entry, flowRef, key, serieskeysonly);
-    }
-
-    private static List<Series> copyOfKeys(DataCursor cursor) throws IOException {
-        List<Series> result = new ArrayList<>();
-        Series.Builder series = Series.builder();
-        while (cursor.nextSeries()) {
-            result.add(series.key(cursor.getSeriesKey()).freq(cursor.getSeriesFrequency()).meta(cursor.getSeriesAttributes()).build());
-        }
-        return result;
     }
 }

@@ -113,14 +113,18 @@ public class SdmxQueryUtilTest {
     public void testGetSeriesWithData20() throws Exception {
         SdmxConnection conn = nbb.asConnection();
 
-        TsData o = getSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "AUS", "M")).get();
-        assertThat(o.getStart()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1966, 1));
-        assertThat(o.getLastPeriod()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1970, 7));
-        assertThat(o.getLength()).isEqualTo(55);
-        assertThat(o.getObsCount()).isEqualTo(54);
-        assertThat(o.isMissing(50)).isTrue(); // 1970-04
-        assertThat(o.get(0)).isEqualTo(98.68823);
-        assertThat(o.get(54)).isEqualTo(101.1945);
+        try (TsCursor<Key> c = getSeriesWithData(conn, nbbFlow, Key.of("LOCSTL04", "AUS", "M"), SdmxQueryUtil.NO_LABEL)) {
+            assertThat(c.nextSeries()).isTrue();
+            TsData o = c.getSeriesData().get();
+            assertThat(o.getStart()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1966, 1));
+            assertThat(o.getLastPeriod()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1970, 7));
+            assertThat(o.getLength()).isEqualTo(55);
+            assertThat(o.getObsCount()).isEqualTo(54);
+            assertThat(o.isMissing(50)).isTrue(); // 1970-04
+            assertThat(o.get(0)).isEqualTo(98.68823);
+            assertThat(o.get(54)).isEqualTo(101.1945);
+            assertThat(c.nextSeries()).isFalse();
+        }
     }
 
     @Test
@@ -226,13 +230,17 @@ public class SdmxQueryUtilTest {
 
         Key key = Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE");
 
-        TsData o = getSeriesWithData(conn, ecbFlow, key).get();
-        assertThat(o.getStart()).isEqualTo(new TsPeriod(TsFrequency.Yearly, 1991, 0));
-        assertThat(o.getLastPeriod()).isEqualTo(new TsPeriod(TsFrequency.Yearly, 2015, 0));
-        assertThat(o.getLength()).isEqualTo(25);
-        assertThat(o.getObsCount()).isEqualTo(25);
-        assertThat(o.get(0)).isEqualTo(-2.8574221);
-        assertThat(o.get(24)).isEqualTo(-0.1420473);
+        try (TsCursor<Key> c = getSeriesWithData(conn, ecbFlow, key, SdmxQueryUtil.NO_LABEL)) {
+            assertThat(c.nextSeries()).isTrue();
+            TsData o = c.getSeriesData().get();
+            assertThat(o.getStart()).isEqualTo(new TsPeriod(TsFrequency.Yearly, 1991, 0));
+            assertThat(o.getLastPeriod()).isEqualTo(new TsPeriod(TsFrequency.Yearly, 2015, 0));
+            assertThat(o.getLength()).isEqualTo(25);
+            assertThat(o.getObsCount()).isEqualTo(25);
+            assertThat(o.get(0)).isEqualTo(-2.8574221);
+            assertThat(o.get(24)).isEqualTo(-0.1420473);
+            assertThat(c.nextSeries()).isFalse();
+        }
     }
 
     @Test

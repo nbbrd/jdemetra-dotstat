@@ -20,7 +20,9 @@ import be.nbb.demetra.sdmx.HasSdmxProperties;
 import internal.sdmx.SdmxCubeAccessor;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.LanguagePriorityList;
+import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
+import be.nbb.sdmx.facade.util.IO;
 import be.nbb.sdmx.facade.web.SdmxWebManager;
 import com.google.common.cache.Cache;
 import ec.tss.ITsProvider;
@@ -38,10 +40,9 @@ import ec.tss.tsproviders.utils.DataSourcePreconditions;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxCubeItems;
+import internal.sdmx.SdmxPropertiesSupport;
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,9 +57,10 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
 
     public static final String NAME = "DOTSTAT";
 
-    private final AtomicReference<SdmxConnectionSupplier> connectionSupplier;
-    private final AtomicReference<LanguagePriorityList> languages;
     private final AtomicBoolean displayCodes;
+
+    @lombok.experimental.Delegate
+    private final HasSdmxProperties properties;
 
     @lombok.experimental.Delegate
     private final HasDataSourceMutableList mutableListSupport;
@@ -76,50 +78,23 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
     private final ITsProvider tsSupport;
 
     public SdmxWebProvider() {
-        this.connectionSupplier = new AtomicReference<>(SdmxWebManager.ofServiceLoader());
-        this.languages = new AtomicReference<>(LanguagePriorityList.ANY);
         this.displayCodes = new AtomicBoolean(false);
 
         Cache<DataSource, SdmxCubeItems> cache = GuavaCaches.softValuesCache();
         Logger logger = LoggerFactory.getLogger(NAME);
         SdmxWebParam beanParam = new SdmxWebParam.V1();
 
+        this.properties = SdmxPropertiesSupport.of(SdmxWebManager::ofServiceLoader, cache::invalidateAll, () -> LanguagePriorityList.ANY, cache::invalidateAll);
         this.mutableListSupport = HasDataSourceMutableList.of(NAME, logger, cache::invalidate);
         this.monikerSupport = HasDataMoniker.usingUri(NAME);
         this.beanSupport = HasDataSourceBean.of(NAME, beanParam, beanParam.getVersion());
-        this.cubeSupport = CubeSupport.of(new SdmxCubeResource(cache, connectionSupplier, languages, beanParam));
+        this.cubeSupport = CubeSupport.of(new SdmxCubeResource(cache, properties, beanParam));
         this.tsSupport = CubeSupport.asTsProvider(NAME, logger, cubeSupport, monikerSupport, cache::invalidateAll);
     }
 
     @Override
     public String getDisplayName() {
         return "SDMX Web Services";
-    }
-
-    @Override
-    public SdmxConnectionSupplier getConnectionSupplier() {
-        return connectionSupplier.get();
-    }
-
-    @Override
-    public void setConnectionSupplier(SdmxConnectionSupplier connectionSupplier) {
-        SdmxConnectionSupplier old = this.connectionSupplier.get();
-        if (this.connectionSupplier.compareAndSet(old, connectionSupplier != null ? connectionSupplier : SdmxWebManager.ofServiceLoader())) {
-            clearCache();
-        }
-    }
-
-    @Override
-    public LanguagePriorityList getLanguages() {
-        return languages.get();
-    }
-
-    @Override
-    public void setLanguages(LanguagePriorityList languages) {
-        LanguagePriorityList old = this.languages.get();
-        if (this.languages.compareAndSet(old, languages != null ? languages : LanguagePriorityList.ANY)) {
-            clearCache();
-        }
     }
 
     public boolean isDisplayCodes() {
@@ -137,8 +112,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
     private static final class SdmxCubeResource implements CubeSupport.Resource {
 
         private final Cache<DataSource, SdmxCubeItems> cache;
-        private final AtomicReference<SdmxConnectionSupplier> supplier;
-        private final AtomicReference<LanguagePriorityList> languages;
+        private final HasSdmxProperties properties;
         private final SdmxWebParam param;
 
         @Override
@@ -153,25 +127,31 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
 
         private SdmxCubeItems get(DataSource dataSource) throws IOException {
             DataSourcePreconditions.checkProvider(NAME, dataSource);
-            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(supplier.get(), languages.get(), param, dataSource));
+            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(properties, param, dataSource));
         }
 
-        private static SdmxCubeItems of(SdmxConnectionSupplier supplier, LanguagePriorityList languages, SdmxWebParam param, DataSource dataSource) throws IllegalArgumentException, IOException {
+        private static SdmxCubeItems of(HasSdmxProperties properties, SdmxWebParam param, DataSource dataSource) throws IllegalArgumentException, IOException {
             SdmxWebBean bean = param.get(dataSource);
 
             DataflowRef flow = DataflowRef.parse(bean.getFlow());
 
-            List<String> dimensions = bean.getDimensions();
-            if (dimensions.isEmpty()) {
-                dimensions = SdmxCubeItems.getDefaultDimIds(supplier, languages, bean.getSource(), flow);
-            }
+            IO.Supplier<SdmxConnection> conn = getSupplier(properties, bean.getSource());
 
-            CubeAccessor accessor = SdmxCubeAccessor.of(supplier, languages, bean.getSource(), flow, dimensions, bean.getLabelAttribute())
+            CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), conn, flow);
+
+            CubeAccessor accessor = SdmxCubeAccessor.of(conn, flow, root, bean.getLabelAttribute(), bean.getSource())
                     .bulk(bean.getCacheDepth(), GuavaCaches.ttlCacheAsMap(bean.getCacheTtl()));
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());
 
             return new SdmxCubeItems(accessor, idParam);
+        }
+
+        private static IO.Supplier<SdmxConnection> getSupplier(HasSdmxProperties properties, String name) {
+            SdmxConnectionSupplier supplier = properties.getConnectionSupplier();
+            LanguagePriorityList languages = properties.getLanguages();
+
+            return () -> supplier.getConnection(name, languages);
         }
     }
 }

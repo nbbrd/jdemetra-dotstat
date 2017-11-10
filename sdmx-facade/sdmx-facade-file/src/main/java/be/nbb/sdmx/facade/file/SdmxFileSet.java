@@ -14,28 +14,21 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.sdmx;
+package be.nbb.sdmx.facade.file;
 
-import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
-import javax.annotation.Nonnull;
+import java.io.File;
 import javax.annotation.Nullable;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  *
  * @author Philippe Charles
  */
-@ThreadSafe
-public interface HasSdmxProperties {
+@lombok.Value(staticConstructor = "of")
+public class SdmxFileSet {
 
-    @Nonnull
-    SdmxConnectionSupplier getConnectionSupplier();
+    @lombok.NonNull
+    File data;
 
-    void setConnectionSupplier(@Nullable SdmxConnectionSupplier connectionSupplier);
-
-    @Nonnull
-    LanguagePriorityList getLanguages();
-
-    void setLanguages(@Nullable LanguagePriorityList languages);
+    @Nullable
+    File structure;
 }
