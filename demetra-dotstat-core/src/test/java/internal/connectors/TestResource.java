@@ -58,7 +58,7 @@ public final class TestResource {
                     .filter(o -> o.getRef().equals(flowRef))
                     .collect(Collectors.toList()));
             DataStructure dsd = dataStructures.get(DataStructureRef.of("NBB", "TEST_DATASET", null));
-            try (DataCursor cursor = SdmxXmlStreams.genericData20(dsd).get(SdmxSource.XIF, SdmxSource.NBB_DATA.openReader())) {
+            try (DataCursor cursor = SdmxXmlStreams.genericData20(dsd).parseReader(SdmxSource.XIF, SdmxSource.NBB_DATA::openReader)) {
                 result.copyOf(flowRef, cursor);
             }
             return result
@@ -83,7 +83,7 @@ public final class TestResource {
                     .filter(o -> o.getRef().equals(flowRef))
                     .collect(Collectors.toList()));
             DataStructure dfs = dataStructures.get(DataStructureRef.of("ECB", "ECB_AME1", "1.0"));
-            try (DataCursor cursor = SdmxXmlStreams.genericData21(dfs).get(SdmxSource.XIF, SdmxSource.ECB_DATA.openReader())) {
+            try (DataCursor cursor = SdmxXmlStreams.genericData21(dfs).parseReader(SdmxSource.XIF, SdmxSource.ECB_DATA::openReader)) {
                 result.copyOf(flowRef, cursor);
             }
             return result
@@ -111,7 +111,7 @@ public final class TestResource {
     private static <T> T parse(ByteSource xml, LanguagePriorityList l, Parser<T> parser) throws IOException {
         XMLEventReader r = null;
         try {
-            r = xml.openXmlEvent(SdmxSource.XIF);
+            r = SdmxSource.XIF.createXMLEventReader(xml.openReader());
             return parser.parse(r, l);
         } catch (XMLStreamException | SdmxException ex) {
             throw new IOException(ex);
