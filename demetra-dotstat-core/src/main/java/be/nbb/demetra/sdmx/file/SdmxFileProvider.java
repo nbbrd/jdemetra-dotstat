@@ -29,6 +29,7 @@ import com.google.common.cache.Cache;
 import ec.tss.ITsProvider;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.DataSource;
+import ec.tss.tsproviders.HasDataDisplayName;
 import ec.tss.tsproviders.HasDataMoniker;
 import ec.tss.tsproviders.HasDataSourceBean;
 import ec.tss.tsproviders.HasDataSourceMutableList;
@@ -75,7 +76,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
     @lombok.experimental.Delegate
     private final HasFilePaths filePathSupport;
 
-    @lombok.experimental.Delegate(excludes = HasTsCursor.class)
+    @lombok.experimental.Delegate(excludes = {HasTsCursor.class, HasDataDisplayName.class})
     private final CubeSupport cubeSupport;
 
     @lombok.experimental.Delegate
@@ -108,6 +109,26 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
     @Override
     public boolean accept(File pathname) {
         return pathname.getName().toLowerCase().endsWith(".xml");
+    }
+
+    @Override
+    public String getDisplayName(DataSource dataSource) throws IllegalArgumentException {
+        return getSourceLabel(decodeBean(dataSource));
+    }
+
+    @Override
+    public String getDisplayName(DataSet dataSet) throws IllegalArgumentException {
+        return cubeSupport.getDisplayName(dataSet);
+    }
+
+    @Override
+    public String getDisplayName(IOException exception) throws IllegalArgumentException {
+        return cubeSupport.getDisplayName(exception);
+    }
+
+    @Override
+    public String getDisplayNodeName(DataSet dataSet) throws IllegalArgumentException {
+        return cubeSupport.getDisplayNodeName(dataSet);
     }
 
     @lombok.AllArgsConstructor
@@ -143,7 +164,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
 
             CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), conn, flow);
 
-            CubeAccessor accessor = SdmxCubeAccessor.of(conn, flow, root, bean.getLabelAttribute(), bean.getFile().getPath());
+            CubeAccessor accessor = SdmxCubeAccessor.of(conn, flow, root, bean.getLabelAttribute(), getSourceLabel(bean));
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());
 
@@ -161,5 +182,9 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
             String name = SdmxFileUtil.toXml(files);
             return () -> supplier.getConnection(name, languages);
         }
+    }
+
+    private static String getSourceLabel(SdmxFileBean bean) {
+        return bean.getFile().getPath();
     }
 }
