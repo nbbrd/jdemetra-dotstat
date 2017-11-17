@@ -20,6 +20,7 @@ import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.file.SdmxFileManager;
+import be.nbb.sdmx.facade.file.SdmxFileSet;
 import com.google.common.base.Converter;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -220,7 +221,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
                 .add();
 
         Supplier<String> toSource = () -> SdmxCubeItems.tryResolveFileSet(loader, bean).map(SdmxFileUtil::toXml).orElse("");
-        Supplier<String> toFlow = () -> SdmxCubeItems.tryResolveFileSet(loader, bean).map(SdmxFileUtil::asDataflowRef).map(Object::toString).orElse("");
+        Supplier<String> toFlow = () -> SdmxCubeItems.tryResolveFileSet(loader, bean).map(SdmxFileSet::asDataflowRef).map(Object::toString).orElse("");
 
         b.withAutoCompletion()
                 .select(bean, "dimensions", List.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)

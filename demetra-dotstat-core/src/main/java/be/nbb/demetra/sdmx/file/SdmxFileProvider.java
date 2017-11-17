@@ -158,7 +158,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
             SdmxFileBean bean = param.get(dataSource);
             SdmxFileSet files = SdmxCubeItems.resolveFileSet(paths, bean);
 
-            DataflowRef flow = SdmxFileUtil.asDataflowRef(files);
+            DataflowRef flow = files.asDataflowRef();
 
             IO.Supplier<SdmxConnection> conn = getSupplier(properties, files);
 
