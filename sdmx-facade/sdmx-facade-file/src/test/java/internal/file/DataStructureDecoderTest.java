@@ -21,9 +21,10 @@ import be.nbb.sdmx.facade.DataStructureRef;
 import java.io.IOException;
 import org.junit.Test;
 import be.nbb.sdmx.facade.samples.SdmxSource;
+import be.nbb.sdmx.facade.xml.stream.Stax;
 import static org.assertj.core.api.Assertions.assertThat;
 import static internal.file.CustomDataStructureBuilder.dimension;
-import java.io.Reader;
+import javax.xml.stream.XMLInputFactory;
 
 /**
  *
@@ -44,28 +45,24 @@ public class DataStructureDecoderTest {
                 .primaryMeasureId("OBS_VALUE")
                 .build();
 
-        try (Reader stream = SdmxSource.OTHER_GENERIC20.openReader()) {
-            assertThat(DataStructureDecoder.decodeDataStructure(SdmxDecoder.DataType.GENERIC20, SdmxSource.XIF, stream)).isEqualTo(ds);
-        }
+        assertThat(DataStructureDecoder.generic20().parseReader(xif, SdmxSource.OTHER_GENERIC20::openReader)).isEqualTo(ds);
     }
 
     @Test
     public void testDecodeCompact20() throws IOException {
         DataStructure ds = DataStructure.builder()
-                .ref(DataStructureRef.of(null, "TODO", null))
+                .ref(DataStructureRef.of(null, "UNKNOWN", null))
                 .dimension(dimension("FREQ", 1, "A", "M"))
                 .dimension(dimension("COLLECTION", 2, "B"))
                 .dimension(dimension("VIS_CTY", 3, "MX"))
                 .dimension(dimension("JD_TYPE", 4, "P"))
                 .dimension(dimension("JD_CATEGORY", 5, "A", "B"))
-                .label("TODO")
+                .label("UNKNOWN")
                 .timeDimensionId("TIME_PERIOD")
                 .primaryMeasureId("OBS_VALUE")
                 .build();
 
-        try (Reader stream = SdmxSource.OTHER_COMPACT20.openReader()) {
-            assertThat(DataStructureDecoder.decodeDataStructure(SdmxDecoder.DataType.COMPACT20, SdmxSource.XIF, stream)).isEqualTo(ds);
-        }
+        assertThat(DataStructureDecoder.compact20().parseReader(xif, SdmxSource.OTHER_COMPACT20::openReader)).isEqualTo(ds);
     }
 
     @Test
@@ -84,9 +81,7 @@ public class DataStructureDecoderTest {
                 .primaryMeasureId("OBS_VALUE")
                 .build();
 
-        try (Reader stream = SdmxSource.OTHER_GENERIC21.openReader()) {
-            assertThat(DataStructureDecoder.decodeDataStructure(SdmxDecoder.DataType.GENERIC21, SdmxSource.XIF, stream)).isEqualTo(ds);
-        }
+        assertThat(DataStructureDecoder.generic21().parseReader(xif, SdmxSource.OTHER_GENERIC21::openReader)).isEqualTo(ds);
     }
 
     @Test
@@ -105,8 +100,8 @@ public class DataStructureDecoderTest {
                 .primaryMeasureId("OBS_VALUE")
                 .build();
 
-        try (Reader stream = SdmxSource.OTHER_COMPACT21.openReader()) {
-            assertThat(DataStructureDecoder.decodeDataStructure(SdmxDecoder.DataType.COMPACT21, SdmxSource.XIF, stream)).isEqualTo(ds);
-        }
+        assertThat(DataStructureDecoder.compact21().parseReader(xif, SdmxSource.OTHER_COMPACT21::openReader)).isEqualTo(ds);
     }
+
+    private final XMLInputFactory xif = Stax.getInputFactoryWithoutNamespace();
 }

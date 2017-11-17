@@ -17,9 +17,10 @@
 package internal.file;
 
 import be.nbb.sdmx.facade.samples.SdmxSource;
+import be.nbb.sdmx.facade.xml.stream.Stax;
 import java.io.IOException;
+import javax.xml.stream.XMLInputFactory;
 import org.junit.Test;
-import java.io.Reader;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -30,29 +31,27 @@ public class DataTypeProbeTest {
 
     @Test
     public void testDecodeGeneric20() throws IOException {
-        try (Reader stream = SdmxSource.OTHER_GENERIC20.openReader()) {
-            assertThat(DataTypeProbe.probeDataType(SdmxSource.XIF, stream)).isEqualTo(SdmxDecoder.DataType.GENERIC20);
-        }
+        assertThat(DataTypeProbe.of().parseReader(xif, SdmxSource.OTHER_GENERIC20::openReader))
+                .isEqualTo(SdmxDecoder.DataType.GENERIC20);
     }
 
     @Test
     public void testDecodeCompact20() throws IOException {
-        try (Reader stream = SdmxSource.OTHER_COMPACT20.openReader()) {
-            assertThat(DataTypeProbe.probeDataType(SdmxSource.XIF, stream)).isEqualTo(SdmxDecoder.DataType.COMPACT20);
-        }
+        assertThat(DataTypeProbe.of().parseReader(xif, SdmxSource.OTHER_COMPACT20::openReader))
+                .isEqualTo(SdmxDecoder.DataType.COMPACT20);
     }
 
     @Test
     public void testDecodeGeneric21() throws IOException {
-        try (Reader stream = SdmxSource.OTHER_GENERIC21.openReader()) {
-            assertThat(DataTypeProbe.probeDataType(SdmxSource.XIF, stream)).isEqualTo(SdmxDecoder.DataType.GENERIC21);
-        }
+        assertThat(DataTypeProbe.of().parseReader(xif, SdmxSource.OTHER_GENERIC21::openReader))
+                .isEqualTo(SdmxDecoder.DataType.GENERIC21);
     }
 
     @Test
     public void testDecodeCompact21() throws IOException {
-        try (Reader stream = SdmxSource.OTHER_COMPACT21.openReader()) {
-            assertThat(DataTypeProbe.probeDataType(SdmxSource.XIF, stream)).isEqualTo(SdmxDecoder.DataType.COMPACT21);
-        }
+        assertThat(DataTypeProbe.of().parseReader(xif, SdmxSource.OTHER_COMPACT21::openReader))
+                .isEqualTo(SdmxDecoder.DataType.COMPACT21);
     }
+    
+    private final XMLInputFactory xif = Stax.getInputFactory();
 }

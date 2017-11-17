@@ -16,13 +16,12 @@
  */
 package internal.file;
 
-import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.file.SdmxFileSet;
+import be.nbb.sdmx.facade.xml.stream.Stax;
 import java.io.File;
 import java.io.StringReader;
 import java.io.StringWriter;
 import javax.annotation.Nonnull;
-import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -36,21 +35,20 @@ import javax.xml.stream.XMLStreamWriter;
 public class SdmxFileUtil {
 
     @Nonnull
-    public DataflowRef asDataflowRef(@Nonnull SdmxFileSet files) {
-        File structFile = files.getStructure();
-        return DataflowRef.parse("data" + (structFile != null && !structFile.toString().isEmpty() ? "&struct" : ""));
+    public String asFlowLabel(@Nonnull SdmxFileSet files) {
+        return files.getData().getName().replace(".xml", "");
     }
 
     @Nonnull
+    @SuppressWarnings("null")
     public String toXml(@Nonnull SdmxFileSet files) {
         StringWriter result = new StringWriter();
         try {
             XMLStreamWriter xml = OUTPUT.createXMLStreamWriter(result);
             xml.writeEmptyElement(ROOT_TAG);
             xml.writeAttribute(DATA_ATTR, files.getData().toString());
-            File structure = files.getStructure();
-            if (structure != null) {
-                xml.writeAttribute(STRUCT_ATTR, structure.toString());
+            if (files.hasStructure()) {
+                xml.writeAttribute(STRUCT_ATTR, files.getStructure().toString());
             }
             xml.writeEndDocument();
             xml.close();
@@ -65,7 +63,7 @@ public class SdmxFileUtil {
         String data = null;
         String structure = null;
         try {
-            XMLStreamReader xml = INPUT.createXMLStreamReader(new StringReader(input));
+            XMLStreamReader xml = Stax.getInputFactoryWithoutNamespace().createXMLStreamReader(new StringReader(input));
             while (xml.hasNext()) {
                 if (xml.next() == XMLStreamReader.START_ELEMENT && xml.getLocalName().equals(ROOT_TAG)) {
                     data = xml.getAttributeValue(null, DATA_ATTR);
@@ -86,5 +84,4 @@ public class SdmxFileUtil {
     private static final String DATA_ATTR = "data";
     private static final String STRUCT_ATTR = "structure";
     private static final XMLOutputFactory OUTPUT = XMLOutputFactory.newInstance();
-    private static final XMLInputFactory INPUT = XMLInputFactory.newInstance();
 }

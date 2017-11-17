@@ -27,6 +27,8 @@ import be.nbb.sdmx.facade.util.ObsParser;
 import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import be.nbb.sdmx.facade.util.FreqParser;
+import java.io.InputStream;
+import javax.xml.stream.XMLInputFactory;
 
 /**
  *
@@ -39,9 +41,13 @@ public class XMLStreamCompactDataCursorTest {
         ByteSource xml = SdmxSource.OTHER_COMPACT20;
         Key.Builder builder = Key.builder("FREQ", "COLLECTION", "VIS_CTY", "JD_TYPE", "JD_CATEGORY");
 
-        DataCursorAssert.assertCompliance(() -> new XMLStreamCompactDataCursor(xml.openXmlStream(SdmxSource.XIF), builder, ObsParser.standard(), FreqParser.sdmx20(), "TIME_PERIOD", "OBS_VALUE"));
+        DataCursorAssert.assertCompliance(() -> {
+            InputStream stream = xml.openStream();
+            return new XMLStreamCompactDataCursor(xif.createXMLStreamReader(stream), stream, builder, ObsParser.standard(), FreqParser.sdmx20(), "TIME_PERIOD", "OBS_VALUE");
+        });
 
-        try (DataCursor o = new XMLStreamCompactDataCursor(xml.openXmlStream(SdmxSource.XIF), builder, ObsParser.standard(), FreqParser.sdmx20(), "TIME_PERIOD", "OBS_VALUE")) {
+        try (InputStream stream = xml.openStream();
+                DataCursor o = new XMLStreamCompactDataCursor(xif.createXMLStreamReader(stream), stream, builder, ObsParser.standard(), FreqParser.sdmx20(), "TIME_PERIOD", "OBS_VALUE")) {
             int indexSeries = -1;
             while (o.nextSeries()) {
                 switch (++indexSeries) {
@@ -79,9 +85,13 @@ public class XMLStreamCompactDataCursorTest {
         ByteSource xml = SdmxSource.OTHER_COMPACT21;
         Key.Builder builder = Key.builder("FREQ", "AME_REF_AREA", "AME_TRANSFORMATION", "AME_AGG_METHOD", "AME_UNIT", "AME_REFERENCE", "AME_ITEM");
 
-        DataCursorAssert.assertCompliance(() -> new XMLStreamCompactDataCursor(xml.openXmlStream(SdmxSource.XIF), builder, ObsParser.standard(), FreqParser.sdmx21(0), "TIME_PERIOD", "OBS_VALUE"));
+        DataCursorAssert.assertCompliance(() -> {
+            InputStream stream = xml.openStream();
+            return new XMLStreamCompactDataCursor(xif.createXMLStreamReader(stream), stream, builder, ObsParser.standard(), FreqParser.sdmx21(0), "TIME_PERIOD", "OBS_VALUE");
+        });
 
-        try (DataCursor o = new XMLStreamCompactDataCursor(xml.openXmlStream(SdmxSource.XIF), builder, ObsParser.standard(), FreqParser.sdmx21(0), "TIME_PERIOD", "OBS_VALUE")) {
+        try (InputStream stream = xml.openStream();
+                DataCursor o = new XMLStreamCompactDataCursor(xif.createXMLStreamReader(stream), stream, builder, ObsParser.standard(), FreqParser.sdmx21(0), "TIME_PERIOD", "OBS_VALUE")) {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesKey()).isEqualTo(Key.of("A", "BEL", "1", "0", "0", "0", "OVGD"));
             assertThat(o.getSeriesFrequency()).isEqualTo(Frequency.ANNUAL);
@@ -109,4 +119,6 @@ public class XMLStreamCompactDataCursorTest {
             assertThat(o.nextSeries()).isFalse();
         }
     }
+    
+    private final XMLInputFactory xif = Stax.getInputFactoryWithoutNamespace();
 }

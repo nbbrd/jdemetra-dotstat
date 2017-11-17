@@ -14,32 +14,16 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.sdmx.facade.file;
-
-import be.nbb.sdmx.facade.DataflowRef;
-import java.io.File;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+package be.nbb.sdmx.facade.xml;
 
 /**
  *
  * @author Philippe Charles
  */
-@lombok.Value(staticConstructor = "of")
-public class SdmxFileSet {
+@lombok.experimental.UtilityClass
+public class Sdmxml {
 
-    @lombok.NonNull
-    File data;
-
-    @Nullable
-    File structure;
-
-    public boolean hasStructure() {
-        return structure != null;
-    }
-
-    @Nonnull
-    public DataflowRef asDataflowRef() {
-        return DataflowRef.parse("data" + (structure != null && !structure.toString().isEmpty() ? "&struct" : ""));
-    }
+    public static final String NS_V10_URI = "http://www.SDMX.org/resources/SDMXML/schemas/v1_0/message";
+    public static final String NS_V20_URI = "http://www.SDMX.org/resources/SDMXML/schemas/v2_0/message";
+    public static final String NS_V21_URI = "http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message";
 }

@@ -30,6 +30,9 @@ import java.util.Map;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import be.nbb.sdmx.facade.util.FreqParser;
+import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.isTagMatch;
+import java.io.Closeable;
+import java.util.logging.Logger;
 
 /**
  *
@@ -37,11 +40,12 @@ import be.nbb.sdmx.facade.util.FreqParser;
  */
 final class XMLStreamCompactDataCursor implements DataCursor {
 
-    private static final String DATASET_ELEMENT = "DataSet";
-    private static final String SERIES_ELEMENT = "Series";
-    private static final String OBS_ELEMENT = "Obs";
+    private static final String DATASET_TAG = "DataSet";
+    private static final String SERIES_TAG = "Series";
+    private static final String OBS_TAG = "Obs";
 
     private final XMLStreamReader reader;
+    private final Closeable onClose;
     private final Key.Builder keyBuilder;
     private final AttributesBuilder attributesBuilder;
     private final ObsParser obsParser;
@@ -52,8 +56,12 @@ final class XMLStreamCompactDataCursor implements DataCursor {
     private boolean hasSeries;
     private boolean hasObs;
 
-    XMLStreamCompactDataCursor(XMLStreamReader reader, Key.Builder keyBuilder, ObsParser obsParser, FreqParser freqParser, String timeDimensionId, String primaryMeasureId) {
+    XMLStreamCompactDataCursor(XMLStreamReader reader, Closeable onClose, Key.Builder keyBuilder, ObsParser obsParser, FreqParser freqParser, String timeDimensionId, String primaryMeasureId) {
+        if (!Stax.isNotNamespaceAware(reader)) {
+            Logger.getLogger(getClass().getName()).warning("Using XMLStreamReader with namespace awareness");
+        }
         this.reader = reader;
+        this.onClose = onClose;
         this.keyBuilder = keyBuilder;
         this.attributesBuilder = new AttributesBuilder();
         this.obsParser = obsParser;
@@ -73,7 +81,7 @@ final class XMLStreamCompactDataCursor implements DataCursor {
         try {
             return hasSeries = nextWhile(this::onDataSet);
         } catch (XMLStreamException ex) {
-            throw new IOException(ex);
+            throw new Stax.XMLStreamIOException(ex);
         }
     }
 
@@ -84,7 +92,7 @@ final class XMLStreamCompactDataCursor implements DataCursor {
         try {
             return hasObs = nextWhile(this::onSeriesBody);
         } catch (XMLStreamException ex) {
-            throw new IOException(ex);
+            throw new Stax.XMLStreamIOException(ex);
         }
     }
 
@@ -130,11 +138,7 @@ final class XMLStreamCompactDataCursor implements DataCursor {
     @Override
     public void close() throws IOException {
         closed = true;
-        try {
-            reader.close();
-        } catch (XMLStreamException ex) {
-            throw new IOException(ex);
-        }
+        Stax.closeBoth(reader, onClose);
     }
 
     private void checkState() throws IOException {
@@ -159,9 +163,9 @@ final class XMLStreamCompactDataCursor implements DataCursor {
 
     private Status onDataSet(boolean start, String localName) throws XMLStreamException {
         if (start) {
-            return localName.equals(SERIES_ELEMENT) ? parseSeries() : CONTINUE;
+            return isTagMatch(localName, SERIES_TAG) ? parseSeries() : CONTINUE;
         } else {
-            return localName.equals(DATASET_ELEMENT) ? HALT : CONTINUE;
+            return isTagMatch(localName, DATASET_TAG) ? HALT : CONTINUE;
         }
     }
 
@@ -184,9 +188,9 @@ final class XMLStreamCompactDataCursor implements DataCursor {
 
     private Status onSeriesBody(boolean start, String localName) throws XMLStreamException {
         if (start) {
-            return localName.equals(OBS_ELEMENT) ? parseObs() : CONTINUE;
+            return isTagMatch(localName, OBS_TAG) ? parseObs() : CONTINUE;
         } else {
-            return localName.equals(SERIES_ELEMENT) ? HALT : CONTINUE;
+            return isTagMatch(localName, SERIES_TAG) ? HALT : CONTINUE;
         }
     }
 
@@ -196,7 +200,7 @@ final class XMLStreamCompactDataCursor implements DataCursor {
         return SUSPEND;
     }
 
-    private boolean nextWhile(XMLStreamUtil.Func func) throws XMLStreamException {
+    private boolean nextWhile(XMLStreamUtil.TagVisitor func) throws XMLStreamException {
         return XMLStreamUtil.nextWhile(reader, func);
     }
 }

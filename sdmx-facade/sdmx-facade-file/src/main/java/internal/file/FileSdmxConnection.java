@@ -25,12 +25,11 @@ import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.DataQueryDetail;
 import be.nbb.sdmx.facade.DataQuery;
-import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.Series;
+import be.nbb.sdmx.facade.file.SdmxFileConnection;
 import be.nbb.sdmx.facade.file.SdmxFileSet;
 import be.nbb.sdmx.facade.util.SeriesSupport;
 import be.nbb.sdmx.facade.xml.stream.SdmxXmlStreams;
-import be.nbb.sdmx.facade.xml.stream.XMLStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -38,35 +37,48 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.xml.stream.XMLInputFactory;
+import be.nbb.sdmx.facade.xml.stream.Stax;
 
 /**
  *
  * @author Philippe Charles
  */
-class FileSdmxConnection implements SdmxConnection {
+class FileSdmxConnection implements SdmxFileConnection {
 
     private static final DataStructureRef EMPTY = DataStructureRef.of("", "", "");
 
     private final SdmxFileSet files;
     private final LanguagePriorityList languages;
-    private final XMLInputFactory factory;
+    private final XMLInputFactory factoryWithoutNamespace;
     private final SdmxDecoder decoder;
     private final Dataflow dataflow;
     private boolean closed;
 
-    FileSdmxConnection(SdmxFileSet files, LanguagePriorityList languages, XMLInputFactory factory, SdmxDecoder decoder) {
+    FileSdmxConnection(SdmxFileSet files, LanguagePriorityList languages, XMLInputFactory factoryWithoutNamespace, SdmxDecoder decoder) {
         this.files = files;
         this.languages = languages;
-        this.factory = factory;
+        this.factoryWithoutNamespace = factoryWithoutNamespace;
         this.decoder = decoder;
-        this.dataflow = Dataflow.of(SdmxFileUtil.asDataflowRef(files), EMPTY, files.getData().getName().replace(".xml", ""));
+        this.dataflow = Dataflow.of(files.asDataflowRef(), EMPTY, SdmxFileUtil.asFlowLabel(files));
         this.closed = false;
+    }
+
+    @Override
+    final public DataflowRef getDataflowRef() throws IOException {
+        checkState();
+        return dataflow.getRef();
     }
 
     @Override
     final public Set<Dataflow> getFlows() throws IOException {
         checkState();
         return Collections.singleton(dataflow);
+    }
+
+    @Override
+    final public Dataflow getFlow() throws IOException {
+        checkState();
+        return dataflow;
     }
 
     @Override
@@ -78,11 +90,24 @@ class FileSdmxConnection implements SdmxConnection {
     }
 
     @Override
+    final public DataStructure getStructure() throws IOException {
+        checkState();
+        return decode().getDataStructure();
+    }
+
+    @Override
     final public DataStructure getStructure(DataflowRef flowRef) throws IOException {
         checkState();
         Objects.requireNonNull(flowRef);
         checkFlowRef(flowRef);
         return decode().getDataStructure();
+    }
+
+    @Override
+    final public DataCursor getCursor(DataQuery query) throws IOException {
+        checkState();
+        Objects.requireNonNull(query);
+        return loadData(decode(), dataflow.getRef(), query.getKey(), query.getDetail().equals(DataQueryDetail.SERIES_KEYS_ONLY));
     }
 
     @Override
@@ -92,6 +117,11 @@ class FileSdmxConnection implements SdmxConnection {
         Objects.requireNonNull(query);
         checkFlowRef(flowRef);
         return loadData(decode(), flowRef, query.getKey(), query.getDetail().equals(DataQueryDetail.SERIES_KEYS_ONLY));
+    }
+
+    @Override
+    public Stream<Series> getStream(DataQuery query) throws IOException {
+        return SeriesSupport.asStream(() -> getCursor(query));
     }
 
     @Override
@@ -120,10 +150,10 @@ class FileSdmxConnection implements SdmxConnection {
     }
 
     protected DataCursor loadData(SdmxDecoder.Info entry, DataflowRef flowRef, Key key, boolean serieskeysonly) throws IOException {
-        return getDataSupplier(entry.getDataType(), entry.getDataStructure()).get(factory, files.getData().toPath(), StandardCharsets.UTF_8);
+        return getDataSupplier(entry.getDataType(), entry.getDataStructure()).parseFile(factoryWithoutNamespace, files.getData(), StandardCharsets.UTF_8);
     }
 
-    private XMLStream<DataCursor> getDataSupplier(SdmxDecoder.DataType o, DataStructure dsd) throws IOException {
+    private Stax.Parser<DataCursor> getDataSupplier(SdmxDecoder.DataType o, DataStructure dsd) throws IOException {
         switch (o) {
             case GENERIC20:
                 return SdmxXmlStreams.genericData20(dsd);

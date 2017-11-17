@@ -25,6 +25,7 @@ import be.nbb.sdmx.facade.samples.SdmxSource;
 import be.nbb.sdmx.facade.repo.SdmxRepository;
 import be.nbb.sdmx.facade.samples.ByteSource;
 import be.nbb.sdmx.facade.xml.stream.SdmxXmlStreams;
+import be.nbb.sdmx.facade.xml.stream.Stax;
 import it.bancaditalia.oss.sdmx.api.DataFlowStructure;
 import it.bancaditalia.oss.sdmx.client.Parser;
 import it.bancaditalia.oss.sdmx.exceptions.SdmxException;
@@ -36,6 +37,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 
 /**
@@ -58,7 +60,7 @@ public final class TestResource {
                     .filter(o -> o.getRef().equals(flowRef))
                     .collect(Collectors.toList()));
             DataStructure dsd = dataStructures.get(DataStructureRef.of("NBB", "TEST_DATASET", null));
-            try (DataCursor cursor = SdmxXmlStreams.genericData20(dsd).get(SdmxSource.XIF, SdmxSource.NBB_DATA.openReader())) {
+            try (DataCursor cursor = SdmxXmlStreams.genericData20(dsd).parseReader(XIF, SdmxSource.NBB_DATA::openReader)) {
                 result.copyOf(flowRef, cursor);
             }
             return result
@@ -83,7 +85,7 @@ public final class TestResource {
                     .filter(o -> o.getRef().equals(flowRef))
                     .collect(Collectors.toList()));
             DataStructure dfs = dataStructures.get(DataStructureRef.of("ECB", "ECB_AME1", "1.0"));
-            try (DataCursor cursor = SdmxXmlStreams.genericData21(dfs).get(SdmxSource.XIF, SdmxSource.ECB_DATA.openReader())) {
+            try (DataCursor cursor = SdmxXmlStreams.genericData21(dfs).parseReader(XIF, SdmxSource.ECB_DATA::openReader)) {
                 result.copyOf(flowRef, cursor);
             }
             return result
@@ -111,7 +113,7 @@ public final class TestResource {
     private static <T> T parse(ByteSource xml, LanguagePriorityList l, Parser<T> parser) throws IOException {
         XMLEventReader r = null;
         try {
-            r = xml.openXmlEvent(SdmxSource.XIF);
+            r = XIF.createXMLEventReader(xml.openReader());
             return parser.parse(r, l);
         } catch (XMLStreamException | SdmxException ex) {
             throw new IOException(ex);
@@ -125,4 +127,6 @@ public final class TestResource {
             }
         }
     }
+
+    private static final XMLInputFactory XIF = Stax.getInputFactory();
 }

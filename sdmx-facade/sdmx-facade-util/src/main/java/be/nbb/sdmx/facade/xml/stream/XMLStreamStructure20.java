@@ -30,47 +30,16 @@ import javax.xml.stream.XMLStreamReader;
 import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.check;
 import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.nextTags;
 import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.nextTag;
+import static be.nbb.sdmx.facade.xml.Sdmxml.NS_V20_URI;
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  *
  * @author Philippe Charles
  */
+@NotThreadSafe
 final class XMLStreamStructure20 {
-
-    private final TextBuilder structureLabel;
-    private final TextBuilder label;
-
-    XMLStreamStructure20(LanguagePriorityList languages) {
-        this.structureLabel = new TextBuilder(languages);
-        this.label = new TextBuilder(languages);
-    }
-
-    @Nonnull
-    public List<DataStructure> parse(@Nonnull XMLStreamReader reader) throws XMLStreamException {
-        List<DataStructure> result = new ArrayList<>();
-        Map<String, Map<String, String>> codelists = new HashMap<>();
-        Map<String, String> concepts = new HashMap<>();
-        while (nextTags(reader, "")) {
-            switch (reader.getLocalName()) {
-                case HEADER_TAG:
-                    parseHeader(reader);
-                    break;
-                case CODE_LISTS_TAG:
-                    parseCodelists(reader, codelists);
-                    break;
-                case CONCEPTS_TAG:
-                    parseConcepts(reader, concepts);
-                    break;
-                case KEY_FAMILIES_TAG:
-                    parseDataStructures(reader, result, concepts::get, codelists::get);
-                    break;
-            }
-        }
-        return result;
-    }
-
-    private static final String NS_20 = "http://www.SDMX.org/resources/SDMXML/schemas/v2_0/message";
 
     private static final String HEADER_TAG = "Header";
     private static final String CODE_LISTS_TAG = "CodeLists";
@@ -95,9 +64,45 @@ final class XMLStreamStructure20 {
     private static final String CONCEPT_REF_ATTR = "conceptRef";
     private static final String CODELIST_ATTR = "codelist";
 
+    private final TextBuilder structureLabel;
+    private final TextBuilder label;
+
+    XMLStreamStructure20(LanguagePriorityList languages) {
+        this.structureLabel = new TextBuilder(languages);
+        this.label = new TextBuilder(languages);
+    }
+
+    @Nonnull
+    public List<DataStructure> parse(@Nonnull XMLStreamReader reader) throws XMLStreamException {
+        if (Stax.isNotNamespaceAware(reader)) {
+            throw new XMLStreamException("Cannot parse structure");
+        }
+
+        List<DataStructure> result = new ArrayList<>();
+        Map<String, Map<String, String>> codelists = new HashMap<>();
+        Map<String, String> concepts = new HashMap<>();
+        while (nextTags(reader, "")) {
+            switch (reader.getLocalName()) {
+                case HEADER_TAG:
+                    parseHeader(reader);
+                    break;
+                case CODE_LISTS_TAG:
+                    parseCodelists(reader, codelists);
+                    break;
+                case CONCEPTS_TAG:
+                    parseConcepts(reader, concepts);
+                    break;
+                case KEY_FAMILIES_TAG:
+                    parseDataStructures(reader, result, concepts::get, codelists::get);
+                    break;
+            }
+        }
+        return result;
+    }
+
     private void parseHeader(XMLStreamReader reader) throws XMLStreamException {
         String ns = reader.getNamespaceURI();
-        check(NS_20.equals(ns), reader, "Invalid namespace '%s'", ns);
+        check(NS_V20_URI.equals(ns), reader, "Invalid namespace '%s'", ns);
     }
 
     private void parseCodelists(XMLStreamReader reader, Map<String, Map<String, String>> codelists) throws XMLStreamException {

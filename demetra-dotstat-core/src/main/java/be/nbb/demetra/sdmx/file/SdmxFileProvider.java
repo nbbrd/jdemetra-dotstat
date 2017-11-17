@@ -29,6 +29,7 @@ import com.google.common.cache.Cache;
 import ec.tss.ITsProvider;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.DataSource;
+import ec.tss.tsproviders.HasDataDisplayName;
 import ec.tss.tsproviders.HasDataMoniker;
 import ec.tss.tsproviders.HasDataSourceBean;
 import ec.tss.tsproviders.HasDataSourceMutableList;
@@ -75,7 +76,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
     @lombok.experimental.Delegate
     private final HasFilePaths filePathSupport;
 
-    @lombok.experimental.Delegate(excludes = HasTsCursor.class)
+    @lombok.experimental.Delegate(excludes = {HasTsCursor.class, HasDataDisplayName.class})
     private final CubeSupport cubeSupport;
 
     @lombok.experimental.Delegate
@@ -110,6 +111,26 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
         return pathname.getName().toLowerCase().endsWith(".xml");
     }
 
+    @Override
+    public String getDisplayName(DataSource dataSource) throws IllegalArgumentException {
+        return getSourceLabel(decodeBean(dataSource));
+    }
+
+    @Override
+    public String getDisplayName(DataSet dataSet) throws IllegalArgumentException {
+        return cubeSupport.getDisplayName(dataSet);
+    }
+
+    @Override
+    public String getDisplayName(IOException exception) throws IllegalArgumentException {
+        return cubeSupport.getDisplayName(exception);
+    }
+
+    @Override
+    public String getDisplayNodeName(DataSet dataSet) throws IllegalArgumentException {
+        return cubeSupport.getDisplayNodeName(dataSet);
+    }
+
     @lombok.AllArgsConstructor
     private static final class SdmxCubeResource implements CubeSupport.Resource {
 
@@ -137,20 +158,20 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
             SdmxFileBean bean = param.get(dataSource);
             SdmxFileSet files = SdmxCubeItems.resolveFileSet(paths, bean);
 
-            DataflowRef flow = SdmxFileUtil.asDataflowRef(files);
+            DataflowRef flow = files.asDataflowRef();
 
-            IO.Supplier<SdmxConnection> conn = getSupplier(properties, files);
+            IO.Supplier<SdmxConnection> conn = toConnection(properties, files);
 
-            CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), conn, flow);
+            CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), () -> SdmxCubeItems.loadStructure(conn, flow));
 
-            CubeAccessor accessor = SdmxCubeAccessor.of(conn, flow, root, bean.getLabelAttribute(), bean.getFile().getPath());
+            CubeAccessor accessor = SdmxCubeAccessor.of(conn, flow, root, bean.getLabelAttribute(), getSourceLabel(bean));
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());
 
             return new SdmxCubeItems(accessor, idParam);
         }
 
-        private static IO.Supplier<SdmxConnection> getSupplier(HasSdmxProperties properties, SdmxFileSet files) {
+        private static IO.Supplier<SdmxConnection> toConnection(HasSdmxProperties properties, SdmxFileSet files) {
             SdmxConnectionSupplier supplier = properties.getConnectionSupplier();
             LanguagePriorityList languages = properties.getLanguages();
 
@@ -161,5 +182,9 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
             String name = SdmxFileUtil.toXml(files);
             return () -> supplier.getConnection(name, languages);
         }
+    }
+
+    private static String getSourceLabel(SdmxFileBean bean) {
+        return bean.getFile().getPath();
     }
 }

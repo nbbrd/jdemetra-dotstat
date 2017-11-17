@@ -19,10 +19,10 @@ package be.nbb.sdmx.facade.file;
 import internal.file.CachedFileSdmxConnection;
 import internal.file.SdmxDecoder;
 import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import internal.file.XMLStreamSdmxDecoder;
 import be.nbb.sdmx.facade.util.HasCache;
+import be.nbb.sdmx.facade.xml.stream.Stax;
 import internal.file.SdmxFileUtil;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,16 +41,21 @@ public final class SdmxFileManager implements SdmxConnectionSupplier, HasCache {
 
     @Nonnull
     public static SdmxFileManager of() {
-        XMLInputFactory factory = XMLInputFactory.newInstance();
-        return new SdmxFileManager(factory, new XMLStreamSdmxDecoder(factory), new AtomicReference<>(new ConcurrentHashMap()));
+        XMLInputFactory factoryWithoutNamespace = Stax.getInputFactoryWithoutNamespace();
+        return new SdmxFileManager(factoryWithoutNamespace, new XMLStreamSdmxDecoder(Stax.getInputFactory(), factoryWithoutNamespace), new AtomicReference<>(new ConcurrentHashMap()));
     }
 
-    private final XMLInputFactory factory;
+    private final XMLInputFactory factoryWithoutNamespace;
     private final SdmxDecoder decoder;
     private final AtomicReference<ConcurrentMap> cache;
 
     @Override
-    public SdmxConnection getConnection(String name, LanguagePriorityList languages) throws IOException {
+    public SdmxFileConnection getConnection(String name) throws IOException {
+        return getConnection(name, LanguagePriorityList.ANY);
+    }
+
+    @Override
+    public SdmxFileConnection getConnection(String name, LanguagePriorityList languages) throws IOException {
         SdmxFileSet files;
 
         try {
@@ -63,8 +68,13 @@ public final class SdmxFileManager implements SdmxConnectionSupplier, HasCache {
     }
 
     @Nonnull
-    public SdmxConnection getConnection(@Nonnull SdmxFileSet files, @Nonnull LanguagePriorityList languages) throws IOException {
-        return new CachedFileSdmxConnection(files, languages, factory, decoder, cache.get());
+    public SdmxFileConnection getConnection(@Nonnull SdmxFileSet files) throws IOException {
+        return getConnection(files, LanguagePriorityList.ANY);
+    }
+
+    @Nonnull
+    public SdmxFileConnection getConnection(@Nonnull SdmxFileSet files, @Nonnull LanguagePriorityList languages) throws IOException {
+        return new CachedFileSdmxConnection(files, languages, factoryWithoutNamespace, decoder, cache.get());
     }
 
     @Override
