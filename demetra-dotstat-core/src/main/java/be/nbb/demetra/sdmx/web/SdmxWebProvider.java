@@ -135,9 +135,9 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
 
             DataflowRef flow = DataflowRef.parse(bean.getFlow());
 
-            IO.Supplier<SdmxConnection> conn = getSupplier(properties, bean.getSource());
+            IO.Supplier<SdmxConnection> conn = toConnection(properties, bean.getSource());
 
-            CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), conn, flow);
+            CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), () -> SdmxCubeItems.loadStructure(conn, flow));
 
             CubeAccessor accessor = SdmxCubeAccessor.of(conn, flow, root, bean.getLabelAttribute(), bean.getSource())
                     .bulk(bean.getCacheDepth(), GuavaCaches.ttlCacheAsMap(bean.getCacheTtl()));
@@ -147,7 +147,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
             return new SdmxCubeItems(accessor, idParam);
         }
 
-        private static IO.Supplier<SdmxConnection> getSupplier(HasSdmxProperties properties, String name) {
+        private static IO.Supplier<SdmxConnection> toConnection(HasSdmxProperties properties, String name) {
             SdmxConnectionSupplier supplier = properties.getConnectionSupplier();
             LanguagePriorityList languages = properties.getLanguages();
 

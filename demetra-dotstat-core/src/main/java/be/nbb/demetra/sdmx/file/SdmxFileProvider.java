@@ -160,9 +160,9 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
 
             DataflowRef flow = files.asDataflowRef();
 
-            IO.Supplier<SdmxConnection> conn = getSupplier(properties, files);
+            IO.Supplier<SdmxConnection> conn = toConnection(properties, files);
 
-            CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), conn, flow);
+            CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), () -> SdmxCubeItems.loadStructure(conn, flow));
 
             CubeAccessor accessor = SdmxCubeAccessor.of(conn, flow, root, bean.getLabelAttribute(), getSourceLabel(bean));
 
@@ -171,7 +171,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
             return new SdmxCubeItems(accessor, idParam);
         }
 
-        private static IO.Supplier<SdmxConnection> getSupplier(HasSdmxProperties properties, SdmxFileSet files) {
+        private static IO.Supplier<SdmxConnection> toConnection(HasSdmxProperties properties, SdmxFileSet files) {
             SdmxConnectionSupplier supplier = properties.getConnectionSupplier();
             LanguagePriorityList languages = properties.getLanguages();
 

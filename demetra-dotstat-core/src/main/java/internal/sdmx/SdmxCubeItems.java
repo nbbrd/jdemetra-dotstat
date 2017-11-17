@@ -17,6 +17,7 @@
 package internal.sdmx;
 
 import be.nbb.demetra.sdmx.file.SdmxFileBean;
+import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.SdmxConnection;
@@ -45,23 +46,26 @@ public class SdmxCubeItems {
     CubeAccessor accessor;
     IParam<DataSet, CubeId> idParam;
 
-    public static CubeId getOrLoadRoot(List<String> dimensions, IO.Supplier<SdmxConnection> supplier, DataflowRef flow) throws IOException {
-        return dimensions.isEmpty()
-                ? CubeId.root(loadDefaultDimIds(supplier, flow))
-                : CubeId.root(dimensions);
-    }
-
-    public static List<String> loadDefaultDimIds(IO.Supplier<SdmxConnection> supplier, DataflowRef flow) throws IOException {
+    public static DataStructure loadStructure(IO.Supplier<SdmxConnection> supplier, DataflowRef flow) throws IOException {
         try (SdmxConnection conn = supplier.getWithIO()) {
-            return conn
-                    .getStructure(flow)
-                    .getDimensions()
-                    .stream()
-                    .map(Dimension::getId)
-                    .collect(Collectors.toList());
+            return conn.getStructure(flow);
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);
         }
+    }
+
+    public static CubeId getOrLoadRoot(List<String> dimensions, IO.Supplier<DataStructure> structure) throws IOException {
+        return dimensions.isEmpty()
+                ? CubeId.root(loadDefaultDimIds(structure))
+                : CubeId.root(dimensions);
+    }
+
+    public static List<String> loadDefaultDimIds(IO.Supplier<DataStructure> structure) throws IOException {
+        return structure.getWithIO()
+                .getDimensions()
+                .stream()
+                .map(Dimension::getId)
+                .collect(Collectors.toList());
     }
 
     public static Optional<SdmxFileSet> tryResolveFileSet(HasFilePaths paths, SdmxFileBean bean) {
