@@ -18,7 +18,7 @@ package be.nbb.demetra.sdmx.file;
 
 import be.nbb.sdmx.facade.samples.ByteSource;
 import be.nbb.sdmx.facade.samples.SdmxSource;
-import static be.nbb.sdmx.facade.util.FreqUtil.TIME_FORMAT_CONCEPT;
+import static be.nbb.sdmx.facade.parser.FreqUtil.TIME_FORMAT_CONCEPT;
 import ec.tss.TsCollectionInformation;
 import ec.tss.TsInformation;
 import ec.tss.TsInformationType;
