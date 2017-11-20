@@ -22,6 +22,7 @@ import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
+import be.nbb.sdmx.facade.parser.spi.SdmxDialect;
 import be.nbb.sdmx.facade.web.SdmxWebManager;
 import be.nbb.sdmx.facade.web.SdmxWebEntryPoint;
 import be.nbb.sdmx.facade.util.UnexpectedIOException;
@@ -36,10 +37,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.swing.ListCellRenderer;
 
 /**
@@ -49,6 +52,27 @@ import javax.swing.ListCellRenderer;
 @lombok.experimental.UtilityClass
 public class SdmxAutoCompletion {
 
+    public AutoCompletionSource onDialects() {
+        return ExtAutoCompletionSource
+                .builder(o -> StreamSupport.stream(ServiceLoader.load(SdmxDialect.class).spliterator(), false).collect(Collectors.toList()))
+                .behavior(AutoCompletionSource.Behavior.SYNC)
+                .postProcessor(SdmxAutoCompletion::filterAndSortDialects)
+                .valueToString(SdmxDialect::getName)
+                .build();
+    }
+
+    private List<SdmxDialect> filterAndSortDialects(List<SdmxDialect> allValues, String term) {
+        Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
+        return allValues.stream()
+                .filter(o -> filter.test(o.getDescription()) || filter.test(o.getName()))
+                .sorted(Comparator.comparing(SdmxDialect::getDescription))
+                .collect(Collectors.toList());
+    }
+
+    public ListCellRenderer getDialectRenderer() {
+        return CustomListCellRenderer.of(SdmxDialect::getName, SdmxDialect::getDescription);
+    }
+    
     public AutoCompletionSource onEntryPoints(SdmxWebManager manager) {
         return ExtAutoCompletionSource
                 .builder(o -> manager.getEntryPoints())
