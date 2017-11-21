@@ -17,10 +17,12 @@
 package internal.connectors.drivers;
 
 import be.nbb.sdmx.facade.DataCursor;
+import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.web.SdmxWebEntryPoint;
 import be.nbb.sdmx.facade.Series;
+import be.nbb.sdmx.facade.parser.spi.SdmxDialect;
 import be.nbb.sdmx.facade.util.HasCache;
 import be.nbb.sdmx.facade.util.SdmxFix;
 import be.nbb.sdmx.facade.util.SdmxMediaType;
@@ -41,17 +43,19 @@ import internal.connectors.HasSeriesKeysOnlySupported;
 import internal.connectors.ConnectorsDriverSupport;
 import internal.connectors.Util;
 import internal.org.springframework.util.xml.XMLEventStreamReader;
-import internal.util.drivers.InseeDataFactory;
+import internal.util.drivers.InseeDialect;
 import it.bancaditalia.oss.sdmx.api.Codelist;
 import it.bancaditalia.oss.sdmx.api.DSDIdentifier;
 import it.bancaditalia.oss.sdmx.api.Dimension;
 import it.bancaditalia.oss.sdmx.client.Parser;
 import java.net.URI;
+import java.util.logging.Level;
 
 /**
  *
  * @author Philippe Charles
  */
+@lombok.extern.java.Log
 @ServiceProvider(service = SdmxWebDriver.class)
 public final class InseeDriver implements SdmxWebDriver, HasCache {
 
@@ -69,17 +73,18 @@ public final class InseeDriver implements SdmxWebDriver, HasCache {
     private final static class InseeClient extends RestSdmxClient implements HasDataCursor, HasSeriesKeysOnlySupported {
 
         @SdmxFix(id = "INSEE#2", cause = "Does not follow sdmx standard codes")
-        private final InseeDataFactory dataFactory;
+        private final SdmxDialect dialect;
 
         private InseeClient(URI endpoint, LanguagePriorityList langs) {
             super("", endpoint, false, false, true);
             this.languages = Util.fromLanguages(langs);
-            this.dataFactory = new InseeDataFactory();
+            this.dialect = new InseeDialect();
         }
 
         @Override
         public DataFlowStructure getDataFlowStructure(DSDIdentifier dsd, boolean full) throws SdmxException {
             DataFlowStructure result = super.getDataFlowStructure(dsd, full);
+            fixIds(result);
             fixMissingCodes(result);
             return result;
         }
@@ -95,13 +100,38 @@ public final class InseeDriver implements SdmxWebDriver, HasCache {
             return true;
         }
 
+        @SdmxFix(id = "INSEE#4", cause = "Some dimension/code ids are invalid")
+        private void fixIds(DataFlowStructure dsd) {
+            for (Dimension d : dsd.getDimensions()) {
+                if (d.getId().endsWith("6")) {
+                    d.setId(getValidId(d.getId()));
+//                    d.getCodeList().setId(getValidId(d.getCodeList().getId()));
+                }
+            }
+        }
+
+        private String getValidId(String id) {
+            return id.substring(0, id.length() - 1);
+        }
+
         @SdmxFix(id = "INSEE#3", cause = "Some codes are missing in dsd even when requested with 'references=children'")
         private void fixMissingCodes(DataFlowStructure dsd) throws SdmxException {
             for (Dimension d : dsd.getDimensions()) {
-                Codelist freq = d.getCodeList();
-                if (freq.getCodes().isEmpty()) {
-                    freq.setCodes(super.getCodes(freq.getId(), freq.getAgency(), freq.getVersion()));
+                Codelist codelist = d.getCodeList();
+                if (codelist.getCodes().isEmpty()) {
+                    loadMissingCodes(codelist);
                 }
+            }
+        }
+
+        private void loadMissingCodes(Codelist codelist) throws SdmxException {
+            try {
+                codelist.setCodes(super.getCodes(codelist.getId(), codelist.getAgency(), codelist.getVersion()));
+            } catch (SdmxException ex) {
+                if (!Util.isNoResultMatchingQuery(ex)) {
+                    throw ex;
+                }
+                log.log(Level.WARNING, "Cannot retrieve codes for ''{0}''", codelist.getFullIdentifier());
             }
         }
 
@@ -114,7 +144,9 @@ public final class InseeDriver implements SdmxWebDriver, HasCache {
 
         private Parser<List<Series>> getCompactData21Parser(DataFlowStructure dsd) {
             return (r, l) -> {
-                try (DataCursor cursor = SdmxXmlStreams.compactData21(Util.toStructure(dsd), dataFactory).parse(new XMLEventStreamReader(r), () -> {})) {
+                DataStructure tmp = Util.toStructure(dsd);
+                try (DataCursor cursor = SdmxXmlStreams.compactData21(tmp, dialect).parse(new XMLEventStreamReader(r), () -> {
+                })) {
                     return SeriesSupport.copyOf(cursor);
                 } catch (IOException ex) {
                     throw new SdmxIOException("Cannot parse compact data 21", ex);

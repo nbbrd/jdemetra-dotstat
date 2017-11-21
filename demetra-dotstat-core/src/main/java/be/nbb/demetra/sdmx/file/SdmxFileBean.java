@@ -30,6 +30,7 @@ public final class SdmxFileBean implements IFileBean {
 
     private File file;
     private File structureFile;
+    private String dialect;
     private List<String> dimensions;
     private String labelAttribute;
 }

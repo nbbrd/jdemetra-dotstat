@@ -77,10 +77,15 @@ public class SdmxCubeItems {
     }
 
     public static SdmxFileSet resolveFileSet(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {
-        return resolveFileSet(paths, bean.getFile(), bean.getStructureFile());
-    }
-
-    public static SdmxFileSet resolveFileSet(HasFilePaths paths, File data, File structure) throws FileNotFoundException {
-        return SdmxFileSet.of(paths.resolveFilePath(data), structure.toString().isEmpty() ? null : paths.resolveFilePath(structure));
+        SdmxFileSet.Builder result = SdmxFileSet.builder().data(paths.resolveFilePath(bean.getFile()));
+        File structure = bean.getStructureFile();
+        if (structure != null && !structure.toString().isEmpty()) {
+            result.structure(paths.resolveFilePath(structure));
+        }
+        String dialect = bean.getDialect();
+        if (dialect != null && !dialect.isEmpty()) {
+            result.dialect(dialect);
+        }
+        return result.build();
     }
 }

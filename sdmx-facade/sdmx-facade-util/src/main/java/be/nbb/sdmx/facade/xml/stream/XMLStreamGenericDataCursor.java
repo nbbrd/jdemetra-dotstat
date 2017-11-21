@@ -19,7 +19,7 @@ package be.nbb.sdmx.facade.xml.stream;
 import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.Frequency;
-import be.nbb.sdmx.facade.util.ObsParser;
+import be.nbb.sdmx.facade.parser.ObsParser;
 import be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.Status;
 import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.Status.CONTINUE;
 import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.Status.HALT;
@@ -29,25 +29,25 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import be.nbb.sdmx.facade.util.FreqParser;
+import be.nbb.sdmx.facade.parser.Freqs;
 import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.isTagMatch;
 import java.io.Closeable;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 
 /**
  *
  * @author Philippe Charles
  */
+@lombok.extern.java.Log
 final class XMLStreamGenericDataCursor implements DataCursor {
 
-    static XMLStreamGenericDataCursor sdmx20(XMLStreamReader reader, Closeable onClose, Key.Builder keyBuilder, ObsParser obsParser, FreqParser freqParser) {
+    static XMLStreamGenericDataCursor sdmx20(XMLStreamReader reader, Closeable onClose, Key.Builder keyBuilder, ObsParser obsParser, Freqs.Parser freqParser) {
         return new XMLStreamGenericDataCursor(reader, onClose, keyBuilder, obsParser, freqParser, SeriesHeadParser.SDMX20);
     }
 
-    static XMLStreamGenericDataCursor sdmx21(XMLStreamReader reader, Closeable onClose, Key.Builder keyBuilder, ObsParser obsParser, FreqParser freqParser) {
+    static XMLStreamGenericDataCursor sdmx21(XMLStreamReader reader, Closeable onClose, Key.Builder keyBuilder, ObsParser obsParser, Freqs.Parser freqParser) {
         return new XMLStreamGenericDataCursor(reader, onClose, keyBuilder, obsParser, freqParser, SeriesHeadParser.SDMX21);
     }
 
@@ -65,15 +65,15 @@ final class XMLStreamGenericDataCursor implements DataCursor {
     private final Key.Builder keyBuilder;
     private final AttributesBuilder attributesBuilder;
     private final ObsParser obsParser;
-    private final FreqParser freqParser;
+    private final Freqs.Parser freqParser;
     private final SeriesHeadParser headParser;
     private boolean closed;
     private boolean hasSeries;
     private boolean hasObs;
 
-    private XMLStreamGenericDataCursor(XMLStreamReader reader, Closeable onClose, Key.Builder keyBuilder, ObsParser obsParser, FreqParser freqParser, SeriesHeadParser headParser) {
+    private XMLStreamGenericDataCursor(XMLStreamReader reader, Closeable onClose, Key.Builder keyBuilder, ObsParser obsParser, Freqs.Parser freqParser, SeriesHeadParser headParser) {
         if (!Stax.isNotNamespaceAware(reader)) {
-            Logger.getLogger(getClass().getName()).warning("Using XMLStreamReader with namespace awareness");
+            log.fine("Using XMLStreamReader with namespace awareness");
         }
         this.reader = reader;
         this.onClose = onClose;

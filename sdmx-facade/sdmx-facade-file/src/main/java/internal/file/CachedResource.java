@@ -22,12 +22,14 @@ import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.file.SdmxFileSet;
 import be.nbb.sdmx.facade.Series;
+import be.nbb.sdmx.facade.parser.DataFactory;
 import be.nbb.sdmx.facade.util.SeriesSupport;
 import be.nbb.sdmx.facade.util.TtlCache;
 import be.nbb.sdmx.facade.util.TypedId;
 import java.io.IOException;
 import java.time.Clock;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import javax.xml.stream.XMLInputFactory;
@@ -36,7 +38,7 @@ import javax.xml.stream.XMLInputFactory;
  *
  * @author Philippe Charles
  */
-public final class CachedFileSdmxConnection extends FileSdmxConnection {
+public final class CachedResource extends SdmxDecoderResource {
 
     // TODO: replace ttl with file last modification time
     private static final long DEFAULT_CACHE_TTL = TimeUnit.MINUTES.toMillis(5);
@@ -46,8 +48,8 @@ public final class CachedFileSdmxConnection extends FileSdmxConnection {
     private final TypedId<SdmxDecoder.Info> decodeKey;
     private final TypedId<List<Series>> loadDataKey;
 
-    public CachedFileSdmxConnection(SdmxFileSet files, LanguagePriorityList languages, XMLInputFactory factoryWithoutNamespace, SdmxDecoder decoder, ConcurrentMap cache) {
-        super(files, languages, factoryWithoutNamespace, decoder);
+    public CachedResource(SdmxFileSet files, LanguagePriorityList languages, XMLInputFactory factoryWithoutNamespace, SdmxDecoder decoder, Optional<DataFactory> dataFactory, ConcurrentMap cache) {
+        super(files, languages, factoryWithoutNamespace, decoder, dataFactory);
         this.cache = TtlCache.of(cache, CLOCK, DEFAULT_CACHE_TTL);
         String base = SdmxFileUtil.toXml(files) + languages.toString();
         this.decodeKey = TypedId.of("decode://" + base);
@@ -55,7 +57,7 @@ public final class CachedFileSdmxConnection extends FileSdmxConnection {
     }
 
     @Override
-    protected SdmxDecoder.Info decode() throws IOException {
+    public SdmxDecoder.Info decode() throws IOException {
         SdmxDecoder.Info result = cache.get(decodeKey);
         if (result == null) {
             result = super.decode();
@@ -65,7 +67,7 @@ public final class CachedFileSdmxConnection extends FileSdmxConnection {
     }
 
     @Override
-    protected DataCursor loadData(SdmxDecoder.Info entry, DataflowRef flowRef, Key key, boolean serieskeysonly) throws IOException {
+    public DataCursor loadData(SdmxDecoder.Info entry, DataflowRef flowRef, Key key, boolean serieskeysonly) throws IOException {
         if (serieskeysonly) {
             List<Series> result = cache.get(loadDataKey);
             if (result == null) {

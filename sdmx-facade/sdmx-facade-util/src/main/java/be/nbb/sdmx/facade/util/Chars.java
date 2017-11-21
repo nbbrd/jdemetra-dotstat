@@ -14,54 +14,80 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package internal.util;
+package be.nbb.sdmx.facade.util;
 
-import be.nbb.sdmx.facade.Frequency;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.Map;
+import java.time.temporal.ChronoField;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import be.nbb.sdmx.facade.util.SafeParser;
+import javax.annotation.Nonnegative;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  *
  * @author Philippe Charles
  */
 @lombok.experimental.UtilityClass
-public class SafeParsers {
+public class Chars {
 
-    public final Map<Frequency, SafeParser<LocalDateTime>> STANDARD_PARSERS = initStandardParsers();
+    public interface Parser<T> {
 
-    private Map<Frequency, SafeParser<LocalDateTime>> initStandardParsers() {
-        SafeParser yearMonth = SafeParser.onDatePattern("yyyy-MM");
-        SafeParser yearMonthDay = SafeParser.onDatePattern("yyyy-MM-dd");
+        @Nullable
+        T parse(@Nonnull CharSequence input);
 
-        Map<Frequency, SafeParser<LocalDateTime>> result = new EnumMap<>(Frequency.class);
-        result.put(Frequency.ANNUAL, SafeParser.onDatePattern("yyyy").or(SafeParser.onDatePattern("yyyy'-01'")).or(SafeParser.onDatePattern("yyyy'-A1'")));
-        result.put(Frequency.HALF_YEARLY, SafeParser.onYearFreqPos("S", 2).or(yearMonth));
-        result.put(Frequency.QUARTERLY, SafeParser.onYearFreqPos("Q", 4).or(yearMonth));
-        result.put(Frequency.MONTHLY, SafeParser.onYearFreqPos("M", 12).or(yearMonth));
-        result.put(Frequency.WEEKLY, yearMonthDay);
-        result.put(Frequency.DAILY, yearMonthDay);
-        // FIXME: needs other pattern for time
-        result.put(Frequency.HOURLY, yearMonthDay);
-        result.put(Frequency.DAILY_BUSINESS, yearMonthDay);
-        result.put(Frequency.MINUTELY, yearMonthDay);
-        result.put(Frequency.UNDEFINED, yearMonth);
-        return Collections.unmodifiableMap(result);
+        @Nonnull
+        default Parser<T> or(@Nonnull Parser<T> r) {
+            return new Fallback(this, r);
+        }
+
+        @Nonnull
+        default Parser<T> or(@Nonnull T value) {
+            return new Fallback(this, o -> value);
+        }
+
+        @Nonnull
+        @SuppressWarnings("null")
+        static <T> Parser<T> onNull() {
+            return o -> null;
+        }
+
+        @Nonnull
+        static Parser<LocalDateTime> onDatePattern(@Nonnull String pattern) {
+            DateTimeFormatter dateFormat = new DateTimeFormatterBuilder()
+                    .appendPattern(pattern)
+                    .parseStrict()
+                    .parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
+                    .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+                    .toFormatter(Locale.ROOT);
+            return new OnDateTimeFormatter(dateFormat);
+        }
+
+        @Nonnull
+        static Parser<LocalDateTime> onYearFreqPos(@Nonnull String freqCode, @Nonnegative int freq) {
+            return new YearFreqPos(freqCode, freq);
+        }
+
+        @Nonnull
+        static Parser<Double> onStandardDouble() {
+            return Chars::doubleOrNull;
+        }
     }
 
-    public static final class Fallback<T> implements SafeParser<T> {
+    private static final class Fallback<T> implements Parser<T> {
 
-        private final SafeParser<T> first;
-        private final SafeParser<T> second;
+        private final Parser<T> first;
+        private final Parser<T> second;
 
-        public Fallback(SafeParser<T> first, SafeParser<T> second) {
+        public Fallback(Parser<T> first, Parser<T> second) {
             this.first = first;
             this.second = second;
         }
@@ -73,7 +99,7 @@ public class SafeParsers {
         }
     }
 
-    public static final class OnDateTimeFormatter implements SafeParser<LocalDateTime> {
+    private static final class OnDateTimeFormatter implements Parser<LocalDateTime> {
 
         private final DateTimeFormatter dateFormat;
 
@@ -91,7 +117,7 @@ public class SafeParsers {
         }
     }
 
-    public static final class YearFreqPos implements SafeParser<LocalDateTime> {
+    private static final class YearFreqPos implements Parser<LocalDateTime> {
 
         private final Pattern regex;
         private final int freq;
@@ -112,7 +138,7 @@ public class SafeParsers {
         }
     }
 
-    public Double doubleOrNull(CharSequence input) {
+    private Double doubleOrNull(CharSequence input) {
         try {
             return Double.valueOf(input.toString());
         } catch (NumberFormatException ex) {

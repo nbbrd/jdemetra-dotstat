@@ -20,13 +20,12 @@ import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.util.NoOpCursor;
-import be.nbb.sdmx.facade.util.ObsParser;
+import be.nbb.sdmx.facade.parser.ObsParser;
 import be.nbb.sdmx.facade.util.UnexpectedIOException;
 import it.bancaditalia.oss.sdmx.api.DSDIdentifier;
 import it.bancaditalia.oss.sdmx.api.GenericSDMXClient;
 import it.bancaditalia.oss.sdmx.client.custom.DotStat;
 import it.bancaditalia.oss.sdmx.exceptions.SdmxException;
-import it.bancaditalia.oss.sdmx.exceptions.SdmxResponseException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Level;
@@ -112,7 +111,7 @@ class GenericSDMXClientResource implements ConnectorsConnection.Resource {
                     ? ((HasDataCursor) client).getDataCursor(dataflow, dfs, key, serieskeysonly)
                     : new PortableTimeSeriesCursor(client.getTimeSeries(dataflow, dfs, key.toString(), null, null, serieskeysonly, null, false), ObsParser.standard());
         } catch (SdmxException ex) {
-            if (isNoResultMatchingQuery(ex)) {
+            if (Util.isNoResultMatchingQuery(ex)) {
                 return NoOpCursor.noOp();
             }
             throw expected(ex, "Failed to get data from dataset '%s' with key '%s'", flowRef, key);
@@ -152,9 +151,5 @@ class GenericSDMXClientResource implements ConnectorsConnection.Resource {
         String msg = String.format(format, args);
         log.log(Level.WARNING, msg);
         return new UnexpectedIOException(new NullPointerException(msg));
-    }
-
-    private static boolean isNoResultMatchingQuery(SdmxException ex) {
-        return ex instanceof SdmxResponseException && ((SdmxResponseException) ex).getResponseCode() == 100;
     }
 }

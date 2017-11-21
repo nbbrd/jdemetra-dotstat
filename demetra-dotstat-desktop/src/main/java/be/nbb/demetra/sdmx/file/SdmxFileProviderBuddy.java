@@ -128,7 +128,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private static SdmxFileManager createManager() {
-        SdmxFileManager result = SdmxFileManager.of();
+        SdmxFileManager result = SdmxFileManager.ofServiceLoader();
         result.setCache(GuavaCaches.softValuesCacheAsMap());
         return result;
     }
@@ -188,7 +188,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
     }
 
     @NbBundle.Messages({
-        "bean.file.display=Sdmx data file",
+        "bean.file.display=Data file",
         "bean.file.description=The path to the sdmx data file.",})
     private NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxFileBean bean, IFileLoader loader) {
         b.withFile()
@@ -203,8 +203,10 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
     }
 
     @NbBundle.Messages({
-        "bean.structureFile.display=Sdmx structure file",
+        "bean.structureFile.display=Structure file",
         "bean.structureFile.description=The path to the sdmx structure file.",
+        "bean.dialect.display=Dialect",
+        "bean.dialect.description=The name of the dialect used to parse the sdmx data file.",
         "bean.dimensions.display=Dataflow dimensions",
         "bean.dimensions.description=An optional comma-separated list of dimensions that defines the order used to hierarchise time series.",
         "bean.labelAttribute.display=Series label attribute",
@@ -218,6 +220,14 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
                 .filterForSwing(new FileLoaderFileFilter(loader))
                 .paths(loader.getPaths())
                 .directories(false)
+                .add();
+
+        b.withAutoCompletion()
+                .select(bean, "dialect")
+                .source(SdmxAutoCompletion.onDialects())
+                .cellRenderer(SdmxAutoCompletion.getDialectRenderer())
+                .display(Bundle.bean_dialect_display())
+                .description(Bundle.bean_dialect_description())
                 .add();
 
         Supplier<String> toSource = () -> SdmxCubeItems.tryResolveFileSet(loader, bean).map(SdmxFileUtil::toXml).orElse("");

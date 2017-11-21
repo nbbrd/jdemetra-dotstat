@@ -87,7 +87,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
         Cache<DataSource, SdmxCubeItems> cache = GuavaCaches.softValuesCache();
         SdmxFileParam sdmxParam = new SdmxFileParam.V1();
 
-        this.properties = SdmxPropertiesSupport.of(SdmxFileManager::of, cache::invalidateAll, () -> LanguagePriorityList.ANY, cache::invalidateAll);
+        this.properties = SdmxPropertiesSupport.of(SdmxFileManager::ofServiceLoader, cache::invalidateAll, () -> LanguagePriorityList.ANY, cache::invalidateAll);
         this.mutableListSupport = HasDataSourceMutableList.of(NAME, logger, cache::invalidate);
         this.monikerSupport = HasDataMoniker.usingUri(NAME);
         this.beanSupport = HasDataSourceBean.of(NAME, sdmxParam, sdmxParam.getVersion());

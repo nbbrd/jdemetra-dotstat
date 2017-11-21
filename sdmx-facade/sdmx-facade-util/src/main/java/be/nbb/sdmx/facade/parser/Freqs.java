@@ -14,23 +14,19 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.sdmx.facade.util;
+package be.nbb.sdmx.facade.parser;
 
+import be.nbb.sdmx.facade.util.Chars;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Frequency;
-import static be.nbb.sdmx.facade.Frequency.DAILY;
-import static be.nbb.sdmx.facade.Frequency.HALF_YEARLY;
-import static be.nbb.sdmx.facade.Frequency.HOURLY;
-import static be.nbb.sdmx.facade.Frequency.MINUTELY;
-import static be.nbb.sdmx.facade.Frequency.MONTHLY;
-import static be.nbb.sdmx.facade.Frequency.QUARTERLY;
-import static be.nbb.sdmx.facade.Frequency.UNDEFINED;
-import static be.nbb.sdmx.facade.Frequency.WEEKLY;
+import static be.nbb.sdmx.facade.Frequency.*;
 import javax.annotation.Nonnull;
-import static be.nbb.sdmx.facade.Frequency.ANNUAL;
-import static be.nbb.sdmx.facade.Frequency.DAILY_BUSINESS;
 import be.nbb.sdmx.facade.Key;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -39,7 +35,45 @@ import java.util.function.Function;
  * @author Philippe Charles
  */
 @lombok.experimental.UtilityClass
-public class FreqUtil {
+public class Freqs {
+
+    public interface Parser {
+
+        @Nonnull
+        Frequency parse(@Nonnull Key.Builder key, @Nonnull Function<String, String> attributes);
+
+        @Nonnull
+        static Parser sdmx20() {
+            return Freqs::parseSdmx20;
+        }
+
+        @Nonnull
+        static Parser sdmx21(@Nonnull DataStructure dsd) {
+            return of(extractorByIndex(dsd), Freqs::parseByFreq);
+        }
+
+        @Nonnull
+        static Parser sdmx21(int frequencyCodeIdIndex) {
+            return of(extractorByIndex(frequencyCodeIdIndex), Freqs::parseByFreq);
+        }
+
+        @Nonnull
+        static Parser of(
+                @Nonnull BiFunction<Key.Builder, Function<String, String>, String> extractor,
+                @Nonnull Function<String, Frequency> mapper) {
+            return (k, a) -> {
+                String code = extractor.apply(k, a);
+                if (code == null) {
+                    return Frequency.UNDEFINED;
+                }
+                Frequency freq = mapper.apply(code);
+                if (freq == null) {
+                    return Frequency.UNDEFINED;
+                }
+                return freq;
+            };
+        }
+    }
 
     public final String FREQ_CONCEPT = "FREQ";
     public final String TIME_FORMAT_CONCEPT = "TIME_FORMAT";
@@ -80,12 +114,12 @@ public class FreqUtil {
     public Frequency parseByFreq(@Nonnull String code) {
         switch (code.length()) {
             case 0:
-                return Frequency.UNDEFINED;
+                return UNDEFINED;
             case 1:
                 return parseByStandardFreq(code.charAt(0));
             default:
                 Frequency base = parseByStandardFreq(code.charAt(0));
-                return isMultiplier(code.substring(1)) ? base : Frequency.UNDEFINED;
+                return isMultiplier(code.substring(1)) ? base : UNDEFINED;
         }
     }
 
@@ -148,5 +182,36 @@ public class FreqUtil {
             default:
                 return UNDEFINED;
         }
+    }
+
+    @Nonnull
+    public static Chars.Parser<LocalDateTime> onStandardFreq(@Nonnull Frequency freq) {
+        return STANDARD_PARSERS.get(freq);
+    }
+
+    private final Map<Frequency, Chars.Parser<LocalDateTime>> STANDARD_PARSERS = initStandardParsers();
+
+    private Map<Frequency, Chars.Parser<LocalDateTime>> initStandardParsers() {
+        Chars.Parser yearMonth = Chars.Parser.onDatePattern("yyyy-MM");
+        Chars.Parser yearMonthDay = Chars.Parser.onDatePattern("yyyy-MM-dd");
+
+        Map<Frequency, Chars.Parser<LocalDateTime>> result = new EnumMap<>(Frequency.class);
+        result.put(ANNUAL, Chars.Parser.onDatePattern("yyyy").or(Chars.Parser.onDatePattern("yyyy'-01'")).or(Chars.Parser.onDatePattern("yyyy'-A1'")));
+        result.put(HALF_YEARLY, Chars.Parser.onYearFreqPos("S", 2).or(yearMonth));
+        result.put(QUARTERLY, Chars.Parser.onYearFreqPos("Q", 4).or(yearMonth));
+        result.put(MONTHLY, Chars.Parser.onYearFreqPos("M", 12).or(yearMonth));
+        result.put(WEEKLY, yearMonthDay);
+        result.put(DAILY, yearMonthDay);
+        // FIXME: needs other pattern for time
+        result.put(HOURLY, yearMonthDay);
+        result.put(DAILY_BUSINESS, yearMonthDay);
+        result.put(MINUTELY, yearMonthDay);
+        result.put(UNDEFINED, yearMonth);
+        return Collections.unmodifiableMap(result);
+    }
+
+    private Frequency parseSdmx20(Key.Builder key, Function<String, String> attributes) {
+        String code = attributes.apply(TIME_FORMAT_CONCEPT);
+        return code != null ? parseByTimeFormat(code) : Frequency.UNDEFINED;
     }
 }
