@@ -77,7 +77,7 @@ public class SdmxCubeItems {
     }
 
     public static SdmxFileSet resolveFileSet(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {
-        SdmxFileSet.Builder result = SdmxFileSet.builder().data(bean.getFile());
+        SdmxFileSet.Builder result = SdmxFileSet.builder().data(paths.resolveFilePath(bean.getFile()));
         File structure = bean.getStructureFile();
         if (structure != null && !structure.toString().isEmpty()) {
             result.structure(paths.resolveFilePath(structure));
