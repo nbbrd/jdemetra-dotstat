@@ -24,7 +24,7 @@ import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.file.SdmxFileManager;
 import be.nbb.sdmx.facade.file.SdmxFileSet;
-import be.nbb.sdmx.facade.util.IO;
+import be.nbb.util.IO;
 import com.google.common.cache.Cache;
 import ec.tss.ITsProvider;
 import ec.tss.tsproviders.DataSet;
