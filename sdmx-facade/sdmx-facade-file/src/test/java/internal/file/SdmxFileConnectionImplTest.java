@@ -29,10 +29,11 @@ import be.nbb.sdmx.facade.Series;
 import be.nbb.sdmx.facade.file.SdmxFileSet;
 import be.nbb.sdmx.facade.samples.SdmxSource;
 import be.nbb.sdmx.facade.tck.ConnectionAssert;
-import be.nbb.sdmx.facade.xml.stream.Stax;
+import be.nbb.util.Stax;
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.stream.Stream;
 import javax.xml.stream.XMLInputFactory;
 import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
@@ -59,9 +60,11 @@ public class SdmxFileConnectionImplTest {
         assertThat(conn.getDataflowRef()).isEqualTo(files.asDataflowRef());
         assertThat(conn.getFlow()).isEqualTo(conn.getFlow(files.asDataflowRef()));
         assertThat(conn.getStructure()).isEqualTo(conn.getStructure(files.asDataflowRef()));
-        assertThatThrownBy(() -> conn.getCursor(null)).isInstanceOf(NullPointerException.class);
-        assertThatThrownBy(() -> conn.getStream(null)).isInstanceOf(NullPointerException.class);
-        assertThat(conn.getStream(DataQuery.of(Key.ALL, false))).containsExactly(conn.getStream(DataQuery.of(Key.ALL, false)).toArray(Series[]::new));
+        assertThatNullPointerException().isThrownBy(() -> conn.getCursor(null));
+        assertThatNullPointerException().isThrownBy(() -> conn.getStream(null));
+        try (Stream<Series> stream = conn.getStream(DataQuery.of(Key.ALL, false))) {
+            assertThat(stream).containsExactly(conn.getStream(DataQuery.of(Key.ALL, false)).toArray(Series[]::new));
+        }
     }
 
     @Test

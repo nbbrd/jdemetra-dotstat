@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.sdmx.facade.xml.stream;
+package be.nbb.util;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -32,28 +32,6 @@ import org.junit.Test;
 public class StaxTest {
 
     @Test
-    public void testIsTagMatch() {
-        assertThat(XMLStreamUtil.isTagMatch("", "")).isTrue();
-        assertThat(XMLStreamUtil.isTagMatch("HelloWorld", "HelloWorld")).isTrue();
-        assertThat(XMLStreamUtil.isTagMatch("HelloWorld", "helloWorld")).isFalse();
-        assertThat(XMLStreamUtil.isTagMatch("helloWorld", "HelloWorld")).isFalse();
-        assertThat(XMLStreamUtil.isTagMatch("HelloWorld", "")).isFalse();
-        assertThat(XMLStreamUtil.isTagMatch("", "HelloWorld")).isFalse();
-
-        assertThat(XMLStreamUtil.isTagMatch("xxx:HelloWorld", "HelloWorld")).isTrue();
-        assertThat(XMLStreamUtil.isTagMatch("xxx:HelloWorld", "helloWorld")).isFalse();
-        assertThat(XMLStreamUtil.isTagMatch("xxx:HelloWorld", "Hello")).isFalse();
-        assertThat(XMLStreamUtil.isTagMatch("xxx:HelloWorld", "World")).isFalse();
-        assertThat(XMLStreamUtil.isTagMatch("xxx:HelloWorld", "")).isFalse();
-
-        assertThat(XMLStreamUtil.isTagMatch("HelloWorld", "xxx:HelloWorld")).isFalse();
-        assertThat(XMLStreamUtil.isTagMatch("helloWorld", "xxx:HelloWorld")).isFalse();
-        assertThat(XMLStreamUtil.isTagMatch("Hello", "xxx:HelloWorld")).isFalse();
-        assertThat(XMLStreamUtil.isTagMatch("World", "xxx:HelloWorld")).isFalse();
-        assertThat(XMLStreamUtil.isTagMatch("", "xxx:HelloWorld")).isFalse();
-    }
-
-    @Test
     @SuppressWarnings("null")
     public void testValidParseStream() throws IOException {
         Stax.Parser<String> p = (o, c) -> {
@@ -61,15 +39,9 @@ public class StaxTest {
             return "";
         };
 
-        assertThatThrownBy(() -> p.parseStream(null, EmptyStream::new, UTF_8))
-                .isInstanceOf(NullPointerException.class)
-                .hasNoSuppressedExceptions()
-                .hasNoCause();
+        assertThatNullPointerException().isThrownBy(() -> p.parseStream(null, EmptyStream::new, UTF_8));
 
-        assertThatThrownBy(() -> p.parseStream(xif, null, UTF_8))
-                .isInstanceOf(NullPointerException.class)
-                .hasNoSuppressedExceptions()
-                .hasNoCause();
+        assertThatNullPointerException().isThrownBy(() -> p.parseStream(xif, null, UTF_8));
 
         assertThatThrownBy(() -> p.parseStream(xif, OpenErrorStream::new, UTF_8))
                 .isInstanceOf(OpenError.class)
@@ -97,15 +69,9 @@ public class StaxTest {
             }
         };
 
-        assertThatThrownBy(() -> p.parseStream(null, EmptyStream::new, UTF_8))
-                .isInstanceOf(NullPointerException.class)
-                .hasNoSuppressedExceptions()
-                .hasNoCause();
+        assertThatNullPointerException().isThrownBy(() -> p.parseStream(null, EmptyStream::new, UTF_8));
 
-        assertThatThrownBy(() -> p.parseStream(xif, null, UTF_8))
-                .isInstanceOf(NullPointerException.class)
-                .hasNoSuppressedExceptions()
-                .hasNoCause();
+        assertThatNullPointerException().isThrownBy(() -> p.parseStream(xif, null, UTF_8));
 
         assertThatThrownBy(() -> p.parseStream(xif, OpenErrorStream::new, UTF_8))
                 .isInstanceOf(OpenError.class)

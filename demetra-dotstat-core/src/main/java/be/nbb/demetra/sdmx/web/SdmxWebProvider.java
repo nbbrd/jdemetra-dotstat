@@ -22,7 +22,7 @@ import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
-import be.nbb.sdmx.facade.util.IO;
+import be.nbb.util.IO;
 import be.nbb.sdmx.facade.web.SdmxWebManager;
 import com.google.common.cache.Cache;
 import ec.tss.ITsProvider;

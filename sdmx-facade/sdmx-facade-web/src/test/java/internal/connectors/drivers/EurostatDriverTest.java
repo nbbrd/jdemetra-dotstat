@@ -14,21 +14,19 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package internal.connectors;
+package internal.connectors.drivers;
 
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.tck.ConnectionAssert;
 import org.junit.Test;
+import static test.DriverAssertions.*;
 
 /**
  *
  * @author Philippe Charles
  */
-public class ConnectorsConnectionTest {
+public class EurostatDriverTest {
 
     @Test
     public void testCompliance() {
-        DataflowRef ref = DataflowRef.parse("XYZ");
-        ConnectionAssert.assertCompliance(() -> new ConnectorsConnection(null), ref);
+        assertDriverCompliance(new EurostatDriver(), "sdmx:eurostat:");
     }
 }

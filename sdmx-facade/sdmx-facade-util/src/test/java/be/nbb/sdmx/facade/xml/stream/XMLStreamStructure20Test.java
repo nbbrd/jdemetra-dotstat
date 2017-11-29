@@ -16,6 +16,7 @@
  */
 package be.nbb.sdmx.facade.xml.stream;
 
+import be.nbb.util.Stax;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.LanguagePriorityList;
@@ -24,8 +25,7 @@ import java.io.IOException;
 import java.util.List;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
 
 /**
@@ -65,11 +65,11 @@ public class XMLStreamStructure20Test {
             });
         });
 
-        assertThatThrownBy(() -> p1.parseReader(xif, SdmxSource.ECB_DATA_STRUCTURE::openReader))
-                .isInstanceOf(IOException.class)
-                .hasCauseInstanceOf(XMLStreamException.class)
-                .hasMessageContaining("Invalid namespace");
+        assertThatIOException()
+                .isThrownBy(() -> p1.parseReader(xif, SdmxSource.ECB_DATA_STRUCTURE::openReader))
+                .withCauseInstanceOf(XMLStreamException.class)
+                .withMessageContaining("Invalid namespace");
     }
-    
+
     private final XMLInputFactory xif = Stax.getInputFactory();
 }

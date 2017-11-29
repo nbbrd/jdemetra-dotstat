@@ -14,9 +14,8 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.sdmx.facade.xml.stream;
+package be.nbb.util;
 
-import be.nbb.sdmx.facade.util.IO;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -123,7 +122,7 @@ public class Stax {
         }
     }
 
-    void closeBoth(XMLStreamReader reader, Closeable onClose) throws IOException {
+    public void closeBoth(XMLStreamReader reader, Closeable onClose) throws IOException {
         try {
             reader.close();
         } catch (XMLStreamException ex) {
@@ -155,6 +154,16 @@ public class Stax {
         return !(Boolean) f.getProperty(XMLInputFactory.IS_NAMESPACE_AWARE);
     }
 
+    // https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLInputFactory_.28a_StAX_parser.29
+    public static void preventXXE(@Nonnull XMLInputFactory factory) {
+        if (factory.isPropertySupported(XMLInputFactory.SUPPORT_DTD)) {
+            factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        }
+        if (factory.isPropertySupported(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES)) {
+            factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+        }
+    }
+
     private static final class ImmutableInputFactory extends XMLInputFactory {
 
         static final XMLInputFactory DEFAULT = new ImmutableInputFactory(true);
@@ -167,6 +176,7 @@ public class Stax {
             if (!namespaceAware && delegate.isPropertySupported(XMLInputFactory.IS_NAMESPACE_AWARE)) {
                 delegate.setProperty(XMLInputFactory.IS_NAMESPACE_AWARE, false);
             }
+            preventXXE(delegate);
         }
 
         @Override

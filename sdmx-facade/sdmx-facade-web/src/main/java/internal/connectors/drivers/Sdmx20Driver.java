@@ -16,18 +16,14 @@
  */
 package internal.connectors.drivers;
 
-import be.nbb.sdmx.facade.LanguagePriorityList;
 import static internal.connectors.Util.NEEDS_CREDENTIALS;
-import be.nbb.sdmx.facade.web.SdmxWebEntryPoint;
 import be.nbb.sdmx.facade.util.HasCache;
 import it.bancaditalia.oss.sdmx.client.custom.RestSdmx20Client;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import org.openide.util.lookup.ServiceProvider;
 import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
-import internal.connectors.ConnectorsDriverSupport;
-import internal.connectors.Util;
+import internal.connectors.ConnectorRestClient;
+import internal.web.RestDriverSupport;
 import java.net.URI;
 
 /**
@@ -37,21 +33,17 @@ import java.net.URI;
 @ServiceProvider(service = SdmxWebDriver.class)
 public final class Sdmx20Driver implements SdmxWebDriver, HasCache {
 
-    private static final String PREFIX = "sdmx:sdmx20:";
-
     @lombok.experimental.Delegate
-    private final ConnectorsDriverSupport support = ConnectorsDriverSupport.of(PREFIX, Sdmx20Client::new);
-
-    @Override
-    public List<SdmxWebEntryPoint> getDefaultEntryPoints() {
-        return Collections.emptyList();
-    }
+    private final RestDriverSupport support = RestDriverSupport
+            .builder()
+            .prefix("sdmx:sdmx20:")
+            .client(ConnectorRestClient.of(Sdmx20Client::new))
+            .build();
 
     private static final class Sdmx20Client extends RestSdmx20Client {
 
-        private Sdmx20Client(URI endpoint, Map<?, ?> info, LanguagePriorityList langs) {
+        private Sdmx20Client(URI endpoint, Map<?, ?> info) {
             super("", endpoint, NEEDS_CREDENTIALS.get(info, false), null, "compact_v2");
-            this.languages = Util.fromLanguages(langs);
         }
     }
 }

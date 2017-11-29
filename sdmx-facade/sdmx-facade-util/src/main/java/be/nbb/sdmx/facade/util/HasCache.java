@@ -16,7 +16,11 @@
  */
 package be.nbb.sdmx.facade.util;
 
+import internal.util.HasCacheSupport;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -30,4 +34,17 @@ public interface HasCache {
     ConcurrentMap getCache();
 
     void setCache(@Nullable ConcurrentMap cache);
+
+    @Nonnull
+    static HasCache of(@Nonnull Supplier<ConcurrentMap> defaultCache) {
+        return of(defaultCache, (oldObj, newObj) -> {
+        });
+    }
+
+    @Nonnull
+    static HasCache of(@Nonnull Supplier<ConcurrentMap> defaultCache, @Nonnull BiConsumer<ConcurrentMap, ConcurrentMap> onCacheChange) {
+        ConcurrentMap cache = defaultCache.get();
+        onCacheChange.accept(null, cache);
+        return new HasCacheSupport(defaultCache, new AtomicReference<>(cache), onCacheChange);
+    }
 }

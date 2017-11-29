@@ -16,13 +16,12 @@
  */
 package internal.connectors.drivers;
 
-import be.nbb.sdmx.facade.web.SdmxWebEntryPoint;
 import be.nbb.sdmx.facade.util.HasCache;
 import it.bancaditalia.oss.sdmx.client.custom.NBB;
-import java.util.Collection;
 import org.openide.util.lookup.ServiceProvider;
 import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
-import internal.connectors.ConnectorsDriverSupport;
+import internal.connectors.ConnectorRestClient;
+import internal.web.RestDriverSupport;
 
 /**
  *
@@ -31,13 +30,11 @@ import internal.connectors.ConnectorsDriverSupport;
 @ServiceProvider(service = SdmxWebDriver.class)
 public final class NbbDriver implements SdmxWebDriver, HasCache {
 
-    private static final String PREFIX = "sdmx:nbb:";
-
     @lombok.experimental.Delegate
-    private final ConnectorsDriverSupport support = ConnectorsDriverSupport.of(PREFIX, NBB.class);
-
-    @Override
-    public Collection<SdmxWebEntryPoint> getDefaultEntryPoints() {
-        return ConnectorsDriverSupport.entry("NBB", "National Bank Belgium", "sdmx:nbb:https://stat.nbb.be/restsdmx/sdmx.ashx");
-    }
+    private final RestDriverSupport support = RestDriverSupport
+            .builder()
+            .prefix("sdmx:nbb:")
+            .client(ConnectorRestClient.of(NBB::new))
+            .entry("NBB", "National Bank Belgium", "https://stat.nbb.be/restsdmx/sdmx.ashx")
+            .build();
 }
