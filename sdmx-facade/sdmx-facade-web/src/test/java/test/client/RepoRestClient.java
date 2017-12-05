@@ -23,6 +23,7 @@ import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.repo.SdmxRepository;
+import be.nbb.sdmx.facade.util.SdmxExceptions;
 import internal.web.RestClient;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,25 +41,25 @@ public final class RepoRestClient implements RestClient {
 
     @Override
     public List<Dataflow> getFlows() throws IOException {
-        return new ArrayList(repo.getDataflows());
+        return new ArrayList(repo.getFlows());
     }
 
     @Override
     public Dataflow getFlow(DataflowRef ref) throws IOException {
         return repo.getFlow(ref)
-                .orElseThrow(() -> new IOException("Dataflow not found"));
+                .orElseThrow(() -> SdmxExceptions.missingFlow(ref));
     }
 
     @Override
     public DataStructure getStructure(DataStructureRef ref) throws IOException {
         return repo.getStructure(ref)
-                .orElseThrow(() -> new IOException("DataStructure not found"));
+                .orElseThrow(() -> SdmxExceptions.missingStructure(ref));
     }
 
     @Override
-    public DataCursor getData(DataflowRef flowRef, DataStructure dsd, DataQuery query) throws IOException {
+    public DataCursor getData(DataflowRef flowRef, DataQuery query, DataStructure dsd) throws IOException {
         return repo.getCursor(flowRef, query)
-                .orElseThrow(() -> new IOException("Data not found"));
+                .orElseThrow(() -> SdmxExceptions.missingData(flowRef));
     }
 
     @Override

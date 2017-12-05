@@ -24,6 +24,7 @@ import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.DataQuery;
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.SdmxConnection;
+import be.nbb.sdmx.facade.util.SdmxExceptions;
 import be.nbb.sdmx.facade.util.SeriesSupport;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,11 +51,11 @@ public class SdmxRepository {
 
     @lombok.NonNull
     @lombok.Singular
-    List<DataStructure> dataStructures;
+    List<DataStructure> structures;
 
     @lombok.NonNull
     @lombok.Singular
-    Set<Dataflow> dataflows;
+    Set<Dataflow> flows;
 
     @lombok.NonNull
     Map<DataflowRef, List<Series>> data;
@@ -70,18 +71,18 @@ public class SdmxRepository {
     @Nonnull
     public Optional<DataStructure> getStructure(@Nonnull DataStructureRef ref) {
         Objects.requireNonNull(ref);
-        return dataStructures
+        return structures
                 .stream()
-                .filter(o -> o.getRef().equals(ref))
+                .filter(ref::equalsRef)
                 .findFirst();
     }
 
     @Nonnull
     public Optional<Dataflow> getFlow(@Nonnull DataflowRef ref) {
         Objects.requireNonNull(ref);
-        return dataflows
+        return flows
                 .stream()
-                .filter(o -> ref.contains(o.getRef()))
+                .filter(ref::containsRef)
                 .findFirst();
     }
 
@@ -155,7 +156,7 @@ public class SdmxRepository {
         @Override
         public Set<Dataflow> getFlows() throws IOException {
             checkState();
-            return repo.getDataflows();
+            return repo.getFlows();
         }
 
         @Override
@@ -163,15 +164,16 @@ public class SdmxRepository {
             checkState();
             return repo
                     .getFlow(flowRef)
-                    .orElseThrow(() -> new IOException("Dataflow not found"));
+                    .orElseThrow(() -> SdmxExceptions.missingFlow(flowRef));
         }
 
         @Override
         public DataStructure getStructure(DataflowRef flowRef) throws IOException {
             checkState();
+            DataStructureRef structRef = getFlow(flowRef).getStructureRef();
             return repo
-                    .getStructure(getFlow(flowRef).getStructureRef())
-                    .orElseThrow(() -> new IOException("DataStructure not found"));
+                    .getStructure(structRef)
+                    .orElseThrow(() -> SdmxExceptions.missingStructure(structRef));
         }
 
         @Override
@@ -179,7 +181,7 @@ public class SdmxRepository {
             checkState();
             return repo
                     .getCursor(flowRef, query)
-                    .orElseThrow(() -> new IOException("Data not found"));
+                    .orElseThrow(() -> SdmxExceptions.missingData(flowRef));
         }
 
         @Override
@@ -187,7 +189,7 @@ public class SdmxRepository {
             checkState();
             return repo
                     .getStream(flowRef, query)
-                    .orElseThrow(() -> new IOException("Data not found"));
+                    .orElseThrow(() -> SdmxExceptions.missingData(flowRef));
         }
 
         @Override
@@ -202,7 +204,7 @@ public class SdmxRepository {
 
         private void checkState() throws IOException {
             if (closed) {
-                throw new IOException("Connection closed");
+                throw SdmxExceptions.connectionClosed();
             }
         }
     }

@@ -29,9 +29,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
-import test.FacadeResource;
-import static test.FacadeResource.ECB_FLOW_REF;
-import static test.FacadeResource.ECB_STRUCT_REF;
+import test.samples.FacadeResource;
+import static test.samples.FacadeResource.ECB_FLOW_REF;
+import static test.samples.FacadeResource.ECB_STRUCT_REF;
 import test.client.RepoRestClient;
 
 /**
@@ -139,23 +139,23 @@ public class CachedRestClientTest {
 
         CachedRestClient target = new CachedRestClient(getClient(count), "", cache, clock, 100);
 
-        assertThatNullPointerException().isThrownBy(() -> target.getData(null, null, query));
+        assertThatNullPointerException().isThrownBy(() -> target.getData(null, query, null));
 
-        target.getData(ECB_FLOW_REF, null, query);
+        target.getData(ECB_FLOW_REF, query, null);
         assertThat(count).hasValue(1);
         assertThat(cache).containsOnlyKeys(keysId);
 
-        target.getData(ECB_FLOW_REF, null, query);
+        target.getData(ECB_FLOW_REF, query, null);
         assertThat(count).hasValue(1);
         assertThat(cache).containsOnlyKeys(keysId);
 
         clock.plus(100);
-        target.getData(ECB_FLOW_REF, null, query);
+        target.getData(ECB_FLOW_REF, query, null);
         assertThat(count).hasValue(2);
         assertThat(cache).containsOnlyKeys(keysId);
 
         cache.clear();
-        target.getData(ECB_FLOW_REF, null, query);
+        target.getData(ECB_FLOW_REF, query, null);
         assertThat(count).hasValue(3);
         assertThat(cache).containsOnlyKeys(keysId);
     }

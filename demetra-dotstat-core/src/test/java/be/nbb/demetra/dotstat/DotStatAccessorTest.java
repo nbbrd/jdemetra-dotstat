@@ -19,13 +19,11 @@ package be.nbb.demetra.dotstat;
 import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.DataQuery;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.Series;
-import internal.connectors.TestResource;
 import be.nbb.sdmx.facade.repo.SdmxRepositoryManager;
 import com.google.common.base.Joiner;
 import ec.tss.tsproviders.db.DbAccessor;
@@ -34,10 +32,15 @@ import ec.tss.tsproviders.db.DbSetId;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import ec.tstoolkit.timeseries.simplets.TsPeriod;
+import java.io.IOException;
 import java.util.Map;
 import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import test.samples.FacadeResource;
+import static test.samples.FacadeResource.ECB_FLOW_REF;
+import static test.samples.FacadeResource.NBB_FLOW_REF;
 
 /**
  *
@@ -45,15 +48,20 @@ import org.junit.Test;
  */
 public class DotStatAccessorTest {
 
-    private final SdmxConnectionSupplier supplier = SdmxRepositoryManager.builder()
-            .repository(TestResource.nbb())
-            .repository(TestResource.ecb())
-            .build();
+    private static SdmxConnectionSupplier supplier;
+
+    @BeforeClass
+    public static void beforeClass() throws IOException {
+        supplier = SdmxRepositoryManager.builder()
+                .repository(FacadeResource.nbb())
+                .repository(FacadeResource.ecb())
+                .build();
+    }
 
     private static DotStatBean nbbBean() {
         DotStatBean result = new DotStatBean();
         result.setDbName("NBB");
-        result.setFlowRef(DataflowRef.of("NBB", "TEST_DATASET", null));
+        result.setFlowRef(NBB_FLOW_REF);
         result.setDimColumns(Joiner.on(',').join(new String[]{"SUBJECT", "LOCATION", "FREQUENCY"}));
         return result;
     }
@@ -68,7 +76,7 @@ public class DotStatAccessorTest {
 
         DotStatBean result = new DotStatBean();
         result.setDbName("ECB");
-        result.setFlowRef(DataflowRef.parse("ECB,AME,1.0"));
+        result.setFlowRef(ECB_FLOW_REF);
         result.setDimColumns(Joiner.on(',').join(dimensions));
         return result;
     }
@@ -80,7 +88,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKey() throws Exception {
-        DataStructure dfs = supplier.getConnection("NBB").getStructure(DataflowRef.of("NBB", "TEST_DATASET", null));
+        DataStructure dfs = supplier.getConnection("NBB").getStructure(NBB_FLOW_REF);
         Map<String, Dimension> dimById = DotStatAccessor.dimensionById(dfs);
 
         // default ordering of dimensions
@@ -101,7 +109,7 @@ public class DotStatAccessorTest {
     @Test
     public void testGetKeyFromTs() throws Exception {
         assertThat(supplier.getConnection("NBB")
-                .getStream(DataflowRef.of("NBB", "TEST_DATASET", null), DataQuery.of(Key.ALL, true))
+                .getStream(NBB_FLOW_REF, DataQuery.of(Key.ALL, true))
                 .map(Series::getKey)).contains(Key.parse("LOCSTL04.AUS.M"));
     }
 

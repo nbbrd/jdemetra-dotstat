@@ -24,9 +24,9 @@ import be.nbb.sdmx.facade.util.UnexpectedIOException;
 import java.io.IOException;
 import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
-import test.FacadeResource;
-import static test.FacadeResource.ECB_FLOW_REF;
-import static test.FacadeResource.ECB_STRUCT_REF;
+import test.samples.FacadeResource;
+import static test.samples.FacadeResource.ECB_FLOW_REF;
+import static test.samples.FacadeResource.ECB_STRUCT_REF;
 import test.client.FailingRestClient;
 import test.client.NoOpRestClient;
 import test.client.NullRestClient;
@@ -58,7 +58,7 @@ public class FailsafeRestClientTest {
         DataQuery all = DataQuery.of(Key.ALL, false);
         DataStructure struct = DataStructure.builder().ref(ECB_STRUCT_REF).label("hello").build();
 
-        assertOperation(o -> FailsafeRestClient.of(o).getData(ECB_FLOW_REF, struct, all));
+        assertOperation(o -> FailsafeRestClient.of(o).getData(ECB_FLOW_REF, all, struct));
     }
 
     @Test

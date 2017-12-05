@@ -14,20 +14,25 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package test;
+package internal.web.sdmx21;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.Test;
+import be.nbb.sdmx.facade.LanguagePriorityList;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import javax.annotation.Nonnull;
 
 /**
  *
  * @author Philippe Charles
  */
-public class ParsersTest {
+@FunctionalInterface
+public interface RestExecutor {
 
-    @Test
-    public void test() throws Exception {
-        assertThat(ConnectorsResource.nbb()).isEqualTo(FacadeResource.nbb());
-        assertThat(ConnectorsResource.ecb()).isEqualTo(FacadeResource.ecb());
+    @Nonnull
+    InputStream execute(@Nonnull URL query, @Nonnull String mediaType, @Nonnull LanguagePriorityList langs) throws IOException;
+
+    static RestExecutor getDefault(int readTimeout, int connectTimeout) {
+        return RestExecutorImpl.of(readTimeout, connectTimeout);
     }
 }

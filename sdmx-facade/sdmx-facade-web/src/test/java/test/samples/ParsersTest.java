@@ -14,24 +14,20 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package internal.web;
+package test.samples;
 
-import be.nbb.sdmx.facade.repo.SdmxRepository;
-import be.nbb.sdmx.facade.tck.ConnectionAssert;
-import java.io.IOException;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.Test;
-import test.samples.FacadeResource;
-import test.client.RepoRestClient;
 
 /**
  *
  * @author Philippe Charles
  */
-public class RestConnectionTest {
+public class ParsersTest {
 
     @Test
-    public void testCompliance() throws IOException {
-        SdmxRepository repo = FacadeResource.ecb();
-        ConnectionAssert.assertCompliance(() -> RestConnection.of(RepoRestClient.of(repo)), FacadeResource.ECB_FLOW_REF);
+    public void test() throws Exception {
+        assertThat(ConnectorsResource.nbb()).isEqualTo(FacadeResource.nbb());
+        assertThat(ConnectorsResource.ecb()).isEqualTo(FacadeResource.ecb());
     }
 }
