@@ -16,10 +16,11 @@
  */
 package be.nbb.sdmx.facade.xml.stream;
 
+import be.nbb.util.StaxUtil;
 import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.Frequency;
-import be.nbb.sdmx.facade.util.ObsParser;
+import be.nbb.sdmx.facade.parser.ObsParser;
 import be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.Status;
 import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.Status.CONTINUE;
 import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.Status.HALT;
@@ -29,40 +30,60 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import be.nbb.sdmx.facade.util.FreqParser;
+import be.nbb.sdmx.facade.parser.Freqs;
+import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.isTagMatch;
+import ioutil.Xml;
+import java.io.Closeable;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import javax.annotation.Nonnull;
 
 /**
  *
  * @author Philippe Charles
  */
+@lombok.extern.java.Log
 final class XMLStreamGenericDataCursor implements DataCursor {
 
-    private static final String DATASET_ELEMENT = "DataSet";
-    private static final String SERIES_ELEMENT = "Series";
-    private static final String OBS_ELEMENT = "Obs";
-    private static final String OBS_VALUE_ELEMENT = "ObsValue";
-    private static final String SERIES_KEY_ELEMENT = "SeriesKey";
-    private static final String ATTRIBUTES_ELEMENT = "Attributes";
-    private static final String VALUE_ELEMENT = "Value";
-    private static final String VALUE_ATTRIBUTE = "value";
+    static XMLStreamGenericDataCursor sdmx20(XMLStreamReader reader, Closeable onClose, Key.Builder keyBuilder, ObsParser obsParser, Freqs.Parser freqParser) {
+        return new XMLStreamGenericDataCursor(reader, onClose, keyBuilder, obsParser, freqParser, SeriesHeadParser.SDMX20);
+    }
+
+    static XMLStreamGenericDataCursor sdmx21(XMLStreamReader reader, Closeable onClose, Key.Builder keyBuilder, ObsParser obsParser, Freqs.Parser freqParser) {
+        return new XMLStreamGenericDataCursor(reader, onClose, keyBuilder, obsParser, freqParser, SeriesHeadParser.SDMX21);
+    }
+
+    private static final String DATASET_TAG = "DataSet";
+    private static final String SERIES_TAG = "Series";
+    private static final String OBS_TAG = "Obs";
+    private static final String OBS_VALUE_TAG = "ObsValue";
+    private static final String SERIES_KEY_TAG = "SeriesKey";
+    private static final String ATTRIBUTES_TAG = "Attributes";
+    private static final String VALUE_TAG = "Value";
+    private static final String VALUE_ATTR = "value";
 
     private final XMLStreamReader reader;
+    private final Closeable onClose;
     private final Key.Builder keyBuilder;
     private final AttributesBuilder attributesBuilder;
     private final ObsParser obsParser;
-    private final FreqParser freqParser;
-    private final GenericDataParser genericParser;
+    private final Freqs.Parser freqParser;
+    private final SeriesHeadParser headParser;
     private boolean closed;
     private boolean hasSeries;
     private boolean hasObs;
 
-    XMLStreamGenericDataCursor(XMLStreamReader reader, Key.Builder keyBuilder, ObsParser obsParser, FreqParser freqParser, GenericDataParser genericParser) {
+    private XMLStreamGenericDataCursor(XMLStreamReader reader, Closeable onClose, Key.Builder keyBuilder, ObsParser obsParser, Freqs.Parser freqParser, SeriesHeadParser headParser) {
+        if (!StaxUtil.isNotNamespaceAware(reader)) {
+            log.fine("Using XMLStreamReader with namespace awareness");
+        }
         this.reader = reader;
+        this.onClose = onClose;
         this.keyBuilder = keyBuilder;
         this.attributesBuilder = new AttributesBuilder();
         this.obsParser = obsParser;
         this.freqParser = freqParser;
-        this.genericParser = genericParser;
+        this.headParser = headParser;
         this.closed = false;
         this.hasSeries = false;
         this.hasObs = false;
@@ -76,7 +97,7 @@ final class XMLStreamGenericDataCursor implements DataCursor {
         try {
             return hasSeries = nextWhile(this::onDataSet);
         } catch (XMLStreamException ex) {
-            throw new IOException(ex);
+            throw new Xml.WrappedException(ex);
         }
     }
 
@@ -94,7 +115,7 @@ final class XMLStreamGenericDataCursor implements DataCursor {
             }
             return hasObs = nextWhile(this::onSeriesBody);
         } catch (XMLStreamException ex) {
-            throw new IOException(ex);
+            throw new Xml.WrappedException(ex);
         }
     }
 
@@ -140,11 +161,7 @@ final class XMLStreamGenericDataCursor implements DataCursor {
     @Override
     public void close() throws IOException {
         closed = true;
-        try {
-            reader.close();
-        } catch (XMLStreamException ex) {
-            throw new IOException(ex);
-        }
+        StaxUtil.closeBoth(reader, onClose);
     }
 
     private void checkState() throws IOException {
@@ -169,9 +186,9 @@ final class XMLStreamGenericDataCursor implements DataCursor {
 
     private Status onDataSet(boolean start, String localName) throws XMLStreamException {
         if (start) {
-            return localName.equals(SERIES_ELEMENT) ? parseSeries() : CONTINUE;
+            return isTagMatch(localName, SERIES_TAG) ? parseSeries() : CONTINUE;
         } else {
-            return localName.equals(DATASET_ELEMENT) ? HALT : CONTINUE;
+            return isTagMatch(localName, DATASET_TAG) ? HALT : CONTINUE;
         }
     }
 
@@ -183,18 +200,17 @@ final class XMLStreamGenericDataCursor implements DataCursor {
 
     private Status onSeriesHead(boolean start, String localName) throws XMLStreamException {
         if (start) {
-            switch (localName) {
-                case SERIES_KEY_ELEMENT:
-                    return parseSeriesKey();
-                case ATTRIBUTES_ELEMENT:
-                    return parseAttributes();
-                case OBS_ELEMENT:
-                    return HALT;
-                default:
-                    return CONTINUE;
+            if (isTagMatch(localName, SERIES_KEY_TAG)) {
+                return parseSeriesKey();
+            } else if (isTagMatch(localName, ATTRIBUTES_TAG)) {
+                return parseAttributes();
+            } else if (isTagMatch(localName, OBS_TAG)) {
+                return HALT;
+            } else {
+                return CONTINUE;
             }
         } else {
-            return localName.equals(SERIES_ELEMENT) ? HALT : CONTINUE;
+            return isTagMatch(localName, SERIES_TAG) ? HALT : CONTINUE;
         }
     }
 
@@ -210,54 +226,54 @@ final class XMLStreamGenericDataCursor implements DataCursor {
 
     private Status onSeriesKey(boolean start, String localName) throws XMLStreamException {
         if (start) {
-            return localName.equals(VALUE_ELEMENT) ? parseSeriesKeyValue() : CONTINUE;
+            return isTagMatch(localName, VALUE_TAG) ? parseSeriesKeyValue() : CONTINUE;
         } else {
-            return localName.equals(SERIES_KEY_ELEMENT) ? HALT : CONTINUE;
+            return isTagMatch(localName, SERIES_KEY_TAG) ? HALT : CONTINUE;
         }
     }
 
     private Status onAttributes(boolean start, String localName) throws XMLStreamException {
         if (start) {
-            return localName.equals(VALUE_ELEMENT) ? parseAttributesValue() : CONTINUE;
+            return isTagMatch(localName, VALUE_TAG) ? parseAttributesValue() : CONTINUE;
         } else {
-            return localName.equals(ATTRIBUTES_ELEMENT) ? HALT : CONTINUE;
+            return isTagMatch(localName, ATTRIBUTES_TAG) ? HALT : CONTINUE;
         }
     }
 
     private Status parseSeriesKeyValue() throws XMLStreamException {
-        genericParser.parseValueElement(reader, keyBuilder::put);
+        headParser.parseValueElement(reader, keyBuilder::put);
         return CONTINUE;
     }
 
     private Status parseAttributesValue() throws XMLStreamException {
-        genericParser.parseValueElement(reader, attributesBuilder::put);
+        headParser.parseValueElement(reader, attributesBuilder::put);
         return CONTINUE;
     }
 
     private boolean isCurrentElementStartOfObs() {
-        return reader.getEventType() == XMLStreamReader.START_ELEMENT && OBS_ELEMENT.equals(reader.getLocalName());
+        return reader.isStartElement() && isTagMatch(reader.getLocalName(), OBS_TAG);
     }
 
     private boolean isCurrentElementEnfOfSeries() {
-        return reader.getEventType() == XMLStreamReader.END_ELEMENT && SERIES_ELEMENT.equals(reader.getLocalName());
+        return reader.isEndElement() && isTagMatch(reader.getLocalName(), SERIES_TAG);
     }
 
     private Status onSeriesBody(boolean start, String localName) throws XMLStreamException {
         if (start) {
-            return localName.equals(OBS_ELEMENT) ? parseObs() : CONTINUE;
+            return isTagMatch(localName, OBS_TAG) ? parseObs() : CONTINUE;
         } else {
-            return localName.equals(SERIES_ELEMENT) ? HALT : CONTINUE;
+            return isTagMatch(localName, SERIES_TAG) ? HALT : CONTINUE;
         }
     }
 
     private Status onObs(boolean start, String localName) throws XMLStreamException {
         if (start) {
-            if (localName.equals(genericParser.getTimeELement())) {
+            if (isTagMatch(localName, headParser.getTimeELement())) {
                 return parseObsTime();
             }
-            return localName.equals(OBS_VALUE_ELEMENT) ? parseObsValue() : CONTINUE;
+            return isTagMatch(localName, OBS_VALUE_TAG) ? parseObsValue() : CONTINUE;
         } else {
-            return localName.equals(OBS_ELEMENT) ? HALT : CONTINUE;
+            return isTagMatch(localName, OBS_TAG) ? HALT : CONTINUE;
         }
     }
 
@@ -267,16 +283,59 @@ final class XMLStreamGenericDataCursor implements DataCursor {
     }
 
     private Status parseObsTime() throws XMLStreamException {
-        genericParser.parseTimeElement(reader, obsParser::period);
+        headParser.parseTimeElement(reader, obsParser::period);
         return CONTINUE;
     }
 
     private Status parseObsValue() {
-        obsParser.value(reader.getAttributeValue(null, VALUE_ATTRIBUTE));
+        obsParser.value(reader.getAttributeValue(null, VALUE_ATTR));
         return CONTINUE;
     }
 
-    private boolean nextWhile(XMLStreamUtil.Func func) throws XMLStreamException {
+    private boolean nextWhile(XMLStreamUtil.TagVisitor func) throws XMLStreamException {
         return XMLStreamUtil.nextWhile(reader, func);
+    }
+
+    private enum SeriesHeadParser {
+
+        SDMX20 {
+            @Override
+            public void parseValueElement(XMLStreamReader r, BiConsumer<String, String> c) throws XMLStreamException {
+                c.accept(r.getAttributeValue(null, "concept"), r.getAttributeValue(null, "value"));
+            }
+
+            @Override
+            public void parseTimeElement(XMLStreamReader r, Consumer<String> c) throws XMLStreamException {
+                c.accept(r.getElementText());
+            }
+
+            @Override
+            public String getTimeELement() {
+                return "Time";
+            }
+        },
+        SDMX21 {
+            @Override
+            public void parseValueElement(XMLStreamReader r, BiConsumer<String, String> c) throws XMLStreamException {
+                c.accept(r.getAttributeValue(null, "id"), r.getAttributeValue(null, "value"));
+            }
+
+            @Override
+            public void parseTimeElement(XMLStreamReader r, Consumer<String> c) throws XMLStreamException {
+                c.accept(r.getAttributeValue(null, "value"));
+            }
+
+            @Override
+            public String getTimeELement() {
+                return "ObsDimension";
+            }
+        };
+
+        abstract void parseValueElement(@Nonnull XMLStreamReader r, @Nonnull BiConsumer<String, String> c) throws XMLStreamException;
+
+        abstract void parseTimeElement(@Nonnull XMLStreamReader r, @Nonnull Consumer<String> c) throws XMLStreamException;
+
+        @Nonnull
+        abstract String getTimeELement();
     }
 }

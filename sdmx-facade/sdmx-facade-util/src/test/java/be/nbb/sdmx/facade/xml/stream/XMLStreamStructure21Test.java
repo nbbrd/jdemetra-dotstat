@@ -16,14 +16,14 @@
  */
 package be.nbb.sdmx.facade.xml.stream;
 
+import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.samples.SdmxSource;
-import java.io.InputStreamReader;
-import javax.xml.stream.XMLInputFactory;
+import ioutil.Xml;
+import java.util.List;
 import javax.xml.stream.XMLStreamException;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
 
 /**
@@ -35,31 +35,23 @@ public class XMLStreamStructure21Test {
     @Test
     @SuppressWarnings("null")
     public void test() throws Exception {
-        XMLInputFactory factory = XMLInputFactory.newFactory();
+        Xml.Parser<List<DataStructure>> parser = SdmxXmlStreams.struct21(LanguagePriorityList.ANY);
 
-        XMLStreamStructure21 parser = new XMLStreamStructure21(LanguagePriorityList.ANY);
-
-        try (InputStreamReader stream = SdmxSource.ECB_DATA_STRUCTURE.openReader()) {
-            assertThat(parser.parse(factory.createXMLStreamReader(stream))).hasSize(1).element(0).satisfies(o -> {
-                assertThat(o.getLabel()).isEqualTo("AMECO");
-                assertThat(o.getPrimaryMeasureId()).isEqualTo("OBS_VALUE");
-                assertThat(o.getTimeDimensionId()).isEqualTo("TIME_PERIOD");
-                assertThat(o.getRef()).isEqualTo(DataStructureRef.of("ECB", "ECB_AME1", "1.0"));
-                assertThat(o.getDimensions()).hasSize(7).element(0).satisfies(x -> {
-                    assertThat(x.getId()).isEqualTo("FREQ");
-                    assertThat(x.getLabel()).isEqualTo("Frequency");
-                    assertThat(x.getPosition()).isEqualTo(1);
-                });
+        assertThat(parser.parseReader(SdmxSource.ECB_DATA_STRUCTURE::openReader)).hasSize(1).element(0).satisfies(o -> {
+            assertThat(o.getLabel()).isEqualTo("AMECO");
+            assertThat(o.getPrimaryMeasureId()).isEqualTo("OBS_VALUE");
+            assertThat(o.getTimeDimensionId()).isEqualTo("TIME_PERIOD");
+            assertThat(o.getRef()).isEqualTo(DataStructureRef.of("ECB", "ECB_AME1", "1.0"));
+            assertThat(o.getDimensions()).hasSize(7).element(0).satisfies(x -> {
+                assertThat(x.getId()).isEqualTo("FREQ");
+                assertThat(x.getLabel()).isEqualTo("Frequency");
+                assertThat(x.getPosition()).isEqualTo(1);
             });
-        }
+        });
 
-        try (InputStreamReader stream = SdmxSource.NBB_DATA_STRUCTURE.openReader()) {
-            assertThatThrownBy(() -> parser.parse(factory.createXMLStreamReader(stream)))
-                    .isInstanceOf(XMLStreamException.class)
-                    .hasMessageContaining("Invalid namespace")
-                    .hasNoCause();
-        }
-
-        assertThatThrownBy(() -> parser.parse(null)).isInstanceOf(NullPointerException.class);
+        assertThatIOException()
+                .isThrownBy(() -> parser.parseReader(SdmxSource.NBB_DATA_STRUCTURE::openReader))
+                .withCauseInstanceOf(XMLStreamException.class)
+                .withMessageContaining("Invalid namespace");
     }
 }

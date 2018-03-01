@@ -47,6 +47,7 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
 
         private final IParam<DataSource, File> file = Params.onFile(new File(""), "f");
         private final IParam<DataSource, File> structureFile = Params.onFile(new File(""), "s");
+        private final IParam<DataSource, String> dialect = Params.onString("", "j");
         private final IParam<DataSource, List<String>> dimensionIds = onStringList(ImmutableList.of(), "d", dimensionSplitter, dimensionJoiner);
         private final IParam<DataSource, String> labelAttribute = Params.onString("", "l");
 
@@ -60,6 +61,7 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
             SdmxFileBean result = new SdmxFileBean();
             result.setFile(file.defaultValue());
             result.setStructureFile(structureFile.defaultValue());
+            result.setDialect(dialect.defaultValue());
             result.setDimensions(dimensionIds.defaultValue());
             result.setLabelAttribute(labelAttribute.defaultValue());
             return result;
@@ -70,6 +72,7 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
             SdmxFileBean result = new SdmxFileBean();
             result.setFile(file.get(dataSource));
             result.setStructureFile(structureFile.get(dataSource));
+            result.setDialect(dialect.get(dataSource));
             result.setDimensions(dimensionIds.get(dataSource));
             result.setLabelAttribute(labelAttribute.get(dataSource));
             return result;
@@ -79,6 +82,7 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
         public void set(IConfig.Builder<?, DataSource> builder, SdmxFileBean value) {
             file.set(builder, value.getFile());
             structureFile.set(builder, value.getStructureFile());
+            dialect.set(builder, value.getDialect());
             dimensionIds.set(builder, value.getDimensions());
             labelAttribute.set(builder, value.getLabelAttribute());
         }

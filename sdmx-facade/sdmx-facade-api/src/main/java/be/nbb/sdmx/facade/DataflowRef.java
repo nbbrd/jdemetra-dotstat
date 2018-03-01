@@ -16,9 +16,10 @@
  */
 package be.nbb.sdmx.facade;
 
+import internal.util.ResourceRefs;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.annotation.concurrent.Immutable;
+import lombok.AccessLevel;
 
 /**
  * Identifier of a data flow used in a data (or meta data) query.
@@ -34,24 +35,41 @@ import javax.annotation.concurrent.Immutable;
  *
  * @author Philippe Charles
  */
-@Immutable
-public final class DataflowRef extends ResourceRef {
+@lombok.Value
+@lombok.AllArgsConstructor(access = AccessLevel.PRIVATE)
+public final class DataflowRef implements ResourceRef {
 
-    public boolean contains(@Nonnull DataflowRef that) {
-        return super.contains(that);
+    @lombok.NonNull
+    private String agency;
+
+    @lombok.NonNull
+    private String id;
+
+    @lombok.NonNull
+    private String version;
+
+    public boolean containsRef(@Nonnull Dataflow that) {
+        return contains(that.getRef());
     }
 
-    private DataflowRef(String agencyId, String flowId, String version) {
-        super(agencyId, flowId, version);
+    public boolean contains(@Nonnull DataflowRef that) {
+        return (this.agency.equals(ALL_AGENCIES) || this.agency.equals(that.agency))
+                && (this.id.equals(that.id))
+                && (this.version.equals(LATEST_VERSION) || this.version.equals(that.version));
+    }
+
+    @Override
+    public String toString() {
+        return ResourceRefs.toString(this);
     }
 
     @Nonnull
     public static DataflowRef parse(@Nonnull String input) throws IllegalArgumentException {
-        return ResourceRef.parse(input, DataflowRef::new);
+        return ResourceRefs.parse(input, DataflowRef::new);
     }
 
     @Nonnull
-    public static DataflowRef of(@Nullable String agencyId, @Nonnull String flowId, @Nullable String version) throws IllegalArgumentException {
-        return ResourceRef.of(agencyId, flowId, version, DataflowRef::new);
+    public static DataflowRef of(@Nullable String agency, @Nonnull String id, @Nullable String version) throws IllegalArgumentException {
+        return ResourceRefs.of(agency, id, version, DataflowRef::new);
     }
 }

@@ -16,62 +16,102 @@
  */
 package be.nbb.sdmx.facade.file;
 
+import be.nbb.sdmx.facade.DataStructureRef;
+import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
-import be.nbb.sdmx.facade.file.impl.XMLStreamSdmxDecoder;
+import be.nbb.sdmx.facade.parser.DataFactory;
+import be.nbb.sdmx.facade.parser.spi.SdmxDialect;
 import be.nbb.sdmx.facade.util.HasCache;
+import internal.file.CachedResource;
+import internal.file.SdmxDecoder;
+import internal.file.SdmxFileConnectionImpl;
+import internal.file.SdmxFileUtil;
+import internal.file.xml.StaxSdmxDecoder;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
-import javax.xml.stream.XMLInputFactory;
+import lombok.AccessLevel;
 
 /**
  *
  * @author Philippe Charles
  */
+@lombok.AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SdmxFileManager implements SdmxConnectionSupplier, HasCache {
 
-    private final XMLInputFactory factory;
-    private final SdmxDecoder decoder;
-    private final AtomicReference<ConcurrentMap> cache;
+    @Nonnull
+    public static SdmxFileManager ofServiceLoader() {
+        List<SdmxDialect> dialects = new ArrayList<>();
+        ServiceLoader.load(SdmxDialect.class).forEach(dialects::add);
+        return new SdmxFileManager(
+                new StaxSdmxDecoder(),
+                HasCache.of(ConcurrentHashMap::new),
+                dialects
+        );
+    }
 
-    public SdmxFileManager() {
-        this.factory = XMLInputFactory.newInstance();
-        this.decoder = new XMLStreamSdmxDecoder(factory);
-        this.cache = new AtomicReference<>(new ConcurrentHashMap());
+    private static final DataStructureRef EMPTY = DataStructureRef.of("", "", "");
+
+    private final SdmxDecoder decoder;
+    private final HasCache cacheSupport;
+    private final List<SdmxDialect> dialects;
+
+    @Override
+    public SdmxFileConnection getConnection(String name) throws IOException {
+        return getConnection(name, LanguagePriorityList.ANY);
     }
 
     @Override
-    public SdmxConnection getConnection(String name, LanguagePriorityList languages) throws IOException {
+    public SdmxFileConnection getConnection(String name, LanguagePriorityList languages) throws IOException {
+        return getConnection(getFiles(name), languages);
+    }
+
+    @Nonnull
+    public SdmxFileConnection getConnection(@Nonnull SdmxFileSet files) throws IOException {
+        return getConnection(files, LanguagePriorityList.ANY);
+    }
+
+    @Nonnull
+    public SdmxFileConnection getConnection(@Nonnull SdmxFileSet files, @Nonnull LanguagePriorityList languages) throws IOException {
+        return new SdmxFileConnectionImpl(getResource(files, languages), getDataflow(files));
+    }
+
+    @Override
+    public ConcurrentMap getCache() {
+        return cacheSupport.getCache();
+    }
+
+    @Override
+    public void setCache(ConcurrentMap cache) {
+        this.cacheSupport.setCache(cache);
+    }
+
+    private SdmxFileSet getFiles(String name) throws IOException {
         try {
-            return getConnection(SdmxFile.parse(name), languages);
+            return SdmxFileUtil.fromXml(name);
         } catch (IllegalArgumentException ex) {
             throw new IOException(ex.getMessage(), ex.getCause());
         }
     }
 
-    @Nonnull
-    public SdmxConnection getConnection(@Nonnull SdmxFile file, @Nonnull LanguagePriorityList languages) throws IOException {
-        return new CachedFileSdmxConnection(file, languages, factory, decoder, cache.get());
+    private SdmxFileConnectionImpl.Resource getResource(SdmxFileSet files, LanguagePriorityList languages) {
+        return new CachedResource(files, languages, decoder, getDataFactory(files), getCache());
     }
 
-    @Override
-    public ConcurrentMap getCache() {
-        return cache.get();
+    private Dataflow getDataflow(SdmxFileSet files) {
+        return Dataflow.of(files.asDataflowRef(), EMPTY, SdmxFileUtil.asFlowLabel(files));
     }
 
-    @Override
-    public void setCache(ConcurrentMap cache) {
-        this.cache.set(cache != null ? cache : new ConcurrentHashMap());
+    private Optional<DataFactory> getDataFactory(SdmxFileSet files) {
+        return dialects.stream()
+                .filter(o -> o.getName().equals(files.getDialect()))
+                .map(DataFactory.class::cast)
+                .findFirst();
     }
-
-    @Nonnull
-    public static SdmxFileManager getDefault() {
-        return INSTANCE;
-    }
-
-    private static final SdmxFileManager INSTANCE = new SdmxFileManager();
 }

@@ -16,6 +16,7 @@
  */
 package be.nbb.sdmx.facade.samples;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -25,9 +26,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 import javax.annotation.Nonnull;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 
 /**
  *
@@ -39,11 +37,6 @@ public interface ByteSource {
     InputStream openStream() throws IOException;
 
     @Nonnull
-    default XMLStreamReader openXmlStream() throws XMLStreamException, IOException {
-        return XMLInputFactory.newInstance().createXMLStreamReader(openReader());
-    }
-
-    @Nonnull
     default InputStreamReader openReader() throws IOException {
         return new InputStreamReader(openStream(), StandardCharsets.UTF_8);
     }
@@ -52,6 +45,10 @@ public interface ByteSource {
         try (InputStream stream = openStream()) {
             Files.copy(stream, file, StandardCopyOption.REPLACE_EXISTING);
         }
+    }
+
+    default void copyTo(@Nonnull File file) throws IOException {
+        copyTo(file.toPath());
     }
 
     @Nonnull

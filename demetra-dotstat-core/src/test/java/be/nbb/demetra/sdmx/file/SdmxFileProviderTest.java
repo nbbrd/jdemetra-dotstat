@@ -18,11 +18,11 @@ package be.nbb.demetra.sdmx.file;
 
 import be.nbb.sdmx.facade.samples.ByteSource;
 import be.nbb.sdmx.facade.samples.SdmxSource;
-import static be.nbb.sdmx.facade.util.FreqUtil.TIME_FORMAT_CONCEPT;
+import static be.nbb.sdmx.facade.parser.Freqs.TIME_FORMAT_CONCEPT;
 import ec.tss.TsCollectionInformation;
+import ec.tss.TsInformation;
 import ec.tss.TsInformationType;
 import ec.tss.TsMoniker;
-import static ec.tss.tsproviders.Assertions.assertThat;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.IDataSourceLoaderAssert;
@@ -30,7 +30,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
-import org.assertj.core.api.Assertions;
+import java.util.concurrent.atomic.AtomicReference;
+import static org.assertj.core.api.Assertions.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -48,7 +49,7 @@ public class SdmxFileProviderTest {
     private static File createTemp(ByteSource bytes, String prefix, String suffix) throws IOException {
         File result = File.createTempFile(prefix, suffix);
         result.deleteOnExit();
-        bytes.copyTo(result.toPath());
+        bytes.copyTo(result);
         return result;
     }
 
@@ -97,59 +98,75 @@ public class SdmxFileProviderTest {
     @Test
     public void testContent() throws IOException {
         try (SdmxFileProvider p = new SdmxFileProvider()) {
-            Assertions.assertThat(newRequest(p, GENERIC20, STRUCT20)).satisfies(info -> {
-                Assertions.assertThat(p.get(info)).isTrue();
-                Assertions.assertThat(info.items)
+
+            AtomicReference<TsMoniker> single = new AtomicReference<>();
+            assertThat(newColInfo(p, GENERIC20, STRUCT20)).satisfies(info -> {
+                assertThat(p.get(info)).isTrue();
+                assertThat(info.items)
                         .hasSize(1)
                         .element(0)
                         .satisfies(o -> {
-                            Assertions.assertThat(o.name).isEqualTo("LOCSTL04.AUS.M");
-                            Assertions.assertThat(new HashMap(o.metaData)).hasSize(1).containsEntry(TIME_FORMAT_CONCEPT, "P1M");
-                            Assertions.assertThat(o.data).isNotNull();
-                            Assertions.assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("Monthly");
+                            assertThat(o.name).isEqualTo("LOCSTL04.AUS.M");
+                            assertThat(new HashMap(o.metaData)).hasSize(1).containsEntry(TIME_FORMAT_CONCEPT, "P1M");
+                            assertThat(o.data).isNotNull();
+                            assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("Monthly");
+                            single.set(o.moniker);
                         });
             });
 
-            Assertions.assertThat(newRequest(p, GENERIC20, BLANK)).satisfies(info -> {
-                Assertions.assertThat(p.get(info)).isTrue();
-                Assertions.assertThat(info.items).hasSize(1).element(0).satisfies(o -> Assertions.assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("M"));
+            p.clearCache();
+            assertThat(new TsInformation("", single.get(), TsInformationType.All)).satisfies(o -> {
+                assertThat(p.get(o)).isTrue();
+                assertThat(o.name).isEqualTo("LOCSTL04.AUS.M");
+                assertThat(new HashMap(o.metaData)).hasSize(1).containsEntry(TIME_FORMAT_CONCEPT, "P1M");
+                assertThat(o.data).isNotNull();
+                assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("Monthly");
+                single.set(o.moniker);
             });
 
-            Assertions.assertThat(newRequest(p, GENERIC20, BLANK, "SUBJECT", "LOCATION", "FREQUENCY")).satisfies(info -> {
-                Assertions.assertThat(p.get(info)).isTrue();
-                Assertions.assertThat(info.items).hasSize(1).element(0).satisfies(o -> Assertions.assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("M"));
+            assertThat(newColInfo(p, GENERIC20, BLANK)).satisfies(info -> {
+                assertThat(p.get(info)).isTrue();
+                assertThat(info.items).hasSize(1).element(0).satisfies(o -> assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("M"));
             });
 
-            Assertions.assertThat(newRequest(p, GENERIC20, BLANK, "LOCATION", "FREQUENCY", "SUBJECT")).satisfies(info -> {
-                Assertions.assertThat(p.get(info)).isTrue();
-                Assertions.assertThat(info.items).hasSize(1).element(0).satisfies(o -> Assertions.assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("LOCSTL04"));
+            assertThat(newColInfo(p, GENERIC20, BLANK, "SUBJECT", "LOCATION", "FREQUENCY")).satisfies(info -> {
+                assertThat(p.get(info)).isTrue();
+                assertThat(info.items).hasSize(1).element(0).satisfies(o -> assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("M"));
             });
 
-            Assertions.assertThat(newRequest(p, GENERIC20, STRUCT20, "LOCATION", "FREQUENCY", "SUBJECT")).satisfies(info -> {
-                Assertions.assertThat(p.get(info)).isTrue();
-                Assertions.assertThat(info.items).hasSize(1).element(0).satisfies(o -> Assertions.assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("Amplitude adjusted (CLI)"));
+            assertThat(newColInfo(p, GENERIC20, BLANK, "LOCATION", "FREQUENCY", "SUBJECT")).satisfies(info -> {
+                assertThat(p.get(info)).isTrue();
+                assertThat(info.items).hasSize(1).element(0).satisfies(o -> assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("LOCSTL04"));
             });
 
-            Assertions.assertThat(newRequest(p, NO_XML, STRUCT20)).satisfies(info -> {
-                Assertions.assertThat(p.get(info)).isFalse();
-                Assertions.assertThat(info.invalidDataCause).contains("XMLStreamException");
+            assertThat(newColInfo(p, GENERIC20, STRUCT20, "LOCATION", "FREQUENCY", "SUBJECT")).satisfies(info -> {
+                assertThat(p.get(info)).isTrue();
+                assertThat(info.items).hasSize(1).element(0).satisfies(o -> assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("Amplitude adjusted (CLI)"));
             });
 
-            Assertions.assertThat(newRequest(p, GENERIC20, NO_XML)).satisfies(info -> {
-                Assertions.assertThat(p.get(info)).isFalse();
-                Assertions.assertThat(info.invalidDataCause).contains("XMLStreamException");
+            assertThat(newColInfo(p, NO_XML, STRUCT20)).satisfies(info -> {
+                assertThat(p.get(info)).isFalse();
+                assertThat(info.invalidDataCause).contains("XMLStreamException");
+            });
+
+            assertThat(newColInfo(p, GENERIC20, NO_XML)).satisfies(info -> {
+                assertThat(p.get(info)).isFalse();
+                assertThat(info.invalidDataCause).contains("XMLStreamException");
             });
         }
     }
 
-    private static TsCollectionInformation newRequest(SdmxFileProvider p, File data, File structure, String... dims) {
-        SdmxFileBean bean = new SdmxFileBean();
-        bean.setFile(data);
-        bean.setStructureFile(structure);
-        bean.setDimensions(Arrays.asList(dims));
-
-        DataSource dataSource = p.encodeBean(bean);
-        Assertions.assertThat(p.open(dataSource)).isTrue();
+    private static TsCollectionInformation newColInfo(SdmxFileProvider p, File data, File structure, String... dims) {
+        DataSource dataSource = p.encodeBean(newBean(data, structure, dims));
+        assertThat(p.open(dataSource)).isTrue();
         return new TsCollectionInformation(p.toMoniker(dataSource), TsInformationType.All);
+    }
+
+    private static SdmxFileBean newBean(File data, File structure, String... dims) {
+        SdmxFileBean result = new SdmxFileBean();
+        result.setFile(data);
+        result.setStructureFile(structure);
+        result.setDimensions(Arrays.asList(dims));
+        return result;
     }
 }

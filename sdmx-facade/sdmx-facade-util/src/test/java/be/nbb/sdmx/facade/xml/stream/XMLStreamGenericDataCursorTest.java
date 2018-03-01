@@ -16,17 +16,20 @@
  */
 package be.nbb.sdmx.facade.xml.stream;
 
+import be.nbb.util.StaxUtil;
 import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.Frequency;
+import be.nbb.sdmx.facade.parser.Freqs;
 import be.nbb.sdmx.facade.samples.ByteSource;
 import be.nbb.sdmx.facade.samples.SdmxSource;
 import be.nbb.sdmx.facade.tck.DataCursorAssert;
-import static be.nbb.sdmx.facade.util.FreqUtil.TIME_FORMAT_CONCEPT;
-import be.nbb.sdmx.facade.util.ObsParser;
+import static be.nbb.sdmx.facade.parser.Freqs.TIME_FORMAT_CONCEPT;
+import be.nbb.sdmx.facade.parser.ObsParser;
 import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
-import be.nbb.sdmx.facade.util.FreqParser;
+import java.io.InputStream;
+import javax.xml.stream.XMLInputFactory;
 
 /**
  *
@@ -39,9 +42,13 @@ public class XMLStreamGenericDataCursorTest {
         ByteSource xml = SdmxSource.NBB_DATA;
         Key.Builder builder = Key.builder("SUBJECT", "LOCATION", "FREQUENCY");
 
-        DataCursorAssert.assertCompliance(() -> new XMLStreamGenericDataCursor(xml.openXmlStream(), builder, ObsParser.standard(), FreqParser.sdmx20(), GenericDataParser.sdmx20()));
+        DataCursorAssert.assertCompliance(() -> {
+            InputStream stream = xml.openStream();
+            return XMLStreamGenericDataCursor.sdmx20(xif.createXMLStreamReader(stream), stream, builder, ObsParser.standard(), Freqs.Parser.sdmx20());
+        });
 
-        try (DataCursor o = new XMLStreamGenericDataCursor(xml.openXmlStream(), builder, ObsParser.standard(), FreqParser.sdmx20(), GenericDataParser.sdmx20())) {
+        try (InputStream stream = xml.openStream();
+                DataCursor o = XMLStreamGenericDataCursor.sdmx20(xif.createXMLStreamReader(stream), stream, builder, ObsParser.standard(), Freqs.Parser.sdmx20())) {
             int indexSeries = -1;
             while (o.nextSeries()) {
                 switch (++indexSeries) {
@@ -83,9 +90,13 @@ public class XMLStreamGenericDataCursorTest {
         ByteSource xml = SdmxSource.OTHER_GENERIC21;
         Key.Builder builder = Key.builder("FREQ", "AME_REF_AREA", "AME_TRANSFORMATION", "AME_AGG_METHOD", "AME_UNIT", "AME_REFERENCE", "AME_ITEM");
 
-        DataCursorAssert.assertCompliance(() -> new XMLStreamGenericDataCursor(xml.openXmlStream(), builder, ObsParser.standard(), FreqParser.sdmx21(0), GenericDataParser.sdmx21()));
+        DataCursorAssert.assertCompliance(() -> {
+            InputStream stream = xml.openStream();
+            return XMLStreamGenericDataCursor.sdmx21(xif.createXMLStreamReader(stream), stream, builder, ObsParser.standard(), Freqs.Parser.sdmx21(0));
+        });
 
-        try (DataCursor o = new XMLStreamGenericDataCursor(xml.openXmlStream(), builder, ObsParser.standard(), FreqParser.sdmx21(0), GenericDataParser.sdmx21())) {
+        try (InputStream stream = xml.openStream();
+                DataCursor o = XMLStreamGenericDataCursor.sdmx21(xif.createXMLStreamReader(stream), stream, builder, ObsParser.standard(), Freqs.Parser.sdmx21(0))) {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesKey()).isEqualTo(Key.of("A", "BEL", "1", "0", "0", "0", "OVGD"));
             assertThat(o.getSeriesFrequency()).isEqualTo(Frequency.ANNUAL);
@@ -119,9 +130,13 @@ public class XMLStreamGenericDataCursorTest {
         ByteSource xml = SdmxSource.ECB_DATA;
         Key.Builder builder = Key.builder("FREQ", "AME_REF_AREA", "AME_TRANSFORMATION", "AME_AGG_METHOD", "AME_UNIT", "AME_REFERENCE", "AME_ITEM");
 
-        DataCursorAssert.assertCompliance(() -> new XMLStreamGenericDataCursor(xml.openXmlStream(), builder, ObsParser.standard(), FreqParser.sdmx21(0), GenericDataParser.sdmx21()));
+        DataCursorAssert.assertCompliance(() -> {
+            InputStream stream = xml.openStream();
+            return XMLStreamGenericDataCursor.sdmx21(xif.createXMLStreamReader(stream), stream, builder, ObsParser.standard(), Freqs.Parser.sdmx21(0));
+        });
 
-        try (DataCursor o = new XMLStreamGenericDataCursor(xml.openXmlStream(), builder, ObsParser.standard(), FreqParser.sdmx21(0), GenericDataParser.sdmx21())) {
+        try (InputStream stream = xml.openStream();
+                DataCursor o = XMLStreamGenericDataCursor.sdmx21(xif.createXMLStreamReader(stream), stream, builder, ObsParser.standard(), Freqs.Parser.sdmx21(0))) {
             int indexSeries = -1;
             while (o.nextSeries()) {
                 switch (++indexSeries) {
@@ -153,4 +168,6 @@ public class XMLStreamGenericDataCursorTest {
             assertThat(indexSeries).isEqualTo(119);
         }
     }
+    
+    private final XMLInputFactory xif = StaxUtil.getInputFactoryWithoutNamespace();
 }

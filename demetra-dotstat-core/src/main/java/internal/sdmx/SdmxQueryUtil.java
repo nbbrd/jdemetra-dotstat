@@ -20,6 +20,7 @@ import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.DataQuery;
 import be.nbb.sdmx.facade.SdmxConnection;
 import com.google.common.collect.ImmutableList;
 import ec.tss.tsproviders.cursor.TsCursor;
@@ -45,6 +46,7 @@ import javax.annotation.Nullable;
 public class SdmxQueryUtil {
 
     public final String NO_LABEL = null;
+    public final OptionalTsData MISSING_DATA = OptionalTsData.absent("No results matching the query");
 
     @Nonnull
     public TsCursor<Key> getAllSeries(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
@@ -61,10 +63,8 @@ public class SdmxQueryUtil {
     }
 
     @Nonnull
-    public OptionalTsData getSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref) throws IOException {
-        try (TsCursor<Key> cursor = request(conn, flowRef, ref, NO_LABEL, false)) {
-            return cursor.nextSeries() ? cursor.getSeriesData() : MISSING_DATA;
-        }
+    public TsCursor<Key> getSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
+        return request(conn, flowRef, ref, labelAttribute, false);
     }
 
     @Nonnull
@@ -80,23 +80,21 @@ public class SdmxQueryUtil {
             }
         }
 
-        return computeAllPossibleChildren(dimensionByIndex(conn.getDataStructure(flowRef)), dimensionPosition);
+        return computeAllPossibleChildren(dimensionByIndex(conn.getStructure(flowRef)), dimensionPosition);
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private final OptionalTsData MISSING_DATA = OptionalTsData.absent("No results matching the query");
-
     private TsCursor<Key> request(SdmxConnection conn, DataflowRef flowRef, Key key, String labelAttribute, boolean seriesKeysOnly) throws IOException {
-        return new SdmxDataAdapter(key, conn.getData(flowRef, key, seriesKeysOnly), labelAttribute);
+        return new SdmxDataAdapter(key, conn.getCursor(flowRef, DataQuery.of(key, seriesKeysOnly)), labelAttribute);
     }
 
     private TsCursor<Key> computeKeys(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
-        List<Key> list = computeAllPossibleSeries(dimensionByIndex(conn.getDataStructure(flowRef)), key);
+        List<Key> list = computeAllPossibleSeries(dimensionByIndex(conn.getStructure(flowRef)), key);
         return TsCursor.from(list.iterator());
     }
 
     private TsCursor<Key> computeKeysAndRequestData(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
-        List<Key> list = computeAllPossibleSeries(dimensionByIndex(conn.getDataStructure(flowRef)), key);
+        List<Key> list = computeAllPossibleSeries(dimensionByIndex(conn.getStructure(flowRef)), key);
         Map<Key, OptionalTsData> dataByKey = dataByKey(conn, flowRef, key);
         return TsCursor.from(list.iterator(), o -> dataByKey.getOrDefault(o, MISSING_DATA));
     }

@@ -4,7 +4,7 @@
 
     <groupId>be.nbb.demetra</groupId>
     <artifactId>demetra-dotstat-core</artifactId>
-    <version>2.2.0</version>
+    <version>2.2.1</version>
     <packaging>jar</packaging>
     
     <name>Demetra - DotStat - Core</name>
@@ -18,7 +18,7 @@
     <licenses>
         <license>
             <name>European Union Public Licence (EUPL)</name>
-            <url>https://joinup.ec.europa.eu/software/page/eupl/licence-eupl</url>
+            <url>https://joinup.ec.europa.eu/page/eupl-text-11-12</url>
         </license>
     </licenses>
 
@@ -73,7 +73,7 @@
         </dependency>
         <dependency>
             <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-connectors</artifactId>
+            <artifactId>sdmx-facade-web</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -115,8 +115,8 @@
             <url>http://bits.netbeans.org/maven2/</url>
         </repository>        
         <repository>
-            <id>joinup-releases</id>
-            <url>https://joinup.ec.europa.eu/nexus/content/repositories/releases/</url>
+            <id>oss-jfrog-artifactory-releases</id>
+            <url>https://oss.jfrog.org/artifactory/oss-release-local</url>
         </repository>
     </repositories>
 </project>

@@ -20,11 +20,8 @@ package be.nbb.sdmx.facade.samples;
  *
  * @author Philippe Charles
  */
-public final class SdmxSource {
-
-    private SdmxSource() {
-        // static class
-    }
+@lombok.experimental.UtilityClass
+public class SdmxSource {
 
     private static ByteSource of(String name) {
         return ByteSource.of(SdmxSource.class, name);

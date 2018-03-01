@@ -19,6 +19,7 @@ package be.nbb.sdmx.facade;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -30,16 +31,19 @@ import javax.annotation.concurrent.NotThreadSafe;
 public interface SdmxConnection extends Closeable {
 
     @Nonnull
-    Set<Dataflow> getDataflows() throws IOException;
+    Set<Dataflow> getFlows() throws IOException;
 
     @Nonnull
-    Dataflow getDataflow(@Nonnull DataflowRef flowRef) throws IOException;
+    Dataflow getFlow(@Nonnull DataflowRef flowRef) throws IOException;
 
     @Nonnull
-    DataStructure getDataStructure(@Nonnull DataflowRef flowRef) throws IOException;
+    DataStructure getStructure(@Nonnull DataflowRef flowRef) throws IOException;
 
     @Nonnull
-    DataCursor getData(@Nonnull DataflowRef flowRef, @Nonnull Key key, boolean serieskeysonly) throws IOException;
+    DataCursor getCursor(@Nonnull DataflowRef flowRef, @Nonnull DataQuery query) throws IOException;
+
+    @Nonnull
+    Stream<Series> getStream(@Nonnull DataflowRef flowRef, @Nonnull DataQuery query) throws IOException;
 
     boolean isSeriesKeysOnlySupported() throws IOException;
 }

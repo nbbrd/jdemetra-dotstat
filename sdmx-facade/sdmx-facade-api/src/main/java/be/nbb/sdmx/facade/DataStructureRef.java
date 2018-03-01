@@ -16,27 +16,55 @@
  */
 package be.nbb.sdmx.facade;
 
+import internal.util.ResourceRefs;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import lombok.AccessLevel;
 
 /**
  * Identifier of a data structure.
  *
  * @author Philippe Charles
  */
-public final class DataStructureRef extends ResourceRef {
+@lombok.Value
+@lombok.AllArgsConstructor(access = AccessLevel.PRIVATE)
+public final class DataStructureRef implements ResourceRef {
 
-    private DataStructureRef(String agencyId, String id, String version) {
-        super(agencyId, id, version);
+    @lombok.NonNull
+    private String agency;
+
+    @lombok.NonNull
+    private String id;
+
+    @lombok.NonNull
+    private String version;
+
+    public boolean containsRef(@Nonnull DataStructure that) {
+        return contains(that.getRef());
+    }
+
+    public boolean contains(@Nonnull DataStructureRef that) {
+        return (this.agency.equals(ALL_AGENCIES) || this.agency.equals(that.agency))
+                && (this.id.equals(that.id))
+                && (this.version.equals(LATEST_VERSION) || this.version.equals(that.version));
+    }
+
+    public boolean equalsRef(@Nonnull DataStructure that) {
+        return equals(that.getRef());
+    }
+
+    @Override
+    public String toString() {
+        return ResourceRefs.toString(this);
     }
 
     @Nonnull
     public static DataStructureRef parse(@Nonnull String input) throws IllegalArgumentException {
-        return ResourceRef.parse(input, DataStructureRef::new);
+        return ResourceRefs.parse(input, DataStructureRef::new);
     }
 
     @Nonnull
-    public static DataStructureRef of(@Nullable String agencyId, @Nonnull String flowId, @Nullable String version) throws IllegalArgumentException {
-        return ResourceRef.of(agencyId, flowId, version, DataStructureRef::new);
+    public static DataStructureRef of(@Nullable String agency, @Nonnull String id, @Nullable String version) throws IllegalArgumentException {
+        return ResourceRefs.of(agency, id, version, DataStructureRef::new);
     }
 }

@@ -16,11 +16,11 @@
  */
 package be.nbb.sdmx.facade.xml.stream;
 
+import be.nbb.util.StaxUtil;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.util.SdmxFix;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,39 +31,19 @@ import javax.xml.stream.XMLStreamReader;
 import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.check;
 import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.nextTags;
 import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.nextTag;
+import static be.nbb.sdmx.facade.xml.Sdmxml.NS_V21_URI;
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.NotThreadSafe;
+import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.check;
+import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.check;
+import static be.nbb.sdmx.facade.xml.stream.XMLStreamUtil.check;
 
 /**
  *
  * @author Philippe Charles
  */
+@NotThreadSafe
 final class XMLStreamStructure21 {
-
-    private final TextBuilder structureLabel;
-    private final TextBuilder label;
-
-    XMLStreamStructure21(LanguagePriorityList languages) {
-        this.structureLabel = new TextBuilder(languages);
-        this.label = new TextBuilder(languages);
-    }
-
-    @Nonnull
-    public List<DataStructure> parse(@Nonnull XMLStreamReader reader) throws XMLStreamException {
-        List<DataStructure> result = new ArrayList<>();
-        while (nextTags(reader, "")) {
-            switch (reader.getLocalName()) {
-                case HEADER_TAG:
-                    parseHeader(reader);
-                    break;
-                case STRUCTURES_TAG:
-                    parseStructures(reader, result);
-                    break;
-            }
-        }
-        return result;
-    }
-
-    private static final String NS_21 = "http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message";
 
     private static final String HEADER_TAG = "Header";
     private static final String STRUCTURES_TAG = "Structures";
@@ -90,9 +70,37 @@ final class XMLStreamStructure21 {
     private static final String VERSION_ATTR = "version";
     private static final String LANG_ATTR = "lang";
 
+    private final TextBuilder structureLabel;
+    private final TextBuilder label;
+
+    XMLStreamStructure21(LanguagePriorityList languages) {
+        this.structureLabel = new TextBuilder(languages);
+        this.label = new TextBuilder(languages);
+    }
+
+    @Nonnull
+    public List<DataStructure> parse(@Nonnull XMLStreamReader reader) throws XMLStreamException {
+        if (StaxUtil.isNotNamespaceAware(reader)) {
+            throw new XMLStreamException("Cannot parse structure");
+        }
+
+        List<DataStructure> result = new ArrayList<>();
+        while (nextTags(reader, "")) {
+            switch (reader.getLocalName()) {
+                case HEADER_TAG:
+                    parseHeader(reader);
+                    break;
+                case STRUCTURES_TAG:
+                    parseStructures(reader, result);
+                    break;
+            }
+        }
+        return result;
+    }
+
     private void parseHeader(XMLStreamReader reader) throws XMLStreamException {
         String ns = reader.getNamespaceURI();
-        check(NS_21.equals(ns), reader, "Invalid namespace '%s'", ns);
+        check(NS_V21_URI.equals(ns), reader, "Invalid namespace '%s'", ns);
     }
 
     private void parseStructures(XMLStreamReader reader, List<DataStructure> structs) throws XMLStreamException {
@@ -244,7 +252,10 @@ final class XMLStreamStructure21 {
             String id = reader.getAttributeValue(null, ID_ATTR);
             check(id != null, reader, "Missing Ref id");
 
-            SdmxFix.codes(dimension, toCodes.apply(id));
+            Map<String, String> codes = toCodes.apply(id);
+            if (codes != null) {
+                dimension.codes(codes);
+            }
         }
     }
 

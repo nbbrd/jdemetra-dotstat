@@ -32,12 +32,12 @@ class XMLStreamUtil {
         HALT, CONTINUE, SUSPEND;
     }
 
-    interface Func {
+    interface TagVisitor {
 
         Status visitTag(boolean start, String localName) throws XMLStreamException;
     }
 
-    static boolean nextWhile(XMLStreamReader reader, Func func) throws XMLStreamException {
+    static boolean nextWhile(XMLStreamReader reader, TagVisitor func) throws XMLStreamException {
         while (reader.hasNext()) {
             int event = reader.next();
             if (event == XMLStreamReader.START_ELEMENT) {
@@ -69,7 +69,7 @@ class XMLStreamUtil {
                 case XMLStreamReader.START_ELEMENT:
                     return true;
                 case XMLStreamReader.END_ELEMENT:
-                    if (tag.equals(reader.getLocalName())) {
+                    if (isTagMatch(reader.getLocalName(), tag)) {
                         return false;
                     }
                     break;
@@ -82,12 +82,12 @@ class XMLStreamUtil {
         while (reader.hasNext()) {
             switch (reader.next()) {
                 case XMLStreamReader.START_ELEMENT:
-                    if (start.equals(reader.getLocalName())) {
+                    if (isTagMatch(reader.getLocalName(), start)) {
                         return true;
                     }
                     break;
                 case XMLStreamReader.END_ELEMENT:
-                    if (end.equals(reader.getLocalName())) {
+                    if (isTagMatch(reader.getLocalName(), end)) {
                         return false;
                     }
                     break;
@@ -106,34 +106,7 @@ class XMLStreamUtil {
         }
     }
 
-    static int toInt(String input, int defaultValue) {
-        if (input != null) {
-            try {
-                return Integer.parseInt(input);
-            } catch (NumberFormatException ex) {
-            }
-        }
-        return defaultValue;
-    }
-
-    static <T> T with(XMLStreamReader reader, ReaderFunc<T> func) throws XMLStreamException {
-        T result;
-        try {
-            result = func.apply(reader);
-        } catch (XMLStreamException ex) {
-            try {
-                reader.close();
-            } catch (XMLStreamException suppressed) {
-                ex.addSuppressed(suppressed);
-            }
-            throw (ex);
-        }
-        reader.close();
-        return result;
-    }
-
-    interface ReaderFunc<T> {
-
-        T apply(XMLStreamReader reader) throws XMLStreamException;
+    static boolean isTagMatch(String localName, String tag) {
+        return localName.endsWith(tag) && (localName.length() == tag.length() || localName.charAt(localName.length() - 1 - tag.length()) == ':');
     }
 }

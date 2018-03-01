@@ -16,18 +16,24 @@
  */
 package internal.sdmx;
 
+import be.nbb.demetra.sdmx.file.SdmxFileBean;
+import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
+import be.nbb.sdmx.facade.file.SdmxFileSet;
 import be.nbb.sdmx.facade.util.UnexpectedIOException;
 import ec.tss.tsproviders.DataSet;
+import ec.tss.tsproviders.HasFilePaths;
 import ec.tss.tsproviders.cube.CubeAccessor;
 import ec.tss.tsproviders.cube.CubeId;
 import ec.tss.tsproviders.utils.IParam;
+import ioutil.IO;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -40,11 +46,46 @@ public class SdmxCubeItems {
     CubeAccessor accessor;
     IParam<DataSet, CubeId> idParam;
 
-    public static List<String> getDefaultDimIds(SdmxConnectionSupplier supplier, LanguagePriorityList languages, String source, DataflowRef flow) throws IOException {
-        try (SdmxConnection conn = supplier.getConnection(source, languages)) {
-            return conn.getDataStructure(flow).getDimensions().stream().map(Dimension::getId).collect(Collectors.toList());
+    public static DataStructure loadStructure(IO.Supplier<SdmxConnection> supplier, DataflowRef flow) throws IOException {
+        try (SdmxConnection conn = supplier.getWithIO()) {
+            return conn.getStructure(flow);
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);
         }
+    }
+
+    public static CubeId getOrLoadRoot(List<String> dimensions, IO.Supplier<DataStructure> structure) throws IOException {
+        return dimensions.isEmpty()
+                ? CubeId.root(loadDefaultDimIds(structure))
+                : CubeId.root(dimensions);
+    }
+
+    public static List<String> loadDefaultDimIds(IO.Supplier<DataStructure> structure) throws IOException {
+        return structure.getWithIO()
+                .getDimensions()
+                .stream()
+                .map(Dimension::getId)
+                .collect(Collectors.toList());
+    }
+
+    public static Optional<SdmxFileSet> tryResolveFileSet(HasFilePaths paths, SdmxFileBean bean) {
+        try {
+            return Optional.of(resolveFileSet(paths, bean));
+        } catch (FileNotFoundException ex) {
+            return Optional.empty();
+        }
+    }
+
+    public static SdmxFileSet resolveFileSet(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {
+        SdmxFileSet.Builder result = SdmxFileSet.builder().data(paths.resolveFilePath(bean.getFile()));
+        File structure = bean.getStructureFile();
+        if (structure != null && !structure.toString().isEmpty()) {
+            result.structure(paths.resolveFilePath(structure));
+        }
+        String dialect = bean.getDialect();
+        if (dialect != null && !dialect.isEmpty()) {
+            result.dialect(dialect);
+        }
+        return result.build();
     }
 }

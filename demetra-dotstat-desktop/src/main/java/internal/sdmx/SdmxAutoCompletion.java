@@ -22,8 +22,9 @@ import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
-import be.nbb.sdmx.facade.driver.SdmxDriverManager;
-import be.nbb.sdmx.facade.driver.WsEntryPoint;
+import be.nbb.sdmx.facade.parser.spi.SdmxDialect;
+import be.nbb.sdmx.facade.web.SdmxWebManager;
+import be.nbb.sdmx.facade.web.SdmxWebEntryPoint;
 import be.nbb.sdmx.facade.util.UnexpectedIOException;
 import com.google.common.base.Strings;
 import ec.util.completion.AutoCompletionSource;
@@ -36,10 +37,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.swing.ListCellRenderer;
 
 /**
@@ -49,17 +52,38 @@ import javax.swing.ListCellRenderer;
 @lombok.experimental.UtilityClass
 public class SdmxAutoCompletion {
 
-    public AutoCompletionSource onEntryPoints(SdmxDriverManager manager) {
+    public AutoCompletionSource onDialects() {
+        return ExtAutoCompletionSource
+                .builder(o -> StreamSupport.stream(ServiceLoader.load(SdmxDialect.class).spliterator(), false).collect(Collectors.toList()))
+                .behavior(AutoCompletionSource.Behavior.SYNC)
+                .postProcessor(SdmxAutoCompletion::filterAndSortDialects)
+                .valueToString(SdmxDialect::getName)
+                .build();
+    }
+
+    private List<SdmxDialect> filterAndSortDialects(List<SdmxDialect> allValues, String term) {
+        Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
+        return allValues.stream()
+                .filter(o -> filter.test(o.getDescription()) || filter.test(o.getName()))
+                .sorted(Comparator.comparing(SdmxDialect::getDescription))
+                .collect(Collectors.toList());
+    }
+
+    public ListCellRenderer getDialectRenderer() {
+        return CustomListCellRenderer.of(SdmxDialect::getName, SdmxDialect::getDescription);
+    }
+    
+    public AutoCompletionSource onEntryPoints(SdmxWebManager manager) {
         return ExtAutoCompletionSource
                 .builder(o -> manager.getEntryPoints())
                 .behavior(AutoCompletionSource.Behavior.SYNC)
                 .postProcessor(SdmxAutoCompletion::filterAndSortEntryPoints)
-                .valueToString(WsEntryPoint::getName)
+                .valueToString(SdmxWebEntryPoint::getName)
                 .build();
     }
 
     public ListCellRenderer getEntryPointsRenderer() {
-        return CustomListCellRenderer.of(WsEntryPoint::getDescription, WsEntryPoint::getName);
+        return CustomListCellRenderer.of(SdmxWebEntryPoint::getDescription, SdmxWebEntryPoint::getName);
     }
 
     public AutoCompletionSource onFlows(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source, ConcurrentMap cache) {
@@ -67,13 +91,13 @@ public class SdmxAutoCompletion {
                 .builder(o -> loadFlows(supplier, languages, source))
                 .behavior(o -> canLoadFlows(source) ? ASYNC : NONE)
                 .postProcessor(SdmxAutoCompletion::filterAndSortFlows)
-                .valueToString(o -> o.getFlowRef().toString())
+                .valueToString(o -> o.getRef().toString())
                 .cache(cache, o -> getFlowCacheKey(source, languages), SYNC)
                 .build();
     }
 
     public ListCellRenderer getFlowsRenderer() {
-        return CustomListCellRenderer.of(Dataflow::getLabel, o -> o.getFlowRef().toString());
+        return CustomListCellRenderer.of(Dataflow::getLabel, o -> o.getRef().toString());
     }
 
     public AutoCompletionSource onDimensions(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache) {
@@ -103,11 +127,11 @@ public class SdmxAutoCompletion {
                 .collect(Collectors.joining(delimiter));
     }
 
-    private List<WsEntryPoint> filterAndSortEntryPoints(List<WsEntryPoint> allValues, String term) {
+    private List<SdmxWebEntryPoint> filterAndSortEntryPoints(List<SdmxWebEntryPoint> allValues, String term) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return allValues.stream()
                 .filter(o -> filter.test(o.getDescription()) || filter.test(o.getUri().toString()))
-                .sorted(Comparator.comparing(WsEntryPoint::getDescription))
+                .sorted(Comparator.comparing(SdmxWebEntryPoint::getDescription))
                 .collect(Collectors.toList());
     }
 
@@ -117,7 +141,7 @@ public class SdmxAutoCompletion {
 
     private List<Dataflow> loadFlows(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source) throws IOException {
         try (SdmxConnection c = supplier.getConnection(source.get(), languages)) {
-            return new ArrayList<>(c.getDataflows());
+            return new ArrayList<>(c.getFlows());
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);
         }
@@ -126,7 +150,7 @@ public class SdmxAutoCompletion {
     private List<Dataflow> filterAndSortFlows(List<Dataflow> values, String term) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return values.stream()
-                .filter(o -> filter.test(o.getLabel()) || filter.test(o.getFlowRef().getId()))
+                .filter(o -> filter.test(o.getLabel()) || filter.test(o.getRef().getId()))
                 .sorted(Comparator.comparing(Dataflow::getLabel))
                 .collect(Collectors.toList());
     }
@@ -141,7 +165,7 @@ public class SdmxAutoCompletion {
 
     private List<Dimension> loadDimensions(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source, Supplier<String> flow) throws IOException {
         try (SdmxConnection c = supplier.getConnection(source.get(), languages)) {
-            return new ArrayList<>(c.getDataStructure(DataflowRef.parse(flow.get())).getDimensions());
+            return new ArrayList<>(c.getStructure(DataflowRef.parse(flow.get())).getDimensions());
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);
         }

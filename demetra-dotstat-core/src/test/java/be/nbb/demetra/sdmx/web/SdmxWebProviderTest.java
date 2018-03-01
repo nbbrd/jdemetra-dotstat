@@ -24,11 +24,11 @@ import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.Frequency;
-import be.nbb.sdmx.facade.driver.SdmxDriverManager;
+import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.repo.SdmxRepository;
-import be.nbb.sdmx.facade.repo.Obs;
-import be.nbb.sdmx.facade.repo.SdmxRepositoryDriver;
-import be.nbb.sdmx.facade.repo.Series;
+import be.nbb.sdmx.facade.Obs;
+import be.nbb.sdmx.facade.repo.SdmxRepositoryManager;
+import be.nbb.sdmx.facade.Series;
 import ec.tss.TsMoniker;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.DataSource;
@@ -110,8 +110,8 @@ public class SdmxWebProviderTest {
         return o.encodeBean(result);
     }
 
-    private static SdmxDriverManager getCustomSupplier() {
-        return SdmxDriverManager.of(SdmxRepositoryDriver.of(getCustomRepo()));
+    private static SdmxConnectionSupplier getCustomSupplier() {
+        return SdmxRepositoryManager.builder().repository(getCustomRepo()).build();
     }
 
     private static SdmxRepository getCustomRepo() {
@@ -127,11 +127,11 @@ public class SdmxWebProviderTest {
 
         return SdmxRepository.builder()
                 .name("world")
-                .dataStructure(conjStruct)
-                .dataflow(conj)
-                .data(conj.getFlowRef(), Series.builder().key(Key.of("BE", "IND")).frequency(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 1)).build())
-                .data(conj.getFlowRef(), Series.builder().key(Key.of("BE", "XXX")).frequency(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 2)).build())
-                .data(conj.getFlowRef(), Series.builder().key(Key.of("FR", "IND")).frequency(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 3)).build())
+                .structure(conjStruct)
+                .flow(conj)
+                .data(conj.getRef(), Series.builder().key(Key.of("BE", "IND")).freq(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 1)).build())
+                .data(conj.getRef(), Series.builder().key(Key.of("BE", "XXX")).freq(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 2)).build())
+                .data(conj.getRef(), Series.builder().key(Key.of("FR", "IND")).freq(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 3)).build())
                 .build();
     }
 

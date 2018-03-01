@@ -16,11 +16,17 @@
  */
 package be.nbb.sdmx.facade.tck;
 
-import internal.io.ConsumerWithIO;
+import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
+import be.nbb.sdmx.facade.DataQuery;
+import be.nbb.sdmx.facade.Obs;
 import be.nbb.sdmx.facade.SdmxConnection;
+import be.nbb.sdmx.facade.Series;
+import ioutil.IO;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import org.assertj.core.api.SoftAssertions;
 
@@ -43,6 +49,11 @@ public final class ConnectionAssert {
     public static void assertCompliance(SoftAssertions s, Callable<SdmxConnection> supplier, DataflowRef ref) throws Exception {
         try (SdmxConnection conn = supplier.call()) {
             assertNonnull(s, conn, ref);
+            DataCursorAssert.assertCompliance(s, () -> conn.getCursor(ref, ALL));
+            s.assertThat(conn.getStream(ref, ALL)).containsExactlyElementsOf(cursorToSeries(ref, ALL, conn));
+            s.assertThat(conn.getFlows()).isNotEmpty().filteredOn(ref::containsRef).isNotEmpty();
+            s.assertThat(conn.getFlow(ref)).isNotNull();
+            s.assertThat(conn.getStructure(ref)).isNotNull();
         }
 
         try (SdmxConnection conn = supplier.call()) {
@@ -51,38 +62,66 @@ public final class ConnectionAssert {
             s.fail("Subsequent calls to #close must not raise exception", ex);
         }
 
-        assertState(s, supplier, o -> o.getData(ref, Key.ALL, false), "getData(DataFlowRef, Key, boolean)");
-        assertState(s, supplier, o -> o.getDataStructure(ref), "getDataStructure(DataFlowRef)");
-        assertState(s, supplier, o -> o.getDataflow(ref), "getDataflow(DataFlowRef)");
-        assertState(s, supplier, SdmxConnection::getDataflows, "getDataflows()");
+        assertState(s, supplier, o -> o.getCursor(ref, ALL), "getCursor(DataflowRef, DataQuery)");
+        assertState(s, supplier, o -> o.getStream(ref, ALL), "getStream(DataflowRef, DataQuery)");
+        assertState(s, supplier, o -> o.getStructure(ref), "getStructure(DataflowRef)");
+        assertState(s, supplier, o -> o.getFlow(ref), "getFlow(DataflowRef)");
+        assertState(s, supplier, SdmxConnection::getFlows, "getFlows()");
     }
 
     @SuppressWarnings("null")
     private static void assertNonnull(SoftAssertions s, SdmxConnection conn, DataflowRef ref) {
-        s.assertThatThrownBy(() -> conn.getData(null, Key.ALL, false))
-                .as("Expecting 'getData(DataFlowRef, Key, boolean)' to raise NPE when called with null flowRef")
+        s.assertThatThrownBy(() -> conn.getCursor(null, ALL))
+                .as("Expecting 'getCursor(DataflowRef, DataQuery)' to raise NPE when called with null flowRef")
                 .isInstanceOf(NullPointerException.class);
 
-        s.assertThatThrownBy(() -> conn.getData(ref, null, false))
-                .as("Expecting 'getData(DataFlowRef, Key, boolean)' to raise NPE when called with null key")
+        s.assertThatThrownBy(() -> conn.getCursor(ref, null))
+                .as("Expecting 'getCursor(DataflowRef, DataQuery)' to raise NPE when called with null query")
                 .isInstanceOf(NullPointerException.class);
 
-        s.assertThatThrownBy(() -> conn.getDataStructure(null))
-                .as("Expecting 'getDataStructure(DataFlowRef)' to raise NPE when called with null flowRef")
+        s.assertThatThrownBy(() -> conn.getStream(null, ALL))
+                .as("Expecting 'getStream(DataflowRef, DataQuery)' to raise NPE when called with null flowRef")
                 .isInstanceOf(NullPointerException.class);
 
-        s.assertThatThrownBy(() -> conn.getDataflow(null))
-                .as("Expecting 'getDataflow(DataFlowRef)' to raise NPE when called with null flowRef")
+        s.assertThatThrownBy(() -> conn.getStream(ref, null))
+                .as("Expecting 'getStream(DataflowRef, DataQuery)' to raise NPE when called with null query")
+                .isInstanceOf(NullPointerException.class);
+
+        s.assertThatThrownBy(() -> conn.getStructure(null))
+                .as("Expecting 'getStructure(DataflowRef)' to raise NPE when called with null flowRef")
+                .isInstanceOf(NullPointerException.class);
+
+        s.assertThatThrownBy(() -> conn.getFlow(null))
+                .as("Expecting 'getFlow(DataflowRef)' to raise NPE when called with null flowRef")
                 .isInstanceOf(NullPointerException.class);
     }
 
-    private static void assertState(SoftAssertions s, Callable<SdmxConnection> supplier, ConsumerWithIO<SdmxConnection> consumer, String expression) throws Exception {
+    private static void assertState(SoftAssertions s, Callable<SdmxConnection> supplier, IO.Consumer<SdmxConnection> consumer, String expression) throws Exception {
         try (SdmxConnection conn = supplier.call()) {
             conn.close();
-            s.assertThatThrownBy(() -> consumer.accept(conn))
+            s.assertThatThrownBy(() -> consumer.acceptWithIO(conn))
                     .as("Expecting '%s' to raise IOException when called after close", expression)
                     .isInstanceOf(IOException.class)
                     .hasMessageContaining("closed");
         }
     }
+
+    private static List<Series> cursorToSeries(DataflowRef ref, DataQuery query, SdmxConnection conn) throws IOException {
+        List<Series> result = new ArrayList();
+        try (DataCursor c = conn.getCursor(ref, query)) {
+            while (c.nextSeries()) {
+                Series.Builder series = Series.builder();
+                series.key(c.getSeriesKey());
+                series.freq(c.getSeriesFrequency());
+                series.meta(c.getSeriesAttributes());
+                while (c.nextObs()) {
+                    series.obs(Obs.of(c.getObsPeriod(), c.getObsValue()));
+                }
+                result.add(series.build());
+            }
+        }
+        return result;
+    }
+
+    private static final DataQuery ALL = DataQuery.of(Key.ALL, false);
 }
