@@ -22,7 +22,6 @@ import be.nbb.demetra.dotstat.SdmxWsAutoCompletionService;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.web.SdmxWebManager;
-import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import ec.nbdemetra.db.DbIcon;
@@ -49,7 +48,6 @@ import java.util.concurrent.ConcurrentMap;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.nodes.Sheet;
 import org.openide.util.ImageUtilities;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 
@@ -68,7 +66,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     }
 
     private static SdmxWebManager createManager() {
-        SdmxWebManager result = SdmxWebManager.of(Lookup.getDefault().lookupAll(SdmxWebDriver.class));
+        SdmxWebManager result = SdmxWebManager.ofServiceLoader();
         result.setCache(GuavaCaches.softValuesCacheAsMap());
         return result;
     }
