@@ -130,7 +130,7 @@ public class SdmxAutoCompletion {
     private List<SdmxWebSource> filterAndSortSources(List<SdmxWebSource> allValues, String term) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return allValues.stream()
-                .filter(o -> filter.test(o.getDescription()) || filter.test(o.getUri().toString()))
+                .filter(o -> filter.test(o.getDescription()) || filter.test(o.getName()))
                 .sorted(Comparator.comparing(SdmxWebSource::getDescription))
                 .collect(Collectors.toList());
     }
