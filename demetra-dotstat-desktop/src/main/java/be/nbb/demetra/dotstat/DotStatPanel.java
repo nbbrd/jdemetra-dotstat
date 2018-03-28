@@ -20,7 +20,7 @@ import be.nbb.demetra.sdmx.web.SdmxWebProvider;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.web.SdmxWebManager;
-import be.nbb.sdmx.facade.web.SdmxWebEntryPoint;
+import be.nbb.sdmx.facade.web.SdmxWebSource;
 import ec.nbdemetra.ui.completion.JAutoCompletionService;
 import ec.nbdemetra.ui.nodes.AbstractNodeBuilder;
 import ec.nbdemetra.ui.properties.NodePropertySetBuilder;
@@ -202,10 +202,10 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         return TsProviders.lookup(SdmxWebProvider.class, SdmxWebProvider.NAME).toJavaUtil();
     }
 
-    private void loadEntryPoints(SdmxConnectionSupplier supplier) {
+    private void loadSources(SdmxConnectionSupplier supplier) {
         if (supplier instanceof SdmxWebManager) {
             AbstractNodeBuilder b = new AbstractNodeBuilder();
-            ((SdmxWebManager) supplier).getEntryPoints().forEach(x -> b.add(new ConfigNode(x)));
+            ((SdmxWebManager) supplier).getSources().forEach(x -> b.add(new ConfigNode(x)));
             em.setRootContext(b.name("hello").build());
         }
     }
@@ -214,7 +214,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         lookupProvider().ifPresent(o -> {
             preferedLangTextBox.setText(o.getLanguages().toString());
             displayCodesCheckBox.setSelected(o.isDisplayCodes());
-            loadEntryPoints(o.getConnectionSupplier());
+            loadSources(o.getConnectionSupplier());
         });
     }
 
@@ -247,7 +247,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
     private static final class ConfigNode extends AbstractNode implements Editable {
 
-        public ConfigNode(SdmxWebEntryPoint o) {
+        public ConfigNode(SdmxWebSource o) {
             super(Children.LEAF, Lookups.singleton(o));
             setDisplayName(o.getName());
             setShortDescription(o.getDescription());
@@ -265,7 +265,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
         @Override
         protected Sheet createSheet() {
-            SdmxWebEntryPoint bean = getLookup().lookup(SdmxWebEntryPoint.class);
+            SdmxWebSource bean = getLookup().lookup(SdmxWebSource.class);
             Sheet result = new Sheet();
             NodePropertySetBuilder b = new NodePropertySetBuilder();
             b.with(String.class)
@@ -297,7 +297,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         @Override
         public void edit() {
             if (new PropertySheetDialogBuilder().title("Edit entry point").icon(getIcon(BeanInfo.ICON_MONO_16x16)).editNode(this)) {
-                setDisplayName(getLookup().lookup(SdmxWebEntryPoint.class).getName());
+                setDisplayName(getLookup().lookup(SdmxWebSource.class).getName());
             }
         }
     }

@@ -34,8 +34,8 @@ public final class SdmxWsAutoCompletionService extends JAutoCompletionService {
 
     public static final String PATH = "JAutoCompletionService/SdmxWs";
 
-    private final AutoCompletionSource source = SdmxAutoCompletion.onEntryPoints(SdmxWebProviderBuddy.getDefaultManager());
-    private final ListCellRenderer renderer = SdmxAutoCompletion.getEntryPointsRenderer();
+    private final AutoCompletionSource source = SdmxAutoCompletion.onSources(SdmxWebProviderBuddy.getDefaultManager());
+    private final ListCellRenderer renderer = SdmxAutoCompletion.getSourceRenderer();
 
     @Override
     public JAutoCompletion bind(JTextComponent textComponent) {

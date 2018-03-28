@@ -24,7 +24,7 @@ import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.parser.spi.SdmxDialect;
 import be.nbb.sdmx.facade.web.SdmxWebManager;
-import be.nbb.sdmx.facade.web.SdmxWebEntryPoint;
+import be.nbb.sdmx.facade.web.SdmxWebSource;
 import be.nbb.sdmx.facade.util.UnexpectedIOException;
 import com.google.common.base.Strings;
 import ec.util.completion.AutoCompletionSource;
@@ -73,17 +73,17 @@ public class SdmxAutoCompletion {
         return CustomListCellRenderer.of(SdmxDialect::getName, SdmxDialect::getDescription);
     }
     
-    public AutoCompletionSource onEntryPoints(SdmxWebManager manager) {
+    public AutoCompletionSource onSources(SdmxWebManager manager) {
         return ExtAutoCompletionSource
-                .builder(o -> manager.getEntryPoints())
+                .builder(o -> manager.getSources())
                 .behavior(AutoCompletionSource.Behavior.SYNC)
-                .postProcessor(SdmxAutoCompletion::filterAndSortEntryPoints)
-                .valueToString(SdmxWebEntryPoint::getName)
+                .postProcessor(SdmxAutoCompletion::filterAndSortSources)
+                .valueToString(SdmxWebSource::getName)
                 .build();
     }
 
-    public ListCellRenderer getEntryPointsRenderer() {
-        return CustomListCellRenderer.of(SdmxWebEntryPoint::getDescription, SdmxWebEntryPoint::getName);
+    public ListCellRenderer getSourceRenderer() {
+        return CustomListCellRenderer.of(SdmxWebSource::getDescription, SdmxWebSource::getName);
     }
 
     public AutoCompletionSource onFlows(SdmxConnectionSupplier supplier, LanguagePriorityList languages, Supplier<String> source, ConcurrentMap cache) {
@@ -127,11 +127,11 @@ public class SdmxAutoCompletion {
                 .collect(Collectors.joining(delimiter));
     }
 
-    private List<SdmxWebEntryPoint> filterAndSortEntryPoints(List<SdmxWebEntryPoint> allValues, String term) {
+    private List<SdmxWebSource> filterAndSortSources(List<SdmxWebSource> allValues, String term) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return allValues.stream()
                 .filter(o -> filter.test(o.getDescription()) || filter.test(o.getUri().toString()))
-                .sorted(Comparator.comparing(SdmxWebEntryPoint::getDescription))
+                .sorted(Comparator.comparing(SdmxWebSource::getDescription))
                 .collect(Collectors.toList());
     }
 
