@@ -18,7 +18,6 @@ package be.nbb.demetra.dotstat;
 
 import be.nbb.demetra.sdmx.web.SdmxWebProvider;
 import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.web.SdmxWebManager;
 import be.nbb.sdmx.facade.web.SdmxWebSource;
 import ec.nbdemetra.ui.completion.JAutoCompletionService;
@@ -42,6 +41,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
+import be.nbb.sdmx.facade.SdmxManager;
 
 final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
 
@@ -202,26 +202,26 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         return TsProviders.lookup(SdmxWebProvider.class, SdmxWebProvider.NAME).toJavaUtil();
     }
 
-    private void loadSources(SdmxConnectionSupplier supplier) {
-        if (supplier instanceof SdmxWebManager) {
+    private void loadSources(SdmxManager manager) {
+        if (manager instanceof SdmxWebManager) {
             AbstractNodeBuilder b = new AbstractNodeBuilder();
-            ((SdmxWebManager) supplier).getSources().forEach(x -> b.add(new ConfigNode(x)));
+            ((SdmxWebManager) manager).getSources().forEach(x -> b.add(new ConfigNode(x)));
             em.setRootContext(b.name("hello").build());
         }
     }
 
     void load() {
         lookupProvider().ifPresent(o -> {
-            preferedLangTextBox.setText(o.getLanguages().toString());
+            preferedLangTextBox.setText(o.getSdmxManager().getLanguages().toString());
             displayCodesCheckBox.setSelected(o.isDisplayCodes());
-            loadSources(o.getConnectionSupplier());
+            loadSources(o.getSdmxManager());
         });
     }
 
     void store() {
         lookupProvider().ifPresent(o -> {
             try {
-                o.setLanguages(LanguagePriorityList.parse(preferedLangTextBox.getText()));
+                o.getSdmxManager().setLanguages(LanguagePriorityList.parse(preferedLangTextBox.getText()));
             } catch (IllegalArgumentException ex) {
             }
             o.setDisplayCodes(displayCodesCheckBox.isSelected());

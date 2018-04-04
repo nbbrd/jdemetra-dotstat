@@ -16,11 +16,10 @@
  */
 package be.nbb.demetra.sdmx;
 
-import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
+import be.nbb.sdmx.facade.SdmxManager;
 
 /**
  *
@@ -30,12 +29,7 @@ import javax.annotation.concurrent.ThreadSafe;
 public interface HasSdmxProperties {
 
     @Nonnull
-    SdmxConnectionSupplier getConnectionSupplier();
+    SdmxManager getSdmxManager();
 
-    void setConnectionSupplier(@Nullable SdmxConnectionSupplier connectionSupplier);
-
-    @Nonnull
-    LanguagePriorityList getLanguages();
-
-    void setLanguages(@Nullable LanguagePriorityList languages);
+    void setSdmxManager(@Nullable SdmxManager manager);
 }
