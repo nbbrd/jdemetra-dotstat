@@ -17,8 +17,8 @@
 package be.nbb.sdmx.facade.web.spi;
 
 import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.web.SdmxWebEntryPoint;
+import be.nbb.sdmx.facade.web.SdmxWebConnection;
+import be.nbb.sdmx.facade.web.SdmxWebSource;
 import java.io.IOException;
 import java.util.Collection;
 import javax.annotation.Nonnull;
@@ -32,10 +32,18 @@ import javax.annotation.concurrent.ThreadSafe;
 public interface SdmxWebDriver {
 
     @Nonnull
-    SdmxConnection connect(@Nonnull SdmxWebEntryPoint entryPoint, @Nonnull LanguagePriorityList languages) throws IOException;
-
-    boolean accepts(@Nonnull SdmxWebEntryPoint entryPoint) throws IOException;
+    String getName();
 
     @Nonnull
-    Collection<SdmxWebEntryPoint> getDefaultEntryPoints();
+    SdmxWebConnection connect(
+            @Nonnull SdmxWebSource source,
+            @Nonnull LanguagePriorityList languages,
+            @Nonnull SdmxWebContext context
+    ) throws IOException, IllegalArgumentException;
+
+    @Nonnull
+    Collection<SdmxWebSource> getDefaultSources();
+
+    @Nonnull
+    Collection<String> getSupportedProperties();
 }

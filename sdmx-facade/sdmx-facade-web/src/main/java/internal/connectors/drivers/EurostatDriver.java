@@ -21,7 +21,7 @@ import it.bancaditalia.oss.sdmx.client.custom.EUROSTAT;
 import org.openide.util.lookup.ServiceProvider;
 import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import internal.connectors.ConnectorRestClient;
-import internal.web.RestDriverSupport;
+import internal.web.SdmxWebDriverSupport;
 
 /**
  *
@@ -31,10 +31,11 @@ import internal.web.RestDriverSupport;
 public final class EurostatDriver implements SdmxWebDriver, HasCache {
 
     @lombok.experimental.Delegate
-    private final RestDriverSupport support = RestDriverSupport
+    private final SdmxWebDriverSupport support = SdmxWebDriverSupport
             .builder()
-            .prefix("sdmx:eurostat:")
+            .name("eurostat@connectors")
             .client(ConnectorRestClient.of(EUROSTAT::new))
-            .entry("EUROSTAT", "Eurostat", "http://ec.europa.eu/eurostat/SDMX/diss-web/rest")
+            .supportedProperties(ConnectorRestClient.CONNECTION_PROPERTIES)
+            .sourceOf("EUROSTAT", "Eurostat", "http://ec.europa.eu/eurostat/SDMX/diss-web/rest")
             .build();
 }

@@ -20,8 +20,6 @@ import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.SdmxConnection;
 import com.google.common.base.Converter;
 import com.google.common.collect.ImmutableList;
@@ -35,6 +33,7 @@ import internal.sdmx.SdmxQueryUtil;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import be.nbb.sdmx.facade.SdmxManager;
 
 /**
  *
@@ -43,13 +42,11 @@ import java.util.Map;
 @Deprecated
 final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
 
-    private final SdmxConnectionSupplier supplier;
-    private final LanguagePriorityList languages;
+    private final SdmxManager manager;
 
-    DotStatAccessor(DotStatBean dbBean, SdmxConnectionSupplier supplier, LanguagePriorityList languages) {
+    DotStatAccessor(DotStatBean dbBean, SdmxManager manager) {
         super(dbBean);
-        this.supplier = supplier;
-        this.languages = languages;
+        this.manager = manager;
     }
 
     @Override
@@ -68,28 +65,28 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
 
     @Override
     protected List<DbSetId> getAllSeries(DbSetId ref) throws Exception {
-        try (SdmxConnection conn = supplier.getConnection(dbBean.getDbName(), languages)) {
+        try (SdmxConnection conn = manager.getConnection(dbBean.getDbName())) {
             return getAllSeries(conn, dbBean.getFlowRef(), ref);
         }
     }
 
     @Override
     protected List<DbSeries> getAllSeriesWithData(DbSetId ref) throws Exception {
-        try (SdmxConnection conn = supplier.getConnection(dbBean.getDbName(), languages)) {
+        try (SdmxConnection conn = manager.getConnection(dbBean.getDbName())) {
             return getAllSeriesWithData(conn, dbBean.getFlowRef(), ref);
         }
     }
 
     @Override
     protected DbSeries getSeriesWithData(DbSetId ref) throws Exception {
-        try (SdmxConnection conn = supplier.getConnection(dbBean.getDbName(), languages)) {
+        try (SdmxConnection conn = manager.getConnection(dbBean.getDbName())) {
             return getSeriesWithData(conn, dbBean.getFlowRef(), ref);
         }
     }
 
     @Override
     protected List<String> getChildren(DbSetId ref) throws Exception {
-        try (SdmxConnection conn = supplier.getConnection(dbBean.getDbName(), languages)) {
+        try (SdmxConnection conn = manager.getConnection(dbBean.getDbName())) {
             return getChildren(conn, dbBean.getFlowRef(), ref);
         }
     }

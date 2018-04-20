@@ -20,9 +20,7 @@ import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.DataQuery;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.Series;
 import be.nbb.sdmx.facade.repo.SdmxRepositoryManager;
 import com.google.common.base.Joiner;
@@ -41,6 +39,7 @@ import org.junit.Test;
 import test.samples.FacadeResource;
 import static test.samples.FacadeResource.ECB_FLOW_REF;
 import static test.samples.FacadeResource.NBB_FLOW_REF;
+import be.nbb.sdmx.facade.SdmxManager;
 
 /**
  *
@@ -48,11 +47,11 @@ import static test.samples.FacadeResource.NBB_FLOW_REF;
  */
 public class DotStatAccessorTest {
 
-    private static SdmxConnectionSupplier supplier;
+    private static SdmxManager manager;
 
     @BeforeClass
     public static void beforeClass() throws IOException {
-        supplier = SdmxRepositoryManager.builder()
+        manager = SdmxRepositoryManager.builder()
                 .repository(FacadeResource.nbb())
                 .repository(FacadeResource.ecb())
                 .build();
@@ -88,7 +87,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKey() throws Exception {
-        DataStructure dfs = supplier.getConnection("NBB").getStructure(NBB_FLOW_REF);
+        DataStructure dfs = manager.getConnection("NBB").getStructure(NBB_FLOW_REF);
         Map<String, Dimension> dimById = DotStatAccessor.dimensionById(dfs);
 
         // default ordering of dimensions
@@ -108,14 +107,14 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKeyFromTs() throws Exception {
-        assertThat(supplier.getConnection("NBB")
+        assertThat(manager.getConnection("NBB")
                 .getStream(NBB_FLOW_REF, DataQuery.of(Key.ALL, true))
                 .map(Series::getKey)).contains(Key.parse("LOCSTL04.AUS.M"));
     }
 
     @Test
     public void testGetAllSeries20() throws Exception {
-        DbAccessor<?> accessor = new DotStatAccessor(nbbBean(), supplier, LanguagePriorityList.ANY);
+        DbAccessor<?> accessor = new DotStatAccessor(nbbBean(), manager);
 
         DbSetId single = nbbRoot().child("LOCSTL04", "AUS", "M");
 
@@ -126,7 +125,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetAllSeriesWithData20() throws Exception {
-        DbAccessor<?> accessor = new DotStatAccessor(nbbBean(), supplier, LanguagePriorityList.ANY);
+        DbAccessor<?> accessor = new DotStatAccessor(nbbBean(), manager);
 
         DbSetId single = nbbRoot().child("LOCSTL04", "AUS", "M");
         Consumer<DbSeries> singleCheck = o -> {
@@ -141,7 +140,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetSeriesWithData20() throws Exception {
-        DbAccessor<?> accessor = new DotStatAccessor(nbbBean(), supplier, LanguagePriorityList.ANY);
+        DbAccessor<?> accessor = new DotStatAccessor(nbbBean(), manager);
 
         DbSeries series = accessor.getSeriesWithData("LOCSTL04", "AUS", "M");
         assertThat(series.getId()).isEqualTo(nbbRoot().child("LOCSTL04", "AUS", "M"));
@@ -158,7 +157,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetChildren20() throws Exception {
-        DbAccessor<?> accessor = new DotStatAccessor(nbbBean(), supplier, LanguagePriorityList.ANY);
+        DbAccessor<?> accessor = new DotStatAccessor(nbbBean(), manager);
 
         assertThat(accessor.getChildren()).containsExactly("LOCSTL04");
         assertThat(accessor.getChildren("LOCSTL04")).containsExactly("AUS");
@@ -167,7 +166,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetAllSeries21() throws Exception {
-        DbAccessor<?> accessor = new DotStatAccessor(ecbBean(), supplier, LanguagePriorityList.ANY);
+        DbAccessor<?> accessor = new DotStatAccessor(ecbBean(), manager);
 
         DbSetId root = ecbRoot();
 
@@ -190,7 +189,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetAllSeriesWithData21() throws Exception {
-        DbAccessor<?> accessor = new DotStatAccessor(ecbBean(), supplier, LanguagePriorityList.ANY);
+        DbAccessor<?> accessor = new DotStatAccessor(ecbBean(), manager);
 
         DbSetId item = ecbRoot().child("A", "DEU", "1", "0", "319", "0", "UBLGE");
 
@@ -209,7 +208,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetSeriesWithData21() throws Exception {
-        DbAccessor<?> accessor = new DotStatAccessor(ecbBean(), supplier, LanguagePriorityList.ANY);
+        DbAccessor<?> accessor = new DotStatAccessor(ecbBean(), manager);
 
         DbSeries series = accessor.getSeriesWithData("A", "DEU", "1", "0", "319", "0", "UBLGE");
         assertThat(series.getId()).isEqualTo(ecbRoot().child("A", "DEU", "1", "0", "319", "0", "UBLGE"));
@@ -225,7 +224,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetChildren21() throws Exception {
-        DbAccessor<?> accessor = new DotStatAccessor(ecbBean(), supplier, LanguagePriorityList.ANY);
+        DbAccessor<?> accessor = new DotStatAccessor(ecbBean(), manager);
 
         assertThat(accessor.getChildren())
                 .hasSize(1)

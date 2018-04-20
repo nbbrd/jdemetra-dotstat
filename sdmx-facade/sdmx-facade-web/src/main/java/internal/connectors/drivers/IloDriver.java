@@ -23,7 +23,7 @@ import org.openide.util.lookup.ServiceProvider;
 import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import internal.connectors.ConnectorRestClient;
 import internal.connectors.HasSeriesKeysOnlySupported;
-import internal.web.RestDriverSupport;
+import internal.web.SdmxWebDriverSupport;
 import it.bancaditalia.oss.sdmx.api.Dataflow;
 import it.bancaditalia.oss.sdmx.exceptions.SdmxException;
 import it.bancaditalia.oss.sdmx.parser.v20.DataflowParser;
@@ -44,15 +44,16 @@ import java.util.stream.Collectors;
 public final class IloDriver implements SdmxWebDriver, HasCache {
 
     @lombok.experimental.Delegate
-    private final RestDriverSupport support = RestDriverSupport
+    private final SdmxWebDriverSupport support = SdmxWebDriverSupport
             .builder()
-            .prefix("sdmx:ilo:")
+            .name("ilo@connectors")
             .client(ConnectorRestClient.of(ILO2::new))
-            .entry("ILO", "International Labour Office", URL)
+            .supportedProperties(ConnectorRestClient.CONNECTION_PROPERTIES)
+            .sourceOf("ILO", "International Labour Office", FALLBACK_URL)
             .build();
 
     @SdmxFix(id = "ILO#1", cause = "Fallback to http due to servers redirecting to http")
-    private static final String URL = "http://www.ilo.org/ilostat/sdmx/ws/rest";
+    private static final String FALLBACK_URL = "http://www.ilo.org/ilostat/sdmx/ws/rest";
 
     private static final class ILO2 extends ILO implements HasSeriesKeysOnlySupported {
 

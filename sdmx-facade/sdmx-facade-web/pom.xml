@@ -5,7 +5,7 @@
     <parent>
         <groupId>be.nbb.sdmx</groupId>
         <artifactId>sdmx-facade-parent</artifactId>
-        <version>2.2.1</version>
+        <version>2.2.2</version>
     </parent>
 
     <artifactId>sdmx-facade-web</artifactId>
@@ -13,7 +13,7 @@
     
     <properties>
         <!-- dependencies -->
-        <sdmx-connectors.version>5401d5ee08</sdmx-connectors.version>
+        <sdmx-connectors.version>9244dfa854</sdmx-connectors.version>
         <netbeans.version>RELEASE802</netbeans.version>
     </properties>
 
@@ -89,24 +89,5 @@
             <artifactId>sdmx-facade-samples</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-java</artifactId>
-            <scope>test</scope>
-            <version>2.44.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.opera</groupId>
-            <artifactId>operadriver</artifactId>
-            <scope>test</scope>
-            <version>1.5</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.seleniumhq.selenium</groupId>
-                    <artifactId>selenium-remote-driver</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
     </dependencies>
-    <name>sdmx-facade-web</name>
 </project>

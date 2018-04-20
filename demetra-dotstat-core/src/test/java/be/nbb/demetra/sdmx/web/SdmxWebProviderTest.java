@@ -24,7 +24,6 @@ import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.Frequency;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.repo.SdmxRepository;
 import be.nbb.sdmx.facade.Obs;
 import be.nbb.sdmx.facade.repo.SdmxRepositoryManager;
@@ -44,6 +43,7 @@ import org.junit.Test;
 import static ec.tss.tsproviders.Assertions.assertThat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import be.nbb.sdmx.facade.SdmxManager;
 
 /**
  *
@@ -92,13 +92,13 @@ public class SdmxWebProviderTest {
 
     private static SdmxWebProvider getProvider() {
         SdmxWebProvider result = new SdmxWebProvider();
-        result.setConnectionSupplier(getCustomSupplier());
+        result.setSdmxManager(getCustomManager());
         return result;
     }
 
     private static DotStatProvider getPreviousProvider() {
         DotStatProvider result = new DotStatProvider();
-        result.setConnectionSupplier(getCustomSupplier());
+        result.setSdmxManager(getCustomManager());
         return result;
     }
 
@@ -110,7 +110,7 @@ public class SdmxWebProviderTest {
         return o.encodeBean(result);
     }
 
-    private static SdmxConnectionSupplier getCustomSupplier() {
+    private static SdmxManager getCustomManager() {
         return SdmxRepositoryManager.builder().repository(getCustomRepo()).build();
     }
 

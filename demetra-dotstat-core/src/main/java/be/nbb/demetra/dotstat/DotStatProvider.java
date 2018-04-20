@@ -56,13 +56,13 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
 
     public DotStatProvider() {
         super(LoggerFactory.getLogger(DotStatProvider.class), NAME, TsAsyncMode.Once);
-        this.properties = SdmxPropertiesSupport.of(SdmxWebManager::ofServiceLoader, this::clearCache, () -> LanguagePriorityList.ANY, this::clearCache);
+        this.properties = SdmxPropertiesSupport.of(SdmxWebManager::ofServiceLoader, this::clearCache);
         this.displayCodes = false;
     }
 
     @Override
     protected DbAccessor<DotStatBean> loadFromBean(DotStatBean bean) throws Exception {
-        return new DotStatAccessor(bean, getConnectionSupplier(), getLanguages()).memoize();
+        return new DotStatAccessor(bean, getSdmxManager()).memoize();
     }
 
     @Override
@@ -139,12 +139,12 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
 
     @Nonnull
     public String getPreferredLanguage() {
-        return getLanguages().toString();
+        return getSdmxManager().getLanguages().toString();
     }
 
     public void setPreferredLanguage(@Nullable String lang) {
         try {
-            setLanguages(lang != null ? LanguagePriorityList.parse(lang) : null);
+            getSdmxManager().setLanguages(lang != null ? LanguagePriorityList.parse(lang) : null);
         } catch (IllegalArgumentException ex) {
         }
     }
@@ -158,7 +158,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     }
 
     private SdmxConnection connect(String name) throws IOException {
-        return getConnectionSupplier().getConnection(name, getLanguages());
+        return getSdmxManager().getConnection(name);
     }
 
     @Nullable

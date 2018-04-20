@@ -16,13 +16,13 @@
  */
 package be.nbb.sdmx.facade.web;
 
+import be.nbb.sdmx.facade.web.spi.SdmxWebContext;
 import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.util.HasCache;
 import be.nbb.sdmx.facade.util.UnexpectedIOException;
 import java.io.IOException;
+import java.net.ProxySelector;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,18 +32,25 @@ import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
 import lombok.AccessLevel;
+import be.nbb.sdmx.facade.SdmxManager;
 
 /**
  *
  * @author Philippe Charles
  */
-@lombok.AllArgsConstructor(access = AccessLevel.PRIVATE)
+@lombok.RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @lombok.extern.java.Log
-public final class SdmxWebManager implements SdmxConnectionSupplier, HasCache {
+public final class SdmxWebManager implements SdmxManager, HasCache {
 
     @Nonnull
     public static SdmxWebManager ofServiceLoader() {
@@ -60,46 +67,55 @@ public final class SdmxWebManager implements SdmxConnectionSupplier, HasCache {
         List<SdmxWebDriver> driverList = new ArrayList<>();
         drivers.forEach(driverList::add);
 
-        ConcurrentMap<String, SdmxWebEntryPoint> entryPointByName = new ConcurrentHashMap<>();
-        updateEntryPointMap(entryPointByName, driverList.stream().flatMap(o -> tryGetDefaultEntryPoints(o).stream()));
+        ConcurrentMap<String, SdmxWebSource> sourceByName = new ConcurrentHashMap<>();
+        updateSourceMap(sourceByName, driverList.stream().flatMap(o -> tryGetDefaultSources(o)));
 
         HasCache cacheSupport = HasCache.of(ConcurrentHashMap::new, (o, n) -> applyCache(n, driverList));
 
-        return new SdmxWebManager(driverList, entryPointByName, cacheSupport);
+        return new SdmxWebManager(
+                new AtomicReference<>(LanguagePriorityList.ANY),
+                new AtomicReference<>(SdmxWebContext.builder().build()),
+                driverList, sourceByName, cacheSupport);
     }
 
+    private final AtomicReference<LanguagePriorityList> languages;
+    private final AtomicReference<SdmxWebContext> context;
     private final List<SdmxWebDriver> drivers;
-    private final ConcurrentMap<String, SdmxWebEntryPoint> entryPointByName;
+    private final ConcurrentMap<String, SdmxWebSource> sourceByName;
     private final HasCache cacheSupport;
 
     @Override
-    public SdmxConnection getConnection(String name, LanguagePriorityList languages) throws IOException {
+    public SdmxWebConnection getConnection(String name) throws IOException {
         Objects.requireNonNull(name);
-        Objects.requireNonNull(languages);
 
-        SdmxWebEntryPoint entryPoint = entryPointByName.get(name);
-        if (entryPoint == null) {
+        SdmxWebSource source = sourceByName.get(name);
+        if (source == null) {
             throw new IOException("Cannot find entry point for '" + name + "'");
         }
-        return getConnection(entryPoint, languages);
+        return getConnection(source);
     }
 
     @Nonnull
-    public SdmxConnection getConnection(@Nonnull SdmxWebEntryPoint entryPoint) throws IOException {
-        return getConnection(entryPoint, LanguagePriorityList.ANY);
+    public SdmxWebConnection getConnection(@Nonnull SdmxWebSource source) throws IOException {
+        Objects.requireNonNull(source);
+
+        SdmxWebDriver driver = drivers
+                .stream()
+                .filter(o -> source.getDriver().equals(o.getName()))
+                .findFirst()
+                .orElseThrow(() -> new IOException("Failed to find a suitable driver for '" + source + "'"));
+
+        return tryConnect(driver, source, languages.get(), context.get());
     }
 
-    @Nonnull
-    public SdmxConnection getConnection(@Nonnull SdmxWebEntryPoint entryPoint, @Nonnull LanguagePriorityList languages) throws IOException {
-        Objects.requireNonNull(entryPoint);
-        Objects.requireNonNull(languages);
+    @Override
+    public LanguagePriorityList getLanguages() {
+        return languages.get();
+    }
 
-        for (SdmxWebDriver o : drivers) {
-            if (tryAccepts(o, entryPoint)) {
-                return tryConnect(o, entryPoint, languages);
-            }
-        }
-        throw new IOException("Failed to find a suitable driver for '" + entryPoint + "'");
+    @Override
+    public void setLanguages(LanguagePriorityList languages) {
+        this.languages.set(languages != null ? languages : LanguagePriorityList.ANY);
     }
 
     @Override
@@ -113,12 +129,61 @@ public final class SdmxWebManager implements SdmxConnectionSupplier, HasCache {
     }
 
     @Nonnull
-    public List<SdmxWebEntryPoint> getEntryPoints() {
-        return new ArrayList<>(entryPointByName.values());
+    public ProxySelector getProxySelector() {
+        return context.get().getProxySelector();
     }
 
-    public void setEntryPoints(@Nonnull List<SdmxWebEntryPoint> list) {
-        updateEntryPointMap(entryPointByName, list.stream());
+    public void setProxySelector(@Nullable ProxySelector proxySelector) {
+        ProxySelector newObj = proxySelector != null ? proxySelector : getDefaultProxySelector();
+        context.set(context.get().toBuilder().proxySelector(newObj).build());
+    }
+
+    @Nonnull
+    public SSLSocketFactory getSSLSocketFactory() {
+        return context.get().getSslSocketFactory();
+    }
+
+    public void setSSLSocketFactory(@Nullable SSLSocketFactory sslSocketFactory) {
+        SSLSocketFactory newObj = sslSocketFactory != null ? sslSocketFactory : getDefaultSSLSocketFactory();
+        context.set(context.get().toBuilder().sslSocketFactory(newObj).build());
+    }
+
+    @Nonnull
+    public Logger getLogger() {
+        return context.get().getLogger();
+    }
+
+    public void setLogger(@Nullable Logger logger) {
+        Logger newObj = logger != null ? logger : getDefaultLogger();
+        context.set(context.get().toBuilder().logger(newObj).build());
+    }
+
+    @Nonnull
+    public List<SdmxWebSource> getSources() {
+        return new ArrayList<>(sourceByName.values());
+    }
+
+    public void setSources(@Nonnull List<SdmxWebSource> list) {
+        updateSourceMap(sourceByName, list.stream());
+    }
+
+    @Nonnull
+    public List<String> getDrivers() {
+        return drivers
+                .stream()
+                .map(SdmxWebDriver::getName)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    @Nonnull
+    public Collection<String> getSupportedProperties(@Nonnull String driver) {
+        return drivers
+                .stream()
+                .filter(o -> driver.equals(o.getName()))
+                .map(SdmxWebDriver::getSupportedProperties)
+                .findFirst()
+                .orElse(Collections.emptyList());
     }
 
     private static void applyCache(ConcurrentMap cache, List<SdmxWebDriver> drivers) {
@@ -127,26 +192,17 @@ public final class SdmxWebManager implements SdmxConnectionSupplier, HasCache {
                 .forEach(o -> ((HasCache) o).setCache(cache));
     }
 
-    private static void updateEntryPointMap(ConcurrentMap<String, SdmxWebEntryPoint> entryPointByName, Stream<SdmxWebEntryPoint> list) {
-        entryPointByName.clear();
-        list.forEach(o -> entryPointByName.put(o.getName(), o));
-    }
-
-    private static boolean tryAccepts(SdmxWebDriver driver, SdmxWebEntryPoint entryPoint) throws IOException {
-        try {
-            return driver.accepts(entryPoint);
-        } catch (RuntimeException ex) {
-            log.log(Level.WARNING, "Unexpected exception while parsing URI", ex);
-            return false;
-        }
+    private static void updateSourceMap(ConcurrentMap<String, SdmxWebSource> sourceByName, Stream<SdmxWebSource> list) {
+        sourceByName.clear();
+        list.forEach(o -> sourceByName.put(o.getName(), o));
     }
 
     @SuppressWarnings("null")
-    private static SdmxConnection tryConnect(SdmxWebDriver driver, SdmxWebEntryPoint entryPoint, LanguagePriorityList languages) throws IOException {
-        SdmxConnection result;
+    private static SdmxWebConnection tryConnect(SdmxWebDriver driver, SdmxWebSource s, LanguagePriorityList l, SdmxWebContext c) throws IOException {
+        SdmxWebConnection result;
 
         try {
-            result = driver.connect(entryPoint, languages);
+            result = driver.connect(s, l, c);
         } catch (RuntimeException ex) {
             log.log(Level.WARNING, "Unexpected exception while connecting", ex);
             throw new UnexpectedIOException(ex);
@@ -161,21 +217,35 @@ public final class SdmxWebManager implements SdmxConnectionSupplier, HasCache {
     }
 
     @SuppressWarnings("null")
-    private static Collection<SdmxWebEntryPoint> tryGetDefaultEntryPoints(SdmxWebDriver driver) {
-        Collection<SdmxWebEntryPoint> result;
+    private static Stream<SdmxWebSource> tryGetDefaultSources(SdmxWebDriver driver) {
+        Collection<SdmxWebSource> result;
 
         try {
-            result = driver.getDefaultEntryPoints();
+            result = driver.getDefaultSources();
         } catch (RuntimeException ex) {
             log.log(Level.WARNING, "Unexpected exception while getting default entry points", ex);
-            return Collections.emptyList();
+            return Stream.empty();
         }
 
         if (result == null) {
             log.log(Level.WARNING, "Unexpected null list");
-            return Collections.emptyList();
+            return Stream.empty();
         }
 
-        return result;
+        return result
+                .stream()
+                .filter(o -> o.getDriver().equals(driver.getName()));
+    }
+
+    private static ProxySelector getDefaultProxySelector() {
+        return ProxySelector.getDefault();
+    }
+
+    private static SSLSocketFactory getDefaultSSLSocketFactory() {
+        return HttpsURLConnection.getDefaultSSLSocketFactory();
+    }
+
+    private static Logger getDefaultLogger() {
+        return Logger.getLogger(SdmxWebManager.class.getName());
     }
 }

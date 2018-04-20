@@ -18,9 +18,8 @@ package be.nbb.demetra.dotstat;
 
 import be.nbb.demetra.sdmx.web.SdmxWebProvider;
 import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.web.SdmxWebManager;
-import be.nbb.sdmx.facade.web.SdmxWebEntryPoint;
+import be.nbb.sdmx.facade.web.SdmxWebSource;
 import ec.nbdemetra.ui.completion.JAutoCompletionService;
 import ec.nbdemetra.ui.nodes.AbstractNodeBuilder;
 import ec.nbdemetra.ui.properties.NodePropertySetBuilder;
@@ -42,6 +41,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
+import be.nbb.sdmx.facade.SdmxManager;
 
 final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
 
@@ -202,26 +202,26 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         return TsProviders.lookup(SdmxWebProvider.class, SdmxWebProvider.NAME).toJavaUtil();
     }
 
-    private void loadEntryPoints(SdmxConnectionSupplier supplier) {
-        if (supplier instanceof SdmxWebManager) {
+    private void loadSources(SdmxManager manager) {
+        if (manager instanceof SdmxWebManager) {
             AbstractNodeBuilder b = new AbstractNodeBuilder();
-            ((SdmxWebManager) supplier).getEntryPoints().forEach(x -> b.add(new ConfigNode(x)));
+            ((SdmxWebManager) manager).getSources().forEach(x -> b.add(new ConfigNode(x)));
             em.setRootContext(b.name("hello").build());
         }
     }
 
     void load() {
         lookupProvider().ifPresent(o -> {
-            preferedLangTextBox.setText(o.getLanguages().toString());
+            preferedLangTextBox.setText(o.getSdmxManager().getLanguages().toString());
             displayCodesCheckBox.setSelected(o.isDisplayCodes());
-            loadEntryPoints(o.getConnectionSupplier());
+            loadSources(o.getSdmxManager());
         });
     }
 
     void store() {
         lookupProvider().ifPresent(o -> {
             try {
-                o.setLanguages(LanguagePriorityList.parse(preferedLangTextBox.getText()));
+                o.getSdmxManager().setLanguages(LanguagePriorityList.parse(preferedLangTextBox.getText()));
             } catch (IllegalArgumentException ex) {
             }
             o.setDisplayCodes(displayCodesCheckBox.isSelected());
@@ -247,7 +247,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
     private static final class ConfigNode extends AbstractNode implements Editable {
 
-        public ConfigNode(SdmxWebEntryPoint o) {
+        public ConfigNode(SdmxWebSource o) {
             super(Children.LEAF, Lookups.singleton(o));
             setDisplayName(o.getName());
             setShortDescription(o.getDescription());
@@ -265,7 +265,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
         @Override
         protected Sheet createSheet() {
-            SdmxWebEntryPoint bean = getLookup().lookup(SdmxWebEntryPoint.class);
+            SdmxWebSource bean = getLookup().lookup(SdmxWebSource.class);
             Sheet result = new Sheet();
             NodePropertySetBuilder b = new NodePropertySetBuilder();
             b.with(String.class)
@@ -277,8 +277,12 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
                     .display("Description")
                     .add();
             b.with(String.class)
-                    .select("uri", bean.getUri().toString())
-                    .display("URI")
+                    .select(bean, "getDriver", null)
+                    .display("Driver")
+                    .add();
+            b.with(String.class)
+                    .select("endpoint", bean.getEndpoint().toString())
+                    .display("Endpoint")
                     .add();
             result.put(b.build());
             return result;
@@ -297,7 +301,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         @Override
         public void edit() {
             if (new PropertySheetDialogBuilder().title("Edit entry point").icon(getIcon(BeanInfo.ICON_MONO_16x16)).editNode(this)) {
-                setDisplayName(getLookup().lookup(SdmxWebEntryPoint.class).getName());
+                setDisplayName(getLookup().lookup(SdmxWebSource.class).getName());
             }
         }
     }

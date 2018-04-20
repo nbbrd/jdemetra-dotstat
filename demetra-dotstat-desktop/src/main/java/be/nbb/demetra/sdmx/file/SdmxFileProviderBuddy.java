@@ -17,8 +17,6 @@
 package be.nbb.demetra.sdmx.file;
 
 import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
-import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.file.SdmxFileManager;
 import be.nbb.sdmx.facade.file.SdmxFileSet;
 import com.google.common.base.Converter;
@@ -53,6 +51,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import be.nbb.sdmx.facade.SdmxManager;
 
 /**
  *
@@ -68,7 +67,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
     public SdmxFileProviderBuddy() {
         this.configurator = createConfigurator();
         this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
-        lookupProvider().ifPresent(o -> o.setConnectionSupplier(createManager()));
+        lookupProvider().ifPresent(o -> o.setSdmxManager(createManager()));
     }
 
     @Override
@@ -174,16 +173,16 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
         return new PropertySheetDialogBuilder()
                 .title(title)
                 .icon(getIcon(BeanInfo.ICON_COLOR_16x16, false))
-                .editSheet(createSheet(bean, o, o.getConnectionSupplier(), o.getLanguages()));
+                .editSheet(createSheet(bean, o, o.getSdmxManager()));
     }
 
     @NbBundle.Messages({
         "bean.cache.description=Mechanism used to improve performance."})
-    private Sheet createSheet(SdmxFileBean bean, IFileLoader loader, SdmxConnectionSupplier supplier, LanguagePriorityList languages) {
+    private Sheet createSheet(SdmxFileBean bean, IFileLoader loader, SdmxManager manager) {
         Sheet result = new Sheet();
         NodePropertySetBuilder b = new NodePropertySetBuilder();
         result.put(withSource(b.reset("Source"), bean, loader).build());
-        result.put(withOptions(b.reset("Options"), bean, loader, supplier, languages).build());
+        result.put(withOptions(b.reset("Options"), bean, loader, manager).build());
         return result;
     }
 
@@ -212,7 +211,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
         "bean.labelAttribute.display=Series label attribute",
         "bean.labelAttribute.description=An optional attribute that carries the label of time series."
     })
-    private NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxFileBean bean, IFileLoader loader, SdmxConnectionSupplier supplier, LanguagePriorityList languages) {
+    private NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxFileBean bean, IFileLoader loader, SdmxManager manager) {
         b.withFile()
                 .select(bean, "structureFile")
                 .display(Bundle.bean_structureFile_display())
@@ -235,9 +234,9 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
 
         b.withAutoCompletion()
                 .select(bean, "dimensions", List.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)
-                .source(SdmxAutoCompletion.onDimensions(supplier, languages, toSource, toFlow, autoCompletionCache))
+                .source(SdmxAutoCompletion.onDimensions(manager, toSource, toFlow, autoCompletionCache))
                 .separator(",")
-                .defaultValueSupplier(() -> SdmxAutoCompletion.getDefaultDimensionsAsString(supplier, languages, toSource, toFlow, autoCompletionCache, ","))
+                .defaultValueSupplier(() -> SdmxAutoCompletion.getDefaultDimensionsAsString(manager, toSource, toFlow, autoCompletionCache, ","))
                 .cellRenderer(SdmxAutoCompletion.getDimensionsRenderer())
                 .display(Bundle.bean_dimensions_display())
                 .description(Bundle.bean_dimensions_description())
