@@ -17,11 +17,10 @@
 package internal.sdmx;
 
 import be.nbb.demetra.sdmx.HasSdmxProperties;
-import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import lombok.AccessLevel;
+import be.nbb.sdmx.facade.SdmxManager;
 
 /**
  *
@@ -30,47 +29,27 @@ import lombok.AccessLevel;
 @lombok.AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SdmxPropertiesSupport implements HasSdmxProperties {
 
-    public static HasSdmxProperties of(Supplier<SdmxConnectionSupplier> defaultSupplier, Runnable onSupplierChange, Supplier<LanguagePriorityList> defaultLanguages, Runnable onLanguagesChange) {
+    public static HasSdmxProperties of(Supplier<SdmxManager> defaultManager, Runnable onManagerChange) {
         return new SdmxPropertiesSupport(
-                defaultSupplier,
-                new AtomicReference<>(defaultSupplier.get()),
-                onSupplierChange,
-                defaultLanguages,
-                new AtomicReference<>(defaultLanguages.get()),
-                onLanguagesChange);
+                defaultManager,
+                new AtomicReference<>(defaultManager.get()),
+                onManagerChange);
     }
 
-    private final Supplier<SdmxConnectionSupplier> defaultSupplier;
-    private final AtomicReference<SdmxConnectionSupplier> supplier;
-    private final Runnable onSupplierChange;
-
-    private final Supplier<LanguagePriorityList> defaultLanguages;
-    private final AtomicReference<LanguagePriorityList> languages;
-    private final Runnable onLanguagesChange;
+    private final Supplier<SdmxManager> defaultManager;
+    private final AtomicReference<SdmxManager> manager;
+    private final Runnable onManagerChange;
 
     @Override
-    public SdmxConnectionSupplier getConnectionSupplier() {
-        return supplier.get();
+    public SdmxManager getSdmxManager() {
+        return manager.get();
     }
 
     @Override
-    public void setConnectionSupplier(SdmxConnectionSupplier connectionSupplier) {
-        SdmxConnectionSupplier old = this.supplier.get();
-        if (this.supplier.compareAndSet(old, connectionSupplier != null ? connectionSupplier : defaultSupplier.get())) {
-            onSupplierChange.run();
-        }
-    }
-
-    @Override
-    public LanguagePriorityList getLanguages() {
-        return languages.get();
-    }
-
-    @Override
-    public void setLanguages(LanguagePriorityList languages) {
-        LanguagePriorityList old = this.languages.get();
-        if (this.languages.compareAndSet(old, languages != null ? languages : defaultLanguages.get())) {
-            onLanguagesChange.run();
+    public void setSdmxManager(SdmxManager manager) {
+        SdmxManager old = this.manager.get();
+        if (this.manager.compareAndSet(old, manager != null ? manager : defaultManager.get())) {
+            onManagerChange.run();
         }
     }
 }

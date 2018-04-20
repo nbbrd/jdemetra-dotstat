@@ -17,7 +17,7 @@
 package internal.connectors.drivers;
 
 import org.junit.Test;
-import static test.DriverAssertions.*;
+import static _test.DriverAssertions.*;
 
 /**
  *
@@ -27,6 +27,6 @@ public class OecdDriverTest {
 
     @Test
     public void testCompliance() {
-        assertDriverCompliance(new OecdDriver(), "sdmx:oecd:");
+        assertDriverCompliance(new OecdDriver());
     }
 }

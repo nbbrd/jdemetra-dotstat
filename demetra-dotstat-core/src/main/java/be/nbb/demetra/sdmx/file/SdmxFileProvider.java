@@ -19,9 +19,7 @@ package be.nbb.demetra.sdmx.file;
 import be.nbb.demetra.sdmx.HasSdmxProperties;
 import internal.sdmx.SdmxCubeAccessor;
 import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.file.SdmxFileManager;
 import be.nbb.sdmx.facade.file.SdmxFileSet;
 import com.google.common.cache.Cache;
@@ -50,6 +48,7 @@ import java.io.IOException;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import be.nbb.sdmx.facade.SdmxManager;
 
 /**
  *
@@ -87,7 +86,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
         Cache<DataSource, SdmxCubeItems> cache = GuavaCaches.softValuesCache();
         SdmxFileParam sdmxParam = new SdmxFileParam.V1();
 
-        this.properties = SdmxPropertiesSupport.of(SdmxFileManager::ofServiceLoader, cache::invalidateAll, () -> LanguagePriorityList.ANY, cache::invalidateAll);
+        this.properties = SdmxPropertiesSupport.of(SdmxFileManager::ofServiceLoader, cache::invalidateAll);
         this.mutableListSupport = HasDataSourceMutableList.of(NAME, logger, cache::invalidate);
         this.monikerSupport = HasDataMoniker.usingUri(NAME);
         this.beanSupport = HasDataSourceBean.of(NAME, sdmxParam, sdmxParam.getVersion());
@@ -172,15 +171,14 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
         }
 
         private static IO.Supplier<SdmxConnection> toConnection(HasSdmxProperties properties, SdmxFileSet files) {
-            SdmxConnectionSupplier supplier = properties.getConnectionSupplier();
-            LanguagePriorityList languages = properties.getLanguages();
+            SdmxManager manager = properties.getSdmxManager();
 
-            if (supplier instanceof SdmxFileManager) {
-                return () -> ((SdmxFileManager) supplier).getConnection(files, languages);
+            if (manager instanceof SdmxFileManager) {
+                return () -> ((SdmxFileManager) manager).getConnection(files);
             }
 
             String name = SdmxFileUtil.toXml(files);
-            return () -> supplier.getConnection(name, languages);
+            return () -> manager.getConnection(name);
         }
     }
 

@@ -104,7 +104,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
         Optional<DotStatProvider> provider = lookupProvider();
         if (provider.isPresent()) {
             DotStatProvider o = provider.get();
-            return () -> SdmxAutoCompletion.getDefaultDimensionsAsString(o.getConnectionSupplier(), o.getLanguages(), bean::getDbName, bean::getTableName, autoCompletionCache, ",");
+            return () -> SdmxAutoCompletion.getDefaultDimensionsAsString(o.getSdmxManager(), bean::getDbName, bean::getTableName, autoCompletionCache, ",");
         }
         return () -> "";
     }
@@ -123,7 +123,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
         Optional<DotStatProvider> provider = lookupProvider();
         if (provider.isPresent()) {
             DotStatProvider o = provider.get();
-            return SdmxAutoCompletion.onFlows(o.getConnectionSupplier(), o.getLanguages(), bean::getDbName, autoCompletionCache);
+            return SdmxAutoCompletion.onFlows(o.getSdmxManager(), bean::getDbName, autoCompletionCache);
         }
         return super.getTableSource(bean);
     }
@@ -138,7 +138,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
         Optional<DotStatProvider> provider = lookupProvider();
         if (provider.isPresent()) {
             DotStatProvider o = provider.get();
-            return SdmxAutoCompletion.onDimensions(o.getConnectionSupplier(), o.getLanguages(), bean::getDbName, bean::getTableName, autoCompletionCache);
+            return SdmxAutoCompletion.onDimensions(o.getSdmxManager(), bean::getDbName, bean::getTableName, autoCompletionCache);
         }
         return super.getColumnSource(bean);
     }

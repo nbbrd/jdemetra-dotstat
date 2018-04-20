@@ -20,9 +20,7 @@ import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
 import be.nbb.demetra.dotstat.DotStatProviderBuddy.BuddyConfig;
 import be.nbb.demetra.dotstat.SdmxWsAutoCompletionService;
 import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnectionSupplier;
 import be.nbb.sdmx.facade.web.SdmxWebManager;
-import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import ec.nbdemetra.db.DbIcon;
@@ -49,9 +47,12 @@ import java.util.concurrent.ConcurrentMap;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.nodes.Sheet;
 import org.openide.util.ImageUtilities;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import be.nbb.sdmx.facade.SdmxManager;
+import java.net.ProxySelector;
+import javax.annotation.Nullable;
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  *
@@ -61,25 +62,15 @@ import org.openide.util.lookup.ServiceProvider;
 @ServiceProvider(service = IDataSourceProviderBuddy.class, supersedes = "be.nbb.demetra.dotstat.DotStatProviderBuddy")
 public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, IConfigurable {
 
-    private static final SdmxWebManager WEB_MANAGER = createManager();
-
-    public static SdmxWebManager getDefaultManager() {
-        return WEB_MANAGER;
-    }
-
-    private static SdmxWebManager createManager() {
-        SdmxWebManager result = SdmxWebManager.of(Lookup.getDefault().lookupAll(SdmxWebDriver.class));
-        result.setCache(GuavaCaches.softValuesCacheAsMap());
-        return result;
-    }
-
     private final Configurator<SdmxWebProviderBuddy> configurator;
     private final ConcurrentMap autoCompletionCache;
+    private final SdmxWebManager webManager;
 
     public SdmxWebProviderBuddy() {
         this.configurator = createConfigurator();
         this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
-        lookupProvider().ifPresent(o -> o.setConnectionSupplier(WEB_MANAGER));
+        this.webManager = createManager();
+        lookupProvider().ifPresent(o -> o.setSdmxManager(webManager));
     }
 
     @Override
@@ -119,7 +110,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
                 return new PropertySheetDialogBuilder()
                         .title(title)
                         .icon(getIcon(BeanInfo.ICON_COLOR_16x16, false))
-                        .editSheet(createSheet((SdmxWebBean) bean, o.getConnectionSupplier(), o.getLanguages(), autoCompletionCache));
+                        .editSheet(createSheet((SdmxWebBean) bean, o.getSdmxManager(), autoCompletionCache));
             }
         }
         return IDataSourceProviderBuddy.super.editBean(title, bean);
@@ -141,6 +132,14 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         return config;
     }
 
+    public void setProxySelector(@Nullable ProxySelector proxySelector) {
+        webManager.setProxySelector(proxySelector);
+    }
+
+    public void setSSLSocketFactory(@Nullable SSLSocketFactory sslSocketFactory) {
+        webManager.setSSLSocketFactory(sslSocketFactory);
+    }
+
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private static Optional<SdmxWebProvider> lookupProvider() {
         return TsProviders.lookup(SdmxWebProvider.class, SdmxWebProvider.NAME).toJavaUtil();
@@ -150,13 +149,19 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         return new BuddyConfigHandler().toConfigurator(BuddyConfig.converter());
     }
 
+    private static SdmxWebManager createManager() {
+        SdmxWebManager result = SdmxWebManager.ofServiceLoader();
+        result.setCache(GuavaCaches.softValuesCacheAsMap());
+        return result;
+    }
+
     private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, SdmxWebProviderBuddy> {
 
         @Override
         public BuddyConfig loadBean(SdmxWebProviderBuddy resource) {
             BuddyConfig result = new BuddyConfig();
             lookupProvider().ifPresent(o -> {
-                result.setPreferredLanguage(o.getLanguages().toString());
+                result.setPreferredLanguage(o.getSdmxManager().getLanguages().toString());
                 result.setDisplayCodes(o.isDisplayCodes());
             });
             return result;
@@ -166,7 +171,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         public void storeBean(SdmxWebProviderBuddy resource, BuddyConfig bean) {
             lookupProvider().ifPresent(o -> {
                 try {
-                    o.setLanguages(LanguagePriorityList.parse(bean.getPreferredLanguage()));
+                    o.getSdmxManager().setLanguages(LanguagePriorityList.parse(bean.getPreferredLanguage()));
                 } catch (IllegalArgumentException ex) {
                 }
                 o.setDisplayCodes(bean.isDisplayCodes());
@@ -176,11 +181,11 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
 
     @NbBundle.Messages({
         "bean.cache.description=Mechanism used to improve performance."})
-    private static Sheet createSheet(SdmxWebBean bean, SdmxConnectionSupplier supplier, LanguagePriorityList languages, ConcurrentMap cache) {
+    private static Sheet createSheet(SdmxWebBean bean, SdmxManager manager, ConcurrentMap cache) {
         Sheet result = new Sheet();
         NodePropertySetBuilder b = new NodePropertySetBuilder();
-        result.put(withSource(b.reset("Source"), bean, supplier, languages, cache).build());
-        result.put(withOptions(b.reset("Options"), bean, supplier, languages, cache).build());
+        result.put(withSource(b.reset("Source"), bean, manager, cache).build());
+        result.put(withOptions(b.reset("Options"), bean, manager, cache).build());
         result.put(withCache(b.reset("Cache").description(Bundle.bean_cache_description()), bean).build());
         return result;
     }
@@ -190,7 +195,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         "bean.source.description=The identifier of the service that provides data.",
         "bean.flow.display=Dataflow",
         "bean.flow.description=The identifier of a specific dataflow.",})
-    private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxWebBean bean, SdmxConnectionSupplier supplier, LanguagePriorityList languages, ConcurrentMap cache) {
+    private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxWebBean bean, SdmxManager manager, ConcurrentMap cache) {
         b.withAutoCompletion()
                 .select(bean, "source")
                 .servicePath(SdmxWsAutoCompletionService.PATH)
@@ -199,7 +204,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
                 .add();
         b.withAutoCompletion()
                 .select(bean, "flow")
-                .source(SdmxAutoCompletion.onFlows(supplier, languages, bean::getSource, cache))
+                .source(SdmxAutoCompletion.onFlows(manager, bean::getSource, cache))
                 .cellRenderer(SdmxAutoCompletion.getFlowsRenderer())
                 .display(Bundle.bean_flow_display())
                 .description(Bundle.bean_flow_description())
@@ -213,12 +218,12 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         "bean.labelAttribute.display=Series label attribute",
         "bean.labelAttribute.description=An optional attribute that carries the label of time series."
     })
-    private static NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxWebBean bean, SdmxConnectionSupplier supplier, LanguagePriorityList languages, ConcurrentMap cache) {
+    private static NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxWebBean bean, SdmxManager manager, ConcurrentMap cache) {
         b.withAutoCompletion()
                 .select(bean, "dimensions", List.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)
-                .source(SdmxAutoCompletion.onDimensions(supplier, languages, bean::getSource, bean::getFlow, cache))
+                .source(SdmxAutoCompletion.onDimensions(manager, bean::getSource, bean::getFlow, cache))
                 .separator(",")
-                .defaultValueSupplier(() -> SdmxAutoCompletion.getDefaultDimensionsAsString(supplier, languages, bean::getSource, bean::getFlow, cache, ","))
+                .defaultValueSupplier(() -> SdmxAutoCompletion.getDefaultDimensionsAsString(manager, bean::getSource, bean::getFlow, cache, ","))
                 .cellRenderer(SdmxAutoCompletion.getDimensionsRenderer())
                 .display(Bundle.bean_dimensions_display())
                 .description(Bundle.bean_dimensions_description())

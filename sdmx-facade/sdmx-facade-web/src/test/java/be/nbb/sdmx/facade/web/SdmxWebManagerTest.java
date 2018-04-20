@@ -16,13 +16,14 @@
  */
 package be.nbb.sdmx.facade.web;
 
+import be.nbb.sdmx.facade.web.spi.SdmxWebContext;
 import be.nbb.sdmx.facade.LanguagePriorityList;
-import static be.nbb.sdmx.facade.LanguagePriorityList.ANY;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.repo.SdmxRepository;
 import be.nbb.sdmx.facade.tck.ConnectionSupplierAssert;
 import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -49,40 +50,55 @@ public class SdmxWebManagerTest {
 
     @Test
     @SuppressWarnings("null")
-    public void testGetConnectionOfEntryPoint() {
+    public void testGetConnectionOfSource() {
         SdmxWebManager manager = SdmxWebManager.of(REPO);
-        assertThatNullPointerException().isThrownBy(() -> manager.getConnection((SdmxWebEntryPoint) null, ANY));
-        assertThatNullPointerException().isThrownBy(() -> manager.getConnection(HELLO, null));
-        assertThatIOException().isThrownBy(() -> manager.getConnection(HELLO.toBuilder().uri("ko").build(), ANY));
+        assertThatNullPointerException().isThrownBy(() -> manager.getConnection((SdmxWebSource) null));
+        assertThatIOException().isThrownBy(() -> manager.getConnection(HELLO.toBuilder().endpointOf("http://ko").build()));
     }
 
-    private static final SdmxWebEntryPoint HELLO = SdmxWebEntryPoint.builder().name("ok").uri(RepoDriver.PREFIX + "r1").build();
+    private static final SdmxWebSource HELLO = SdmxWebSource.builder().name("ok").driver(RepoDriver.NAME).endpointOf("http://r1").build();
     private static final SdmxWebDriver REPO = new RepoDriver();
 
     private static final class RepoDriver implements SdmxWebDriver {
 
-        static final String PREFIX = "sdmx:repo:";
+        static final String NAME = "repo";
 
-        final List<SdmxRepository> repos = Collections.singletonList(SdmxRepository.builder().name("r1").build());
+        final List<SdmxRepository> repos = Collections.singletonList(SdmxRepository.builder().name("http://r1").build());
 
         @Override
-        public SdmxConnection connect(SdmxWebEntryPoint entryPoint, LanguagePriorityList languages) throws IOException {
-            String repoName = entryPoint.getUri().toString().substring(PREFIX.length());
+        public String getName() {
+            return NAME;
+        }
+
+        @Override
+        public SdmxWebConnection connect(SdmxWebSource source, LanguagePriorityList langs, SdmxWebContext context) throws IOException {
             return repos.stream()
-                    .filter(o -> o.getName().equals(repoName))
+                    .filter(o -> o.getName().equals(source.getEndpoint().toString()))
                     .findFirst()
-                    .map(SdmxRepository::asConnection)
+                    .map(o -> new RepoWebConnection(o.asConnection()))
                     .orElseThrow(IOException::new);
         }
 
         @Override
-        public boolean accepts(SdmxWebEntryPoint entryPoint) throws IOException {
-            return entryPoint.getUri().toString().startsWith(PREFIX);
+        public Collection<SdmxWebSource> getDefaultSources() {
+            return Collections.singletonList(HELLO);
         }
 
         @Override
-        public Collection<SdmxWebEntryPoint> getDefaultEntryPoints() {
-            return Collections.singletonList(HELLO);
+        public Collection<String> getSupportedProperties() {
+            return Collections.emptyList();
+        }
+    }
+
+    @lombok.AllArgsConstructor
+    private static final class RepoWebConnection implements SdmxWebConnection {
+
+        @lombok.experimental.Delegate
+        private final SdmxConnection delegate;
+
+        @Override
+        public Duration ping() throws IOException {
+            return Duration.ZERO;
         }
     }
 }

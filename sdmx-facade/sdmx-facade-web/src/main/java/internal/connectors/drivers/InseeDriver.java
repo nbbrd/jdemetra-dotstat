@@ -38,10 +38,10 @@ import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import internal.connectors.ConnectorRestClient;
 import internal.connectors.HasDataCursor;
 import internal.connectors.HasSeriesKeysOnlySupported;
-import internal.connectors.Util;
+import internal.connectors.Connectors;
 import internal.org.springframework.util.xml.XMLEventStreamReader;
 import internal.util.drivers.InseeDialect;
-import internal.web.RestDriverSupport;
+import internal.web.SdmxWebDriverSupport;
 import it.bancaditalia.oss.sdmx.api.Codelist;
 import it.bancaditalia.oss.sdmx.api.DSDIdentifier;
 import it.bancaditalia.oss.sdmx.api.Dimension;
@@ -59,15 +59,16 @@ import java.util.logging.Level;
 public final class InseeDriver implements SdmxWebDriver, HasCache {
 
     @lombok.experimental.Delegate
-    private final RestDriverSupport support = RestDriverSupport
+    private final SdmxWebDriverSupport support = SdmxWebDriverSupport
             .builder()
-            .prefix("sdmx:insee:")
+            .name("insee@connectors")
             .client(ConnectorRestClient.of(InseeClient::new))
-            .entry("INSEE", "Institut national de la statistique et des études économiques", URL)
+            .supportedProperties(ConnectorRestClient.CONNECTION_PROPERTIES)
+            .sourceOf("INSEE", "Institut national de la statistique et des études économiques", FALLBACK_URL)
             .build();
 
     @SdmxFix(id = "INSEE#1", cause = "Fallback to http due to some servers that use root certificate unknown to jdk'")
-    private static final String URL = "http://bdm.insee.fr/series/sdmx";
+    private static final String FALLBACK_URL = "http://bdm.insee.fr/series/sdmx";
 
     private final static class InseeClient extends RestSdmxClient implements HasDataCursor, HasSeriesKeysOnlySupported {
 
@@ -126,7 +127,7 @@ public final class InseeDriver implements SdmxWebDriver, HasCache {
             try {
                 codelist.setCodes(super.getCodes(codelist.getId(), codelist.getAgency(), codelist.getVersion()));
             } catch (SdmxException ex) {
-                if (!Util.isNoResultMatchingQuery(ex)) {
+                if (!Connectors.isNoResultMatchingQuery(ex)) {
                     throw ex;
                 }
                 log.log(Level.WARNING, "Cannot retrieve codes for ''{0}''", codelist.getFullIdentifier());
@@ -134,9 +135,8 @@ public final class InseeDriver implements SdmxWebDriver, HasCache {
         }
 
         private List<Series> getData(DataflowRef flowRef, DataStructure dsd, Key resource, boolean serieskeysonly) throws SdmxException {
-            return runQuery(
-                    getCompactData21Parser(dsd),
-                    buildDataQuery(Util.fromFlowQuery(flowRef, dsd.getRef()), resource.toString(), null, null, serieskeysonly, null, false),
+            return runQuery(getCompactData21Parser(dsd),
+                    buildDataQuery(Connectors.fromFlowQuery(flowRef, dsd.getRef()), resource.toString(), null, null, serieskeysonly, null, false),
                     SdmxMediaType.STRUCTURE_SPECIFIC_DATA_21);
         }
 

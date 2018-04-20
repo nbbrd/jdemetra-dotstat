@@ -16,14 +16,15 @@
  */
 package internal.connectors.drivers;
 
-import static internal.connectors.Util.NEEDS_CREDENTIALS;
+import static internal.connectors.Connectors.*;
 import be.nbb.sdmx.facade.util.HasCache;
 import it.bancaditalia.oss.sdmx.client.custom.RestSdmx20Client;
 import java.util.Map;
 import org.openide.util.lookup.ServiceProvider;
 import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import internal.connectors.ConnectorRestClient;
-import internal.web.RestDriverSupport;
+import internal.connectors.Connectors;
+import internal.web.SdmxWebDriverSupport;
 import java.net.URI;
 
 /**
@@ -34,16 +35,18 @@ import java.net.URI;
 public final class Sdmx20Driver implements SdmxWebDriver, HasCache {
 
     @lombok.experimental.Delegate
-    private final RestDriverSupport support = RestDriverSupport
+    private final SdmxWebDriverSupport support = SdmxWebDriverSupport
             .builder()
-            .prefix("sdmx:sdmx20:")
+            .name("sdmx20@connectors")
             .client(ConnectorRestClient.of(Sdmx20Client::new))
+            .supportedProperties(ConnectorRestClient.CONNECTION_PROPERTIES)
+            .supportedProperty(NEEDS_CREDENTIALS_PROPERTY)
             .build();
 
     private static final class Sdmx20Client extends RestSdmx20Client {
 
         private Sdmx20Client(URI endpoint, Map<?, ?> info) {
-            super("", endpoint, NEEDS_CREDENTIALS.get(info, false), null, "compact_v2");
+            super("", endpoint, Connectors.isNeedsCredentials(info), null, "compact_v2");
         }
     }
 }
