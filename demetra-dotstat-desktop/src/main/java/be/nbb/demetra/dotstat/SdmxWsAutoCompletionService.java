@@ -16,11 +16,14 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.demetra.sdmx.web.SdmxWebProviderBuddy;
+import be.nbb.demetra.sdmx.web.SdmxWebProvider;
+import be.nbb.sdmx.facade.web.SdmxWebManager;
 import ec.nbdemetra.ui.completion.JAutoCompletionService;
+import ec.tss.tsproviders.TsProviders;
 import ec.util.completion.AutoCompletionSource;
 import ec.util.completion.swing.JAutoCompletion;
 import internal.sdmx.SdmxAutoCompletion;
+import java.util.Optional;
 import javax.swing.ListCellRenderer;
 import javax.swing.text.JTextComponent;
 import org.openide.util.lookup.ServiceProvider;
@@ -34,15 +37,24 @@ public final class SdmxWsAutoCompletionService extends JAutoCompletionService {
 
     public static final String PATH = "JAutoCompletionService/SdmxWs";
 
-    private final AutoCompletionSource source = SdmxAutoCompletion.onSources(SdmxWebProviderBuddy.getDefaultManager());
     private final ListCellRenderer renderer = SdmxAutoCompletion.getSourceRenderer();
 
     @Override
     public JAutoCompletion bind(JTextComponent textComponent) {
         JAutoCompletion result = new JAutoCompletion(textComponent);
         result.setMinLength(0);
-        result.setSource(source);
+        lookupSource().ifPresent(result::setSource);
         result.getList().setCellRenderer(renderer);
         return result;
+    }
+
+    private Optional<AutoCompletionSource> lookupSource() {
+        return TsProviders
+                .lookup(SdmxWebProvider.class, SdmxWebProvider.NAME)
+                .toJavaUtil()
+                .map(SdmxWebProvider::getSdmxManager)
+                .filter(SdmxWebManager.class::isInstance)
+                .map(SdmxWebManager.class::cast)
+                .map(SdmxAutoCompletion::onSources);
     }
 }

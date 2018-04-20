@@ -50,6 +50,9 @@ import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import be.nbb.sdmx.facade.SdmxManager;
+import java.net.ProxySelector;
+import javax.annotation.Nullable;
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  *
@@ -59,25 +62,15 @@ import be.nbb.sdmx.facade.SdmxManager;
 @ServiceProvider(service = IDataSourceProviderBuddy.class, supersedes = "be.nbb.demetra.dotstat.DotStatProviderBuddy")
 public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, IConfigurable {
 
-    private static final SdmxWebManager WEB_MANAGER = createManager();
-
-    public static SdmxWebManager getDefaultManager() {
-        return WEB_MANAGER;
-    }
-
-    private static SdmxWebManager createManager() {
-        SdmxWebManager result = SdmxWebManager.ofServiceLoader();
-        result.setCache(GuavaCaches.softValuesCacheAsMap());
-        return result;
-    }
-
     private final Configurator<SdmxWebProviderBuddy> configurator;
     private final ConcurrentMap autoCompletionCache;
+    private final SdmxWebManager webManager;
 
     public SdmxWebProviderBuddy() {
         this.configurator = createConfigurator();
         this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
-        lookupProvider().ifPresent(o -> o.setSdmxManager(WEB_MANAGER));
+        this.webManager = createManager();
+        lookupProvider().ifPresent(o -> o.setSdmxManager(webManager));
     }
 
     @Override
@@ -139,6 +132,14 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         return config;
     }
 
+    public void setProxySelector(@Nullable ProxySelector proxySelector) {
+        webManager.setProxySelector(proxySelector);
+    }
+
+    public void setSSLSocketFactory(@Nullable SSLSocketFactory sslSocketFactory) {
+        webManager.setSSLSocketFactory(sslSocketFactory);
+    }
+
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private static Optional<SdmxWebProvider> lookupProvider() {
         return TsProviders.lookup(SdmxWebProvider.class, SdmxWebProvider.NAME).toJavaUtil();
@@ -146,6 +147,12 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
 
     private static Configurator<SdmxWebProviderBuddy> createConfigurator() {
         return new BuddyConfigHandler().toConfigurator(BuddyConfig.converter());
+    }
+
+    private static SdmxWebManager createManager() {
+        SdmxWebManager result = SdmxWebManager.ofServiceLoader();
+        result.setCache(GuavaCaches.softValuesCacheAsMap());
+        return result;
     }
 
     private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, SdmxWebProviderBuddy> {
