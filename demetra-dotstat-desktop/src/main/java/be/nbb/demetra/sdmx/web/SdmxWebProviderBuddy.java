@@ -50,7 +50,11 @@ import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import be.nbb.sdmx.facade.SdmxManager;
+import be.nbb.sdmx.facade.util.HasCache;
+import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import java.net.ProxySelector;
+import java.util.ArrayList;
+import java.util.ServiceLoader;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -150,9 +154,17 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     }
 
     private static SdmxWebManager createManager() {
-        SdmxWebManager result = SdmxWebManager.ofServiceLoader();
-        result.setCache(GuavaCaches.softValuesCacheAsMap());
-        return result;
+        ConcurrentMap cache = GuavaCaches.softValuesCacheAsMap();
+        List<SdmxWebDriver> drivers = new ArrayList<>();
+        ServiceLoader
+                .load(SdmxWebDriver.class)
+                .forEach(o -> {
+                    if (o instanceof HasCache) {
+                        ((HasCache) o).setCache(cache);
+                    }
+                    drivers.add(o);
+                });
+        return SdmxWebManager.of(drivers);
     }
 
     private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, SdmxWebProviderBuddy> {
