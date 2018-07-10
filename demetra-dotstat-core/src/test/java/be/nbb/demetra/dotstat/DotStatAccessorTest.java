@@ -20,7 +20,7 @@ import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.DataQuery;
+import be.nbb.sdmx.facade.DataFilter;
 import be.nbb.sdmx.facade.Series;
 import be.nbb.sdmx.facade.repo.SdmxRepositoryManager;
 import com.google.common.base.Joiner;
@@ -108,7 +108,7 @@ public class DotStatAccessorTest {
     @Test
     public void testGetKeyFromTs() throws Exception {
         assertThat(manager.getConnection("NBB")
-                .getStream(NBB_FLOW_REF, DataQuery.of(Key.ALL, true))
+                .getStream(NBB_FLOW_REF, Key.ALL, DataFilter.SERIES_KEYS_ONLY)
                 .map(Series::getKey)).contains(Key.parse("LOCSTL04.AUS.M"));
     }
 
