@@ -141,7 +141,7 @@ public class SdmxAutoCompletion {
 
     private List<Dataflow> loadFlows(SdmxManager manager, Supplier<String> source) throws IOException {
         try (SdmxConnection c = manager.getConnection(source.get())) {
-            return new ArrayList<>(c.getFlows());
+            return c.getFlows();
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);
         }
