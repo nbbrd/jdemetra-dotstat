@@ -16,11 +16,12 @@
  */
 package internal.web.drivers;
 
-import be.nbb.sdmx.facade.DataQuery;
+import be.nbb.sdmx.facade.DataFilter;
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
-import static internal.web.drivers.AbstractSdmx21.*;
+import internal.web.DataRequest;
+import static internal.web.drivers.Sdmx21RestClient.*;
 import java.io.IOException;
 import java.net.URL;
 import static org.assertj.core.api.Assertions.*;
@@ -30,7 +31,7 @@ import org.junit.Test;
  *
  * @author Philippe Charles
  */
-public class AbstractSdmx21Test {
+public class Sdmx21RestClientTest {
 
     @Test
     @SuppressWarnings("null")
@@ -78,14 +79,16 @@ public class AbstractSdmx21Test {
     public void testGetDataQuery() throws IOException {
         URL endpoint = new URL("http://localhost");
 
-        assertThatNullPointerException().isThrownBy(() -> getDataQuery(null, specificFlow, DataQuery.of(Key.ALL, true)));
-        assertThatNullPointerException().isThrownBy(() -> getDataQuery(endpoint, null, DataQuery.of(Key.ALL, true)));
-        assertThatNullPointerException().isThrownBy(() -> getDataQuery(endpoint, specificFlow, null));
+        DataRequest specificRequest = new DataRequest(specificFlow, Key.ALL, DataFilter.SERIES_KEYS_ONLY);
+        DataRequest genericRequest = new DataRequest(genericFlow, Key.ALL, DataFilter.SERIES_KEYS_ONLY);
 
-        assertThat(getDataQuery(endpoint, specificFlow, DataQuery.of(Key.ALL, true)).build())
+        assertThatNullPointerException().isThrownBy(() -> getDataQuery(null, specificRequest));
+        assertThatNullPointerException().isThrownBy(() -> getDataQuery(endpoint, null));
+
+        assertThat(getDataQuery(endpoint, specificRequest).build())
                 .hasToString("http://localhost/data/ECB%2CEXR%2C1.0/all/all?detail=serieskeysonly");
 
-        assertThat(getDataQuery(endpoint, genericFlow, DataQuery.of(Key.ALL, true)).build())
+        assertThat(getDataQuery(endpoint, genericRequest).build())
                 .hasToString("http://localhost/data/all%2CEXR%2Clatest/all/all?detail=serieskeysonly");
     }
 

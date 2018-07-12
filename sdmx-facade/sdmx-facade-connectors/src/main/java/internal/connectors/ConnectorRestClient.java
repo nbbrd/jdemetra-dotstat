@@ -17,8 +17,6 @@
 package internal.connectors;
 
 import be.nbb.sdmx.facade.DataCursor;
-import be.nbb.sdmx.facade.DataQuery;
-import be.nbb.sdmx.facade.DataQueryDetail;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.Dataflow;
@@ -45,6 +43,7 @@ import internal.web.SdmxWebClient;
 import java.util.Arrays;
 import java.util.Collections;
 import be.nbb.sdmx.facade.web.spi.SdmxWebContext;
+import internal.web.DataRequest;
 
 /**
  *
@@ -133,16 +132,16 @@ public final class ConnectorRestClient implements SdmxWebClient {
     }
 
     @Override
-    public DataCursor getData(DataflowRef flowRef, DataQuery query, DataStructure dsd) throws IOException {
+    public DataCursor getData(DataRequest request, DataStructure dsd) throws IOException {
         try {
             return connector instanceof HasDataCursor
-                    ? getCursor((HasDataCursor) connector, flowRef, dsd, query)
-                    : getAdaptedCursor(connector, flowRef, dsd, query);
+                    ? getNativeCursor((HasDataCursor) connector, request, dsd)
+                    : getAdaptedCursor(connector, request, dsd);
         } catch (SdmxException ex) {
             if (Connectors.isNoResultMatchingQuery(ex)) {
                 return NoOpCursor.noOp();
             }
-            throw wrap(ex, "Failed to get data '%s' with %s from '%s'", flowRef, query, name);
+            throw wrap(ex, "Failed to get data '%s' from '%s'", request, name);
         }
     }
 
@@ -175,16 +174,12 @@ public final class ConnectorRestClient implements SdmxWebClient {
                     READ_TIMEOUT_PROPERTY
             ));
 
-    private static DataCursor getCursor(HasDataCursor connector, DataflowRef flowRef, DataStructure dsd, DataQuery query) throws SdmxException, IOException {
-        return connector.getDataCursor(flowRef, dsd, query.getKey(), isSeriesKeyOnly(query));
+    private static DataCursor getNativeCursor(HasDataCursor connector, DataRequest request, DataStructure dsd) throws SdmxException, IOException {
+        return connector.getDataCursor(request.getFlowRef(), dsd, request.getKey(), request.getFilter().isSeriesKeyOnly());
     }
 
-    private static DataCursor getAdaptedCursor(RestSdmxClient connector, DataflowRef flowRef, DataStructure dsd, DataQuery query) throws SdmxException {
-        return new PortableTimeSeriesCursor(connector.getTimeSeries(Connectors.fromFlowQuery(flowRef, dsd.getRef()), Connectors.fromStructure(dsd), query.getKey().toString(), null, null, isSeriesKeyOnly(query), null, false), ObsParser.standard());
-    }
-
-    private static boolean isSeriesKeyOnly(DataQuery query) {
-        return query.getDetail().equals(DataQueryDetail.SERIES_KEYS_ONLY);
+    private static DataCursor getAdaptedCursor(RestSdmxClient connector, DataRequest request, DataStructure dsd) throws SdmxException {
+        return new PortableTimeSeriesCursor(connector.getTimeSeries(Connectors.fromFlowQuery(request.getFlowRef(), dsd.getRef()), Connectors.fromStructure(dsd), request.getKey().toString(), null, null, request.getFilter().isSeriesKeyOnly(), null, false), ObsParser.standard());
     }
 
     private static IOException wrap(SdmxException ex, String format, Object... args) {

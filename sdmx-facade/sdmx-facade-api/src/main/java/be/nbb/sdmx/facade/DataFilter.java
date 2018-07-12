@@ -20,7 +20,22 @@ package be.nbb.sdmx.facade;
  *
  * @author Philippe Charles
  */
-public enum DataQueryDetail {
+@lombok.Value
+@lombok.Builder(builderClassName = "Builder")
+public class DataFilter {
 
-    FULL, SERIES_KEYS_ONLY
+    public static final DataFilter ALL = builder().build();
+    public static final DataFilter SERIES_KEYS_ONLY = builder().detail(Detail.SERIES_KEYS_ONLY).build();
+
+    @lombok.NonNull
+    @lombok.Builder.Default
+    Detail detail = Detail.FULL;
+
+    public boolean isSeriesKeyOnly() {
+        return detail.equals(Detail.SERIES_KEYS_ONLY);
+    }
+
+    public enum Detail {
+        FULL, SERIES_KEYS_ONLY
+    }
 }

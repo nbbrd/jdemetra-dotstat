@@ -17,7 +17,6 @@
 package internal.web;
 
 import be.nbb.sdmx.facade.DataCursor;
-import be.nbb.sdmx.facade.DataQuery;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.Dataflow;
@@ -47,12 +46,12 @@ public interface SdmxWebClient {
     DataStructure getStructure(@Nonnull DataStructureRef ref) throws IOException;
 
     @Nonnull
-    DataCursor getData(@Nonnull DataflowRef flowRef, @Nonnull DataQuery query, @Nonnull DataStructure dsd) throws IOException;
+    DataCursor getData(@Nonnull DataRequest request, @Nonnull DataStructure dsd) throws IOException;
 
     boolean isSeriesKeysOnlySupported() throws IOException;
 
     @Nullable
-    DataStructureRef peekStructureRef(@Nonnull DataflowRef flowRef) throws IOException;
+    DataStructureRef peekStructureRef(@Nonnull DataflowRef ref) throws IOException;
 
     @Nonnull
     Duration ping() throws IOException;

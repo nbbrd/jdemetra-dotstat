@@ -21,7 +21,7 @@ import be.nbb.sdmx.facade.tck.ConnectionAssert;
 import java.io.IOException;
 import org.junit.Test;
 import _test.samples.FacadeResource;
-import _test.client.RepoWebClient;
+import _test.client.XRepoWebClient;
 
 /**
  *
@@ -32,6 +32,6 @@ public class SdmxWebConnectionImplTest {
     @Test
     public void testCompliance() throws IOException {
         SdmxRepository repo = FacadeResource.ecb();
-        ConnectionAssert.assertCompliance(() -> SdmxWebConnectionImpl.of(RepoWebClient.of(repo)), FacadeResource.ECB_FLOW_REF);
+        ConnectionAssert.assertCompliance(() -> SdmxWebConnectionImpl.of(XRepoWebClient.of(repo)), FacadeResource.ECB_FLOW_REF);
     }
 }

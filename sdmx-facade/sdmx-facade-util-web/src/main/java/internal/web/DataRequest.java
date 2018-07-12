@@ -14,30 +14,25 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.sdmx.facade;
+package internal.web;
 
-import javax.annotation.Nonnull;
+import be.nbb.sdmx.facade.DataFilter;
+import be.nbb.sdmx.facade.DataflowRef;
+import be.nbb.sdmx.facade.Key;
 
 /**
  *
  * @author Philippe Charles
  */
 @lombok.Value
-@lombok.Builder(builderClassName = "Builder")
-public class DataQuery {
+public class DataRequest {
 
     @lombok.NonNull
-    Key key;
+    private DataflowRef flowRef;
 
     @lombok.NonNull
-    @lombok.Builder.Default
-    DataQueryDetail detail = DataQueryDetail.FULL;
+    private Key key;
 
-    @Nonnull
-    public static DataQuery of(@Nonnull Key key, boolean seriesKeysOnly) {
-        return DataQuery.builder()
-                .key(key)
-                .detail(seriesKeysOnly ? DataQueryDetail.SERIES_KEYS_ONLY : DataQueryDetail.FULL)
-                .build();
-    }
+    @lombok.NonNull
+    private DataFilter filter;
 }

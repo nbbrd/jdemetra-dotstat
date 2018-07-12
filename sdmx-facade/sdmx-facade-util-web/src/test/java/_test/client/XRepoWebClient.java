@@ -17,13 +17,13 @@
 package _test.client;
 
 import be.nbb.sdmx.facade.DataCursor;
-import be.nbb.sdmx.facade.DataQuery;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.repo.SdmxRepository;
 import be.nbb.sdmx.facade.util.SdmxExceptions;
+import internal.web.DataRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ import internal.web.SdmxWebClient;
  * @author Philippe Charles
  */
 @lombok.AllArgsConstructor(staticName = "of")
-public final class RepoWebClient implements SdmxWebClient {
+public final class XRepoWebClient implements SdmxWebClient {
 
     @lombok.NonNull
     private final SdmxRepository repo;
@@ -58,9 +58,9 @@ public final class RepoWebClient implements SdmxWebClient {
     }
 
     @Override
-    public DataCursor getData(DataflowRef flowRef, DataQuery query, DataStructure dsd) throws IOException {
-        return repo.getCursor(flowRef, query)
-                .orElseThrow(() -> SdmxExceptions.missingData(flowRef));
+    public DataCursor getData(DataRequest request, DataStructure dsd) throws IOException {
+        return repo.getDataCursor(request.getFlowRef(), request.getKey(), request.getFilter())
+                .orElseThrow(() -> SdmxExceptions.missingData(request.getFlowRef()));
     }
 
     @Override

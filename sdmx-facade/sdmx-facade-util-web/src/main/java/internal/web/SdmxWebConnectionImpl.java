@@ -20,17 +20,16 @@ import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.DataQueryDetail;
-import be.nbb.sdmx.facade.DataQuery;
+import be.nbb.sdmx.facade.DataFilter;
 import be.nbb.sdmx.facade.DataStructureRef;
+import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.Series;
 import be.nbb.sdmx.facade.util.SdmxExceptions;
 import be.nbb.sdmx.facade.util.SeriesSupport;
 import be.nbb.sdmx.facade.web.SdmxWebConnection;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -45,9 +44,9 @@ final class SdmxWebConnectionImpl implements SdmxWebConnection {
     private boolean closed = false;
 
     @Override
-    public Set<Dataflow> getFlows() throws IOException {
+    public List<Dataflow> getFlows() throws IOException {
         checkState();
-        return new HashSet<>(client.getFlows());
+        return client.getFlows();
     }
 
     @Override
@@ -70,9 +69,19 @@ final class SdmxWebConnectionImpl implements SdmxWebConnection {
     }
 
     @Override
-    public DataCursor getCursor(DataflowRef flowRef, DataQuery query) throws IOException {
+    public List<Series> getData(DataflowRef flowRef, Key key, DataFilter filter) throws IOException {
+        return SeriesSupport.asList(() -> getDataCursor(flowRef, key, filter));
+    }
+
+    @Override
+    public Stream<Series> getDataStream(DataflowRef flowRef, Key key, DataFilter filter) throws IOException {
+        return SeriesSupport.asStream(() -> getDataCursor(flowRef, key, filter));
+    }
+
+    @Override
+    public DataCursor getDataCursor(DataflowRef flowRef, Key key, DataFilter filter) throws IOException {
         checkState();
-        checkQuery(query);
+        checkQuery(filter);
 
         DataStructureRef structRef = client.peekStructureRef(flowRef);
         if (structRef == null) {
@@ -82,12 +91,7 @@ final class SdmxWebConnectionImpl implements SdmxWebConnection {
         }
 
         DataStructure structure = client.getStructure(structRef);
-        return client.getData(flowRef, query, structure);
-    }
-
-    @Override
-    public Stream<Series> getStream(DataflowRef flowRef, DataQuery query) throws IOException {
-        return SeriesSupport.asStream(() -> getCursor(flowRef, query));
+        return client.getData(new DataRequest(flowRef, key, filter), structure);
     }
 
     @Override
@@ -112,9 +116,8 @@ final class SdmxWebConnectionImpl implements SdmxWebConnection {
         }
     }
 
-    private void checkQuery(DataQuery query) throws IOException {
-        boolean serieskeysonly = query.getDetail().equals(DataQueryDetail.SERIES_KEYS_ONLY);
-        if (serieskeysonly && !isSeriesKeysOnlySupported()) {
+    private void checkQuery(DataFilter filter) throws IOException {
+        if (filter.isSeriesKeyOnly() && !isSeriesKeysOnlySupported()) {
             throw new IllegalStateException("serieskeysonly not supported");
         }
     }

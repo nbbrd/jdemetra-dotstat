@@ -17,13 +17,15 @@
 package be.nbb.sdmx.facade.file;
 
 import be.nbb.sdmx.facade.DataCursor;
-import be.nbb.sdmx.facade.DataQuery;
+import be.nbb.sdmx.facade.DataFilter;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.DataflowRef;
+import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.Series;
 import java.io.IOException;
+import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
@@ -52,12 +54,17 @@ public interface SdmxFileConnection extends SdmxConnection {
     }
 
     @Nonnull
-    default DataCursor getCursor(@Nonnull DataQuery query) throws IOException {
-        return getCursor(getDataflowRef(), query);
+    default List<Series> getData(@Nonnull Key key, @Nonnull DataFilter filter) throws IOException {
+        return getData(getDataflowRef(), key, filter);
     }
 
     @Nonnull
-    default Stream<Series> getStream(@Nonnull DataQuery query) throws IOException {
-        return getStream(getDataflowRef(), query);
+    default Stream<Series> getDataStream(@Nonnull Key key, @Nonnull DataFilter filter) throws IOException {
+        return getDataStream(getDataflowRef(), key, filter);
+    }
+
+    @Nonnull
+    default DataCursor getDataCursor(@Nonnull Key key, @Nonnull DataFilter filter) throws IOException {
+        return getDataCursor(getDataflowRef(), key, filter);
     }
 }

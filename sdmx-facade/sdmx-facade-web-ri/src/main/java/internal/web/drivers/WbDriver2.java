@@ -16,18 +16,19 @@
  */
 package internal.web.drivers;
 
-import be.nbb.sdmx.facade.DataQuery;
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.parser.DataFactory;
 import be.nbb.sdmx.facade.util.SdmxFix;
+import static be.nbb.sdmx.facade.util.SdmxFix.Category.QUERY;
 import be.nbb.sdmx.facade.web.SdmxWebSource;
 import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import internal.web.SdmxWebDriverSupport;
 import java.io.IOException;
 import java.net.URL;
 import be.nbb.sdmx.facade.web.spi.SdmxWebContext;
+import internal.web.DataRequest;
 
 /**
  *
@@ -44,13 +45,13 @@ public final class WbDriver2 implements SdmxWebDriver {
             .sourceOf("WB", "World Bank", "https://api.worldbank.org/v2/sdmx/rest")
             .build();
 
-    private static final class WbClient2 extends AbstractSdmx21 {
+    private static final class WbClient2 extends Sdmx21RestClient {
 
         private WbClient2(SdmxWebSource s, LanguagePriorityList l, SdmxWebContext c) {
             super(s.getEndpoint(), l, Util.getRestClient(s, c), true, DataFactory.sdmx21());
         }
 
-        @SdmxFix(id = "WB#1", cause = "'/' separator required at the end of query")
+        @SdmxFix(id = 1, category = QUERY, cause = "'/' separator required at the end of query")
         private static final String SEP = "";
 
         @Override
@@ -69,8 +70,8 @@ public final class WbDriver2 implements SdmxWebDriver {
         }
 
         @Override
-        protected URL getDataQuery(DataflowRef flowRef, DataQuery query) throws IOException {
-            return getDataQuery(endpoint, flowRef, query).path(SEP).build();
+        protected URL getDataQuery(DataRequest request) throws IOException {
+            return getDataQuery(endpoint, request).path(SEP).build();
         }
     }
 }

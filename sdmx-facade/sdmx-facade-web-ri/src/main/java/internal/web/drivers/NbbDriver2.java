@@ -16,10 +16,9 @@
  */
 package internal.web.drivers;
 
-import be.nbb.sdmx.facade.DataQuery;
-import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.util.SdmxFix;
+import static be.nbb.sdmx.facade.util.SdmxFix.Category.QUERY;
 import be.nbb.sdmx.facade.web.SdmxWebSource;
 import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import internal.util.rest.RestQueryBuilder;
@@ -27,6 +26,7 @@ import internal.web.SdmxWebDriverSupport;
 import java.io.IOException;
 import java.net.URL;
 import be.nbb.sdmx.facade.web.spi.SdmxWebContext;
+import internal.web.DataRequest;
 
 /**
  *
@@ -43,19 +43,20 @@ public final class NbbDriver2 implements SdmxWebDriver {
             .sourceOf("NBB", "National Bank Belgium", "https://stat.nbb.be/restsdmx/sdmx.ashx")
             .build();
 
-    private static final class NbbClient2 extends AbstractDotStat {
+    private static final class NbbClient2 extends DotStatRestClient {
 
         private NbbClient2(SdmxWebSource s, LanguagePriorityList l, SdmxWebContext c) {
             super(s.getEndpoint(), l, Util.getRestClient(s, c));
         }
 
-        @SdmxFix(id = "NBB#1", cause = "'/all' must be encoded to '%2Fall'")
+        @SdmxFix(id = 1, category = QUERY, cause = "'/all' must be encoded to '%2Fall'")
         @Override
-        protected URL getDataQuery(DataflowRef flowRef, DataQuery query) throws IOException {
-            return RestQueryBuilder.of(endpoint)
+        protected URL getDataQuery(DataRequest request) throws IOException {
+            return RestQueryBuilder
+                    .of(endpoint)
                     .path(DATA_RESOURCE)
-                    .path(flowRef.getId())
-                    .path(query.getKey().toString() + "/all")
+                    .path(request.getFlowRef().getId())
+                    .path(request.getKey().toString() + "/all")
                     .param("format", "compact_v2")
                     .build();
         }

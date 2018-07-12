@@ -17,11 +17,11 @@
 package internal.web.drivers;
 
 import be.nbb.sdmx.facade.DataCursor;
-import be.nbb.sdmx.facade.DataQuery;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.DataflowRef;
+import internal.web.DataRequest;
 import internal.web.SdmxWebClient;
 import java.io.IOException;
 import java.net.URL;
@@ -35,7 +35,6 @@ import javax.annotation.Nonnull;
  *
  * @author Philippe Charles
  */
-@lombok.AllArgsConstructor
 abstract class AbstractRestClient implements SdmxWebClient {
 
     @Override
@@ -57,8 +56,8 @@ abstract class AbstractRestClient implements SdmxWebClient {
     }
 
     @Override
-    public DataCursor getData(DataflowRef flowRef, DataQuery query, DataStructure dsd) throws IOException {
-        URL url = getDataQuery(flowRef, query);
+    public DataCursor getData(DataRequest request, DataStructure dsd) throws IOException {
+        URL url = getDataQuery(request);
         return getData(dsd, url);
     }
 
@@ -89,7 +88,7 @@ abstract class AbstractRestClient implements SdmxWebClient {
     abstract protected DataStructure getStructure(@Nonnull URL url, @Nonnull DataStructureRef ref) throws IOException;
 
     @Nonnull
-    abstract protected URL getDataQuery(@Nonnull DataflowRef flowRef, @Nonnull DataQuery query) throws IOException;
+    abstract protected URL getDataQuery(@Nonnull DataRequest request) throws IOException;
 
     @Nonnull
     abstract protected DataCursor getData(@Nonnull DataStructure dsd, @Nonnull URL url) throws IOException;

@@ -16,17 +16,17 @@
  */
 package internal.web.drivers;
 
-import be.nbb.sdmx.facade.DataQuery;
 import be.nbb.sdmx.facade.DataStructureRef;
-import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.util.SdmxFix;
+import static be.nbb.sdmx.facade.util.SdmxFix.Category.QUERY;
 import be.nbb.sdmx.facade.web.SdmxWebSource;
 import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import internal.web.SdmxWebDriverSupport;
 import java.io.IOException;
 import java.net.URL;
 import be.nbb.sdmx.facade.web.spi.SdmxWebContext;
+import internal.web.DataRequest;
 
 /**
  *
@@ -43,13 +43,13 @@ public final class AbsDriver2 implements SdmxWebDriver {
             .sourceOf("ABS", "Australian Bureau of Statistics", "http://stat.data.abs.gov.au/restsdmx/sdmx.ashx")
             .build();
 
-    private static final class AbsClient2 extends AbstractDotStat {
+    private static final class AbsClient2 extends DotStatRestClient {
 
         private AbsClient2(SdmxWebSource s, LanguagePriorityList l, SdmxWebContext c) {
             super(s.getEndpoint(), l, Util.getRestClient(s, c));
         }
 
-        @SdmxFix(id = "ABS#1", cause = "Agency is required in query")
+        @SdmxFix(id = 1, category = QUERY, cause = "Agency is required in query")
         private static final String AGENCY = "ABS";
 
         @Override
@@ -58,8 +58,8 @@ public final class AbsDriver2 implements SdmxWebDriver {
         }
 
         @Override
-        protected URL getDataQuery(DataflowRef flowRef, DataQuery query) throws IOException {
-            return getDataQuery(endpoint, flowRef, query).path(AGENCY).build();
+        protected URL getDataQuery(DataRequest request) throws IOException {
+            return getDataQuery(endpoint, request).path(AGENCY).build();
         }
     }
 }

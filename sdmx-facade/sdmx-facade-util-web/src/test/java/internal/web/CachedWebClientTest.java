@@ -16,8 +16,8 @@
  */
 package internal.web;
 
-import _test.client.CallStackWebClient;
-import be.nbb.sdmx.facade.DataQuery;
+import _test.client.XCallStackWebClient;
+import be.nbb.sdmx.facade.DataFilter;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.util.TypedId;
 import java.io.IOException;
@@ -32,7 +32,7 @@ import org.junit.Test;
 import _test.samples.FacadeResource;
 import static _test.samples.FacadeResource.ECB_FLOW_REF;
 import static _test.samples.FacadeResource.ECB_STRUCT_REF;
-import _test.client.RepoWebClient;
+import _test.client.XRepoWebClient;
 
 /**
  *
@@ -139,28 +139,30 @@ public class CachedWebClientTest {
 
         CachedWebClient target = new CachedWebClient(getClient(count), "", cache, clock, 100);
 
-        assertThatNullPointerException().isThrownBy(() -> target.getData(null, query, null));
+        assertThatNullPointerException().isThrownBy(() -> target.getData(null, null));
 
-        target.getData(ECB_FLOW_REF, query, null);
+        DataRequest request = new DataRequest(ECB_FLOW_REF, Key.ALL, filter);
+
+        target.getData(request, null);
         assertThat(count).hasValue(1);
         assertThat(cache).containsOnlyKeys(keysId);
 
-        target.getData(ECB_FLOW_REF, query, null);
+        target.getData(request, null);
         assertThat(count).hasValue(1);
         assertThat(cache).containsOnlyKeys(keysId);
 
         clock.plus(100);
-        target.getData(ECB_FLOW_REF, query, null);
+        target.getData(request, null);
         assertThat(count).hasValue(2);
         assertThat(cache).containsOnlyKeys(keysId);
 
         cache.clear();
-        target.getData(ECB_FLOW_REF, query, null);
+        target.getData(request, null);
         assertThat(count).hasValue(3);
         assertThat(cache).containsOnlyKeys(keysId);
     }
 
-    private final DataQuery query = DataQuery.of(Key.ALL, true);
+    private final DataFilter filter = DataFilter.SERIES_KEYS_ONLY;
     private final TypedId<?> flowsId = TypedId.of("flows://");
     private final TypedId<?> flowId = TypedId.of("flow://").with(ECB_FLOW_REF);
     private final TypedId<?> structId = TypedId.of("struct://").with(ECB_STRUCT_REF);
@@ -191,7 +193,7 @@ public class CachedWebClientTest {
     }
 
     private static SdmxWebClient getClient(AtomicInteger count) throws IOException {
-        SdmxWebClient original = RepoWebClient.of(FacadeResource.ecb());
-        return CallStackWebClient.of(original, count);
+        SdmxWebClient original = XRepoWebClient.of(FacadeResource.ecb());
+        return XCallStackWebClient.of(original, count);
     }
 }

@@ -23,7 +23,7 @@ import org.junit.Test;
  *
  * @author Philippe Charles
  */
-public class DtoStatDriver2Test {
+public class DotStatDriver2Test {
 
     @Test
     public void testCompliance() {
