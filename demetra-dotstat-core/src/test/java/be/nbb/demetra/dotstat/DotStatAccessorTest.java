@@ -108,7 +108,7 @@ public class DotStatAccessorTest {
     @Test
     public void testGetKeyFromTs() throws Exception {
         assertThat(manager.getConnection("NBB")
-                .getStream(NBB_FLOW_REF, Key.ALL, DataFilter.SERIES_KEYS_ONLY)
+                .getDataStream(NBB_FLOW_REF, Key.ALL, DataFilter.SERIES_KEYS_ONLY)
                 .map(Series::getKey)).contains(Key.parse("LOCSTL04.AUS.M"));
     }
 

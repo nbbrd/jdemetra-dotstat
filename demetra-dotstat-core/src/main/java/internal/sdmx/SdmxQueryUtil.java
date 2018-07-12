@@ -85,7 +85,7 @@ public class SdmxQueryUtil {
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private TsCursor<Key> request(SdmxConnection conn, DataflowRef flowRef, Key key, String labelAttribute, boolean seriesKeysOnly) throws IOException {
-        return new SdmxDataAdapter(key, conn.getCursor(flowRef, key, seriesKeysOnly ? DataFilter.SERIES_KEYS_ONLY : DataFilter.ALL), labelAttribute);
+        return new SdmxDataAdapter(key, conn.getDataCursor(flowRef, key, seriesKeysOnly ? DataFilter.SERIES_KEYS_ONLY : DataFilter.ALL), labelAttribute);
     }
 
     private TsCursor<Key> computeKeys(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
