@@ -18,7 +18,6 @@ package internal.web.drivers;
 
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.parser.DataFactory;
 import be.nbb.sdmx.facade.util.SdmxFix;
 import static be.nbb.sdmx.facade.util.SdmxFix.Category.QUERY;
@@ -29,17 +28,21 @@ import java.io.IOException;
 import java.net.URL;
 import be.nbb.sdmx.facade.web.spi.SdmxWebContext;
 import internal.web.DataRequest;
+import internal.web.SdmxWebClient;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author Philippe Charles
  */
+@ServiceProvider(service = SdmxWebDriver.class)
 public final class WbDriver2 implements SdmxWebDriver {
 
     @lombok.experimental.Delegate
     private final SdmxWebDriverSupport support = SdmxWebDriverSupport
             .builder()
-            .name("wb@facade")
+            .name("web-ri:wb")
+            .rank(NATIVE_RANK)
             .client(WbClient2::new)
             .supportedProperties(Util.CONNECTION_PROPERTIES)
             .sourceOf("WB", "World Bank", "https://api.worldbank.org/v2/sdmx/rest")
@@ -47,8 +50,8 @@ public final class WbDriver2 implements SdmxWebDriver {
 
     private static final class WbClient2 extends Sdmx21RestClient {
 
-        private WbClient2(SdmxWebSource s, LanguagePriorityList l, SdmxWebContext c) {
-            super(s.getEndpoint(), l, Util.getRestClient(s, c), true, DataFactory.sdmx21());
+        private WbClient2(SdmxWebSource s, SdmxWebContext c) {
+            super(SdmxWebClient.getClientName(s), s.getEndpoint(), c.getLanguages(), Util.getRestClient(s, c), true, DataFactory.sdmx21());
         }
 
         @SdmxFix(id = 1, category = QUERY, cause = "'/' separator required at the end of query")

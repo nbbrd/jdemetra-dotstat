@@ -17,7 +17,6 @@
 package internal.web.drivers;
 
 import be.nbb.sdmx.facade.DataStructureRef;
-import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.util.SdmxFix;
 import static be.nbb.sdmx.facade.util.SdmxFix.Category.QUERY;
 import be.nbb.sdmx.facade.web.SdmxWebSource;
@@ -27,17 +26,21 @@ import java.io.IOException;
 import java.net.URL;
 import be.nbb.sdmx.facade.web.spi.SdmxWebContext;
 import internal.web.DataRequest;
+import internal.web.SdmxWebClient;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author Philippe Charles
  */
+@ServiceProvider(service = SdmxWebDriver.class)
 public final class AbsDriver2 implements SdmxWebDriver {
 
     @lombok.experimental.Delegate
     private final SdmxWebDriverSupport support = SdmxWebDriverSupport
             .builder()
-            .name("abs@facade")
+            .name("web-ri:abs")
+            .rank(NATIVE_RANK)
             .client(AbsClient2::new)
             .supportedProperties(Util.CONNECTION_PROPERTIES)
             .sourceOf("ABS", "Australian Bureau of Statistics", "http://stat.data.abs.gov.au/restsdmx/sdmx.ashx")
@@ -45,8 +48,8 @@ public final class AbsDriver2 implements SdmxWebDriver {
 
     private static final class AbsClient2 extends DotStatRestClient {
 
-        private AbsClient2(SdmxWebSource s, LanguagePriorityList l, SdmxWebContext c) {
-            super(s.getEndpoint(), l, Util.getRestClient(s, c));
+        private AbsClient2(SdmxWebSource s, SdmxWebContext c) {
+            super(SdmxWebClient.getClientName(s), s.getEndpoint(), c.getLanguages(), Util.getRestClient(s, c));
         }
 
         @SdmxFix(id = 1, category = QUERY, cause = "Agency is required in query")

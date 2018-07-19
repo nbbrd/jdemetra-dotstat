@@ -16,16 +16,17 @@
  */
 package internal.connectors.drivers;
 
+import be.nbb.sdmx.facade.parser.DataFactory;
 import be.nbb.sdmx.facade.util.HasCache;
 import be.nbb.sdmx.facade.util.SdmxFix;
 import static be.nbb.sdmx.facade.util.SdmxFix.Category.ENDPOINT;
-import it.bancaditalia.oss.sdmx.client.custom.ILO;
 import org.openide.util.lookup.ServiceProvider;
 import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import internal.connectors.ConnectorRestClient;
 import internal.connectors.HasSeriesKeysOnlySupported;
 import internal.web.SdmxWebDriverSupport;
 import it.bancaditalia.oss.sdmx.api.Dataflow;
+import it.bancaditalia.oss.sdmx.client.custom.ILO_Legacy;
 import it.bancaditalia.oss.sdmx.exceptions.SdmxException;
 import it.bancaditalia.oss.sdmx.parser.v20.DataflowParser;
 import it.bancaditalia.oss.sdmx.parser.v21.Sdmx21Queries;
@@ -47,8 +48,9 @@ public final class IloDriver implements SdmxWebDriver, HasCache {
     @lombok.experimental.Delegate
     private final SdmxWebDriverSupport support = SdmxWebDriverSupport
             .builder()
-            .name("ilo@connectors")
-            .client(ConnectorRestClient.of(ILO2::new))
+            .name("connectors:ilo")
+            .rank(WRAPPED_RANK)
+            .client(ConnectorRestClient.of(ILO2::new, DataFactory.sdmx20()))
             .supportedProperties(ConnectorRestClient.CONNECTION_PROPERTIES)
             .sourceOf("ILO", "International Labour Office", FALLBACK_ENDPOINT)
             .build();
@@ -56,7 +58,7 @@ public final class IloDriver implements SdmxWebDriver, HasCache {
     @SdmxFix(id = 1, category = ENDPOINT, cause = "Fallback to http due to servers redirecting to http")
     private static final String FALLBACK_ENDPOINT = "http://www.ilo.org/ilostat/sdmx/ws/rest";
 
-    private static final class ILO2 extends ILO implements HasSeriesKeysOnlySupported {
+    private static final class ILO2 extends ILO_Legacy implements HasSeriesKeysOnlySupported {
 
         public ILO2() throws URISyntaxException {
         }
@@ -74,7 +76,7 @@ public final class IloDriver implements SdmxWebDriver, HasCache {
             } catch (MalformedURLException ex) {
                 throw new RuntimeException(ex);
             }
-            return runQuery(new DataflowParser(), query, null)
+            return runQuery(new DataflowParser(), query, null, null)
                     .stream()
                     .collect(Collectors.toMap(Dataflow::getId, Function.identity()));
         }

@@ -22,6 +22,7 @@ import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.LanguagePriorityList;
+import be.nbb.sdmx.facade.parser.DataFactory;
 import be.nbb.sdmx.facade.util.SdmxExceptions;
 import static be.nbb.sdmx.facade.util.SdmxMediaType.XML;
 import be.nbb.sdmx.facade.xml.stream.SdmxXmlStreams;
@@ -44,9 +45,15 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 class DotStatRestClient extends AbstractRestClient {
 
+    protected final String name;
     protected final URL endpoint;
     protected final LanguagePriorityList langs;
     protected final RestClient executor;
+
+    @Override
+    public String getName() throws IOException {
+        return name;
+    }
 
     @Override
     protected URL getFlowsQuery() throws IOException {
@@ -76,7 +83,7 @@ class DotStatRestClient extends AbstractRestClient {
                 .stream()
                 .map(DotStatRestClient::getFlowFromStructure)
                 .findFirst()
-                .orElseThrow(() -> SdmxExceptions.missingFlow(ref));
+                .orElseThrow(() -> SdmxExceptions.missingFlow(name, ref));
     }
 
     @Override
@@ -91,7 +98,7 @@ class DotStatRestClient extends AbstractRestClient {
                 .parseStream(calling(url, XML))
                 .stream()
                 .findFirst()
-                .orElseThrow(() -> SdmxExceptions.missingStructure(ref));
+                .orElseThrow(() -> SdmxExceptions.missingStructure(name, ref));
     }
 
     @Override
@@ -102,7 +109,7 @@ class DotStatRestClient extends AbstractRestClient {
     @Override
     protected DataCursor getData(DataStructure dsd, URL url) throws IOException {
         return SdmxXmlStreams
-                .compactData20(dsd)
+                .compactData20(dsd, DataFactory.sdmx20())
                 .parseStream(calling(url, XML));
     }
 

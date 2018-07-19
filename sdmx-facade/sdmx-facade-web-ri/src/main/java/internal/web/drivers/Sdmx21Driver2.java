@@ -16,7 +16,6 @@
  */
 package internal.web.drivers;
 
-import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.parser.DataFactory;
 import static internal.web.SdmxWebProperty.*;
 import be.nbb.sdmx.facade.web.SdmxWebSource;
@@ -26,25 +25,32 @@ import internal.web.SdmxWebDriverSupport;
 import internal.web.SdmxWebClient;
 import internal.web.SdmxWebProperty;
 import be.nbb.sdmx.facade.web.spi.SdmxWebContext;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author Philippe Charles
  */
+@ServiceProvider(service = SdmxWebDriver.class)
 public final class Sdmx21Driver2 implements SdmxWebDriver {
 
     @lombok.experimental.Delegate
     private final SdmxWebDriverSupport support = SdmxWebDriverSupport
             .builder()
-            .name("sdmx21@facade")
+            .name("web-ri:sdmx21")
+            .rank(NATIVE_RANK)
             .client(Sdmx21Driver2::of)
             .supportedProperties(Util.CONNECTION_PROPERTIES)
             .supportedProperty(SERIES_KEYS_ONLY_SUPPORTED_PROPERTY)
             .sources(SdmxWebResource.load("/internal/web/drivers/sdmx21.xml"))
             .build();
 
-    private static SdmxWebClient of(SdmxWebSource s, LanguagePriorityList l, SdmxWebContext c) {
-        return new Sdmx21RestClient(s.getEndpoint(), l, Util.getRestClient(s, c),
+    private static SdmxWebClient of(SdmxWebSource s, SdmxWebContext c) {
+        return new Sdmx21RestClient(
+                SdmxWebClient.getClientName(s),
+                s.getEndpoint(),
+                c.getLanguages(),
+                Util.getRestClient(s, c),
                 SdmxWebProperty.isSeriesKeysOnlySupported(s.getProperties()),
                 DataFactory.sdmx21()
         );

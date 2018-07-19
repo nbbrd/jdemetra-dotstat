@@ -13,7 +13,8 @@
     
     <properties>
         <!-- dependencies -->
-        <sdmx-connectors.version>9244dfa854</sdmx-connectors.version>
+        <!--<sdmx-connectors.version>9244dfa854</sdmx-connectors.version>-->
+        <sdmx-connectors.version>d08affb9df</sdmx-connectors.version>
     </properties>
 
     <repositories>
@@ -83,6 +84,10 @@
             <artifactId>sdmx-facade-samples</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>sdmx-facade-util-xml</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
-    <name>sdmx-facade-connectors</name>
 </project>

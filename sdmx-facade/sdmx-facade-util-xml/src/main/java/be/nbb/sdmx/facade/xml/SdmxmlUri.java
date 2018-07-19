@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 National Bank of Belgium
+ * Copyright 2017 National Bank of Belgium
  * 
  * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
@@ -14,22 +14,28 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package internal.connectors;
+package be.nbb.sdmx.facade.xml;
 
-import be.nbb.sdmx.facade.DataCursor;
-import be.nbb.sdmx.facade.DataStructure;
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.Key;
-import it.bancaditalia.oss.sdmx.exceptions.SdmxException;
-import java.io.IOException;
+import java.net.URI;
 import javax.annotation.Nonnull;
 
 /**
  *
  * @author Philippe Charles
  */
-public interface HasDataCursor {
+public enum SdmxmlUri {
 
-    @Nonnull
-    DataCursor getDataCursor(@Nonnull DataflowRef flowRef, @Nonnull DataStructure dsd, @Nonnull Key resource, boolean serieskeysonly) throws SdmxException, IOException;
+    NS_V10_URI("http://www.SDMX.org/resources/SDMXML/schemas/v1_0/message"),
+    NS_V20_URI("http://www.SDMX.org/resources/SDMXML/schemas/v2_0/message"),
+    NS_V21_URI("http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message");
+
+    private final URI uri;
+
+    private SdmxmlUri(String uri) {
+        this.uri = URI.create(uri);
+    }
+
+    public boolean is(@Nonnull URI found) {
+        return uri.getRawSchemeSpecificPart().equalsIgnoreCase(found.getRawSchemeSpecificPart());
+    }
 }

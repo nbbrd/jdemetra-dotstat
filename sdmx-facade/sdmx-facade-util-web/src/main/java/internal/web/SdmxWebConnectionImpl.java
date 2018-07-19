@@ -29,6 +29,7 @@ import be.nbb.sdmx.facade.util.SeriesSupport;
 import be.nbb.sdmx.facade.web.SdmxWebConnection;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -41,10 +42,14 @@ final class SdmxWebConnectionImpl implements SdmxWebConnection {
 
     @lombok.NonNull
     private final SdmxWebClient client;
+
+    @lombok.NonNull
+    private final String driver;
+
     private boolean closed = false;
 
     @Override
-    public List<Dataflow> getFlows() throws IOException {
+    public Collection<Dataflow> getFlows() throws IOException {
         checkState();
         return client.getFlows();
     }
@@ -106,13 +111,19 @@ final class SdmxWebConnectionImpl implements SdmxWebConnection {
     }
 
     @Override
+    public String getDriver() throws IOException {
+        checkState();
+        return driver;
+    }
+
+    @Override
     public void close() throws IOException {
         closed = true;
     }
 
     private void checkState() throws IOException {
         if (closed) {
-            throw SdmxExceptions.connectionClosed();
+            throw SdmxExceptions.connectionClosed(client.getName());
         }
     }
 

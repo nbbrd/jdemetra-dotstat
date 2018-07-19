@@ -16,7 +16,6 @@
  */
 package be.nbb.sdmx.facade.web.spi;
 
-import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.web.SdmxWebConnection;
 import be.nbb.sdmx.facade.web.SdmxWebSource;
 import java.io.IOException;
@@ -34,10 +33,11 @@ public interface SdmxWebDriver {
     @Nonnull
     String getName();
 
+    int getRank();
+
     @Nonnull
     SdmxWebConnection connect(
             @Nonnull SdmxWebSource source,
-            @Nonnull LanguagePriorityList languages,
             @Nonnull SdmxWebContext context
     ) throws IOException, IllegalArgumentException;
 
@@ -46,4 +46,7 @@ public interface SdmxWebDriver {
 
     @Nonnull
     Collection<String> getSupportedProperties();
+
+    static final int NATIVE_RANK = Byte.MAX_VALUE;
+    static final int WRAPPED_RANK = 0;
 }

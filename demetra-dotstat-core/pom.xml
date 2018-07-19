@@ -73,17 +73,23 @@
         </dependency>
         <dependency>
             <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-connectors</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>be.nbb.sdmx</groupId>
             <artifactId>sdmx-facade-file</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>demetra-jdbc</artifactId>
+        </dependency>
+        <!-- runtime only -->
+        <dependency>
+            <groupId>be.nbb.sdmx</groupId>
+            <artifactId>sdmx-facade-connectors</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>be.nbb.sdmx</groupId>
+            <artifactId>sdmx-facade-web-ri</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <!-- test only -->
         <dependency>

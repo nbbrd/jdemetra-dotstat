@@ -27,6 +27,7 @@ import be.nbb.sdmx.facade.file.SdmxFileConnection;
 import be.nbb.sdmx.facade.util.SdmxExceptions;
 import be.nbb.sdmx.facade.util.SeriesSupport;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -57,9 +58,9 @@ public final class SdmxFileConnectionImpl implements SdmxFileConnection {
     }
 
     @Override
-    public List<Dataflow> getFlows() throws IOException {
+    public Collection<Dataflow> getFlows() throws IOException {
         checkState();
-        return Collections.singletonList(dataflow);
+        return Collections.singleton(dataflow);
     }
 
     @Override
@@ -137,7 +138,7 @@ public final class SdmxFileConnectionImpl implements SdmxFileConnection {
 
     private void checkState() throws IOException {
         if (closed) {
-            throw SdmxExceptions.connectionClosed();
+            throw SdmxExceptions.connectionClosed("fixme");
         }
     }
 

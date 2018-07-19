@@ -16,6 +16,7 @@
  */
 package internal.connectors.drivers;
 
+import be.nbb.sdmx.facade.parser.DataFactory;
 import be.nbb.sdmx.facade.util.HasCache;
 import it.bancaditalia.oss.sdmx.client.custom.ABS;
 import org.openide.util.lookup.ServiceProvider;
@@ -33,8 +34,9 @@ public final class AbsDriver implements SdmxWebDriver, HasCache {
     @lombok.experimental.Delegate
     private final SdmxWebDriverSupport support = SdmxWebDriverSupport
             .builder()
-            .name("abs@connectors")
-            .client(ConnectorRestClient.of(ABS::new))
+            .name("connectors:abs")
+            .rank(WRAPPED_RANK)
+            .client(ConnectorRestClient.of(ABS::new, DataFactory.sdmx20()))
             .supportedProperties(ConnectorRestClient.CONNECTION_PROPERTIES)
             .sourceOf("ABS", "Australian Bureau of Statistics", "http://stat.data.abs.gov.au/restsdmx/sdmx.ashx")
             .build();

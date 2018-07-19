@@ -16,6 +16,7 @@
  */
 package internal.connectors.drivers;
 
+import be.nbb.sdmx.facade.parser.DataFactory;
 import be.nbb.sdmx.facade.util.HasCache;
 import org.openide.util.lookup.ServiceProvider;
 import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
@@ -33,8 +34,9 @@ public final class ImfDriver implements SdmxWebDriver, HasCache {
     @lombok.experimental.Delegate
     private final SdmxWebDriverSupport support = SdmxWebDriverSupport
             .builder()
-            .name("imf@connectors")
-            .client(ConnectorRestClient.of(IMF2::new))
+            .name("connectors:imf")
+            .rank(WRAPPED_RANK)
+            .client(ConnectorRestClient.of(IMF2::new, DataFactory.sdmx20()))
             .supportedProperties(ConnectorRestClient.CONNECTION_PROPERTIES)
             .sourceOf("IMF", "International Monetary Fund", "http://dataservices.imf.org/REST/SDMX_XML.svc")
             .build();

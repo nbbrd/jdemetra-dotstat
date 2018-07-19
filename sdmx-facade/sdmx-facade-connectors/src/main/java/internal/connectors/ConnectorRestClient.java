@@ -21,8 +21,7 @@ import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.DataStructureRef;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.parser.ObsParser;
+import be.nbb.sdmx.facade.parser.DataFactory;
 import static internal.web.SdmxWebProperty.*;
 import be.nbb.sdmx.facade.util.NoOpCursor;
 import java.io.IOException;
@@ -44,6 +43,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import be.nbb.sdmx.facade.web.spi.SdmxWebContext;
 import internal.web.DataRequest;
+import it.bancaditalia.oss.sdmx.api.PortableTimeSeries;
 
 /**
  *
@@ -67,13 +67,13 @@ public final class ConnectorRestClient implements SdmxWebClient {
     }
 
     @Nonnull
-    public static SdmxWebClient.Supplier of(@Nonnull SpecificSupplier supplier) {
-        return (source, langs, context) -> {
+    public static SdmxWebClient.Supplier of(@Nonnull SpecificSupplier supplier, @Nonnull DataFactory dataFactory) {
+        return (source, context) -> {
             try {
                 RestSdmxClient client = supplier.get();
                 client.setEndpoint(source.getEndpoint().toURI());
-                configure(client, source.getProperties(), langs, context);
-                return new ConnectorRestClient(source.getName(), client);
+                configure(client, source.getProperties(), context);
+                return new ConnectorRestClient(source.getName(), client, dataFactory);
             } catch (URISyntaxException ex) {
                 throw new RuntimeException(ex);
             }
@@ -81,12 +81,12 @@ public final class ConnectorRestClient implements SdmxWebClient {
     }
 
     @Nonnull
-    public static SdmxWebClient.Supplier of(@Nonnull GenericSupplier supplier) {
-        return (source, langs, context) -> {
+    public static SdmxWebClient.Supplier of(@Nonnull GenericSupplier supplier, @Nonnull DataFactory dataFactory) {
+        return (source, context) -> {
             try {
                 RestSdmxClient client = supplier.get(source.getEndpoint().toURI(), source.getProperties());
-                configure(client, source.getProperties(), langs, context);
-                return new ConnectorRestClient(source.getName(), client);
+                configure(client, source.getProperties(), context);
+                return new ConnectorRestClient(source.getName(), client, dataFactory);
             } catch (URISyntaxException ex) {
                 throw new RuntimeException(ex);
             }
@@ -98,6 +98,14 @@ public final class ConnectorRestClient implements SdmxWebClient {
 
     @lombok.NonNull
     private final RestSdmxClient connector;
+
+    @lombok.NonNull
+    private final DataFactory dataFactory;
+
+    @Override
+    public String getName() throws IOException {
+        return name;
+    }
 
     @Override
     public List<Dataflow> getFlows() throws IOException {
@@ -134,9 +142,8 @@ public final class ConnectorRestClient implements SdmxWebClient {
     @Override
     public DataCursor getData(DataRequest request, DataStructure dsd) throws IOException {
         try {
-            return connector instanceof HasDataCursor
-                    ? getNativeCursor((HasDataCursor) connector, request, dsd)
-                    : getAdaptedCursor(connector, request, dsd);
+            List<PortableTimeSeries<Double>> data = getData(connector, request, dsd);
+            return PortableTimeSeriesCursor.of(data, dataFactory, dsd);
         } catch (SdmxException ex) {
             if (Connectors.isNoResultMatchingQuery(ex)) {
                 return NoOpCursor.noOp();
@@ -174,20 +181,16 @@ public final class ConnectorRestClient implements SdmxWebClient {
                     READ_TIMEOUT_PROPERTY
             ));
 
-    private static DataCursor getNativeCursor(HasDataCursor connector, DataRequest request, DataStructure dsd) throws SdmxException, IOException {
-        return connector.getDataCursor(request.getFlowRef(), dsd, request.getKey(), request.getFilter().isSeriesKeyOnly());
-    }
-
-    private static DataCursor getAdaptedCursor(RestSdmxClient connector, DataRequest request, DataStructure dsd) throws SdmxException {
-        return new PortableTimeSeriesCursor(connector.getTimeSeries(Connectors.fromFlowQuery(request.getFlowRef(), dsd.getRef()), Connectors.fromStructure(dsd), request.getKey().toString(), null, null, request.getFilter().isSeriesKeyOnly(), null, false), ObsParser.standard());
+    private static List<PortableTimeSeries<Double>> getData(RestSdmxClient connector, DataRequest request, DataStructure dsd) throws SdmxException {
+        return connector.getTimeSeries(Connectors.fromFlowQuery(request.getFlowRef(), dsd.getRef()), Connectors.fromStructure(dsd), request.getKey().toString(), null, null, request.getFilter().isSeriesKeyOnly(), null, false);
     }
 
     private static IOException wrap(SdmxException ex, String format, Object... args) {
         return new IOException(String.format(format, args), ex);
     }
 
-    private static void configure(RestSdmxClient client, Map<?, ?> info, LanguagePriorityList langs, SdmxWebContext context) {
-        client.setLanguages(Connectors.fromLanguages(langs));
+    private static void configure(RestSdmxClient client, Map<?, ?> info, SdmxWebContext context) {
+        client.setLanguages(Connectors.fromLanguages(context.getLanguages()));
         client.setConnectTimeout(getConnectTimeout(info));
         client.setReadTimeout(getReadTimeout(info));
         client.setProxySelector(context.getProxySelector());
