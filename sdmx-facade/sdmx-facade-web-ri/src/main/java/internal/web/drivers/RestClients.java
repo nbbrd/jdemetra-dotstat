@@ -27,22 +27,30 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import be.nbb.sdmx.facade.web.spi.SdmxWebContext;
+import ioutil.IO;
+import java.net.HttpURLConnection;
+import java.net.Proxy;
 
 /**
  *
  * @author Philippe Charles
  */
 @lombok.experimental.UtilityClass
-class Util {
+class RestClients {
 
     public RestClient getRestClient(SdmxWebSource o, SdmxWebContext context) {
+        return getRestClient(o, context, IO.Consumer.noOp());
+    }
+
+    public RestClient getRestClient(SdmxWebSource o, SdmxWebContext context, IO.Consumer<HttpURLConnection> validator) {
         return RestClientImpl.of(
                 SdmxWebProperty.getReadTimeout(o.getProperties()),
                 SdmxWebProperty.getConnectTimeout(o.getProperties()),
                 SdmxWebProperty.getMaxRedirects(o.getProperties()),
                 context.getProxySelector(),
                 context.getSslSocketFactory(),
-                new EventListenerImpl(context.getLogger())
+                new Listener(context.getLogger()),
+                validator
         );
     }
 
@@ -54,19 +62,24 @@ class Util {
             ));
 
     @lombok.AllArgsConstructor
-    private static final class EventListenerImpl implements RestClientImpl.EventListener {
+    private static final class Listener implements RestClientImpl.EventListener {
 
         @lombok.NonNull
         private final Logger logger;
 
         @Override
         public void onOpenStream(URL query, String mediaType, String langs) {
-            logger.log(Level.FINE, "Querying ''{0}''", query);
+            logger.log(Level.INFO, "Querying ''{0}''", query);
         }
 
         @Override
         public void onRedirection(URL oldUrl, URL newUrl) {
-            logger.log(Level.FINE, "Redirecting to ''{0}''", newUrl);
+            logger.log(Level.INFO, "Redirecting to ''{0}''", newUrl);
+        }
+
+        @Override
+        public void onProxy(URL query, Proxy proxy) {
+            logger.log(Level.INFO, "Using proxy ''{0}''", proxy);
         }
     }
 }

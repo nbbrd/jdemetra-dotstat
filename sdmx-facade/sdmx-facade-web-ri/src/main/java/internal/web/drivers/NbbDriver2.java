@@ -17,6 +17,7 @@
 package internal.web.drivers;
 
 import be.nbb.sdmx.facade.util.SdmxFix;
+import static be.nbb.sdmx.facade.util.SdmxFix.Category.CONTENT;
 import static be.nbb.sdmx.facade.util.SdmxFix.Category.QUERY;
 import be.nbb.sdmx.facade.web.SdmxWebSource;
 import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
@@ -27,6 +28,7 @@ import java.net.URL;
 import be.nbb.sdmx.facade.web.spi.SdmxWebContext;
 import internal.web.DataRequest;
 import internal.web.SdmxWebClient;
+import java.net.HttpURLConnection;
 import org.openide.util.lookup.ServiceProvider;
 
 /**
@@ -42,14 +44,15 @@ public final class NbbDriver2 implements SdmxWebDriver {
             .name("web-ri:nbb")
             .rank(NATIVE_RANK)
             .client(NbbClient2::new)
-            .supportedProperties(Util.CONNECTION_PROPERTIES)
+            .supportedProperties(RestClients.CONNECTION_PROPERTIES)
             .sourceOf("NBB", "National Bank of Belgium", "https://stat.nbb.be/restsdmx/sdmx.ashx")
             .build();
 
     private static final class NbbClient2 extends DotStatRestClient {
 
         private NbbClient2(SdmxWebSource s, SdmxWebContext c) {
-            super(SdmxWebClient.getClientName(s), s.getEndpoint(), c.getLanguages(), Util.getRestClient(s, c));
+            super(SdmxWebClient.getClientName(s), s.getEndpoint(), c.getLanguages(),
+                    RestClients.getRestClient(s, c, NbbClient2::checkResponseForError));
         }
 
         @SdmxFix(id = 1, category = QUERY, cause = "'/all' must be encoded to '%2Fall'")
@@ -62,6 +65,13 @@ public final class NbbDriver2 implements SdmxWebDriver {
                     .path(request.getKey().toString() + "/all")
                     .param("format", "compact_v2")
                     .build();
+        }
+
+        @SdmxFix(id = 2, category = CONTENT, cause = "Some interal errors redirect to an html page")
+        private static void checkResponseForError(HttpURLConnection http) throws IOException {
+            if (http.getContentType().equals("text/html")) {
+                throw new IOException("Service not available");
+            }
         }
     }
 }
