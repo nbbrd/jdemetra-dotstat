@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.ServiceLoader;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocketFactory;
+import nbbrd.net.SystemProxySelector;
 import org.openide.util.Lookup;
 
 /**
@@ -164,7 +165,9 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
                     }
                     drivers.add(o);
                 });
-        return SdmxWebManager.of(drivers);
+        SdmxWebManager result = SdmxWebManager.of(drivers);
+        result.setProxySelector(SystemProxySelector.ofServiceLoader());
+        return result;
     }
 
     private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, SdmxWebProviderBuddy> {
