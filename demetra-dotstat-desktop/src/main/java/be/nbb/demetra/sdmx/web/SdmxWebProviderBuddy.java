@@ -33,7 +33,6 @@ import ec.nbdemetra.ui.properties.NodePropertySetBuilder;
 import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
 import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
 import ec.tss.tsproviders.DataSet;
-import ec.tss.tsproviders.TsProviders;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxAutoCompletion;
 import java.awt.Image;
@@ -57,6 +56,7 @@ import java.util.ArrayList;
 import java.util.ServiceLoader;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocketFactory;
+import org.openide.util.Lookup;
 
 /**
  *
@@ -146,7 +146,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private static Optional<SdmxWebProvider> lookupProvider() {
-        return TsProviders.lookup(SdmxWebProvider.class, SdmxWebProvider.NAME).toJavaUtil();
+        return Optional.ofNullable(Lookup.getDefault().lookup(SdmxWebProvider.class));
     }
 
     private static Configurator<SdmxWebProviderBuddy> createConfigurator() {
