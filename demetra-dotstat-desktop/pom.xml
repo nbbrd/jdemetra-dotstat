@@ -33,6 +33,7 @@
 
         <!-- dependencies -->
         <demetra.version>2.2.0</demetra.version>
+        <java-net-proxy.version>1.0.0-SNAPSHOT</java-net-proxy.version>
     </properties>
         
     <dependencyManagement>
@@ -136,6 +137,11 @@
             <artifactId>sdmx-facade-api</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>be.nbb.rd</groupId>
+            <artifactId>java-net-proxy</artifactId>
+            <version>${java-net-proxy.version}</version>
+        </dependency>
     </dependencies>
 
     <repositories>
@@ -146,6 +152,10 @@
         <repository>
             <id>oss-jfrog-artifactory-releases</id>
             <url>https://oss.jfrog.org/artifactory/oss-release-local</url>
+        </repository>
+        <repository>
+            <id>oss-jfrog-artifactory-snapshots</id>
+            <url>https://oss.jfrog.org/artifactory/oss-snapshot-local</url>
         </repository>
     </repositories>
   

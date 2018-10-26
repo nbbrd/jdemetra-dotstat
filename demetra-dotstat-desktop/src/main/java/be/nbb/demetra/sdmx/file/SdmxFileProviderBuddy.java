@@ -32,7 +32,6 @@ import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
 import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.IFileLoader;
-import ec.tss.tsproviders.TsProviders;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.file.SdmxFileUtil;
 import internal.sdmx.SdmxAutoCompletion;
@@ -52,6 +51,7 @@ import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import be.nbb.sdmx.facade.SdmxManager;
+import org.openide.util.Lookup;
 
 /**
  *
@@ -133,7 +133,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
     }
 
     private static Optional<SdmxFileProvider> lookupProvider() {
-        return TsProviders.lookup(SdmxFileProvider.class, SdmxFileProvider.NAME).toJavaUtil();
+        return Optional.ofNullable(Lookup.getDefault().lookup(SdmxFileProvider.class));
     }
 
     private static Configurator<SdmxFileProviderBuddy> createConfigurator() {
