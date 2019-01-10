@@ -30,7 +30,7 @@
         <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
 
         <!-- dependencies -->
-        <demetra.version>2.2.0</demetra.version>
+        <demetra.version>2.2.1</demetra.version>
         <lombok.version>edge-SNAPSHOT</lombok.version>
     </properties>
 
