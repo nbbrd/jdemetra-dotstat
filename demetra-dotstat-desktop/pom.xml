@@ -32,7 +32,7 @@
         <nbm-maven-plugin.version>4.1</nbm-maven-plugin.version>
 
         <!-- dependencies -->
-        <demetra.version>2.2.0</demetra.version>
+        <demetra.version>2.2.1</demetra.version>
         <java-net-proxy.version>1.0.0-SNAPSHOT</java-net-proxy.version>
     </properties>
         
