@@ -146,12 +146,12 @@ public class SdmxFileProviderTest {
 
             assertThat(newColInfo(p, NO_XML, STRUCT20)).satisfies(info -> {
                 assertThat(p.get(info)).isFalse();
-                assertThat(info.invalidDataCause).contains("XMLStreamException");
+                assertThat(info.invalidDataCause).contains("end-of-file");
             });
 
             assertThat(newColInfo(p, GENERIC20, NO_XML)).satisfies(info -> {
                 assertThat(p.get(info)).isFalse();
-                assertThat(info.invalidDataCause).contains("XMLStreamException");
+                assertThat(info.invalidDataCause).contains("end-of-file");
             });
         }
     }
