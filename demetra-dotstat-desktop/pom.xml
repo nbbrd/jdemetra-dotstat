@@ -4,7 +4,7 @@
 
     <groupId>be.nbb.demetra</groupId>
     <artifactId>demetra-dotstat-desktop</artifactId>
-    <version>2.2.3-SNAPSHOT</version>
+    <version>2.2.3</version>
     <packaging>nbm</packaging>
 
     <name>Demetra - DotStat - Desktop</name>
