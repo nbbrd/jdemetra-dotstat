@@ -49,6 +49,10 @@ import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import be.nbb.sdmx.facade.SdmxManager;
+import ec.tss.TsAsyncMode;
+import ec.tss.tsproviders.cursor.TsCursorAsFiller;
+import ec.tss.tsproviders.utils.TsFillerAsProvider;
+import java.io.EOFException;
 
 /**
  *
@@ -79,6 +83,9 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
     private final CubeSupport cubeSupport;
 
     @lombok.experimental.Delegate
+    private final HasDataDisplayName dataDisplayName;
+
+    @lombok.experimental.Delegate
     private final ITsProvider tsSupport;
 
     public SdmxFileProvider() {
@@ -92,7 +99,8 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
         this.beanSupport = HasDataSourceBean.of(NAME, sdmxParam, sdmxParam.getVersion());
         this.filePathSupport = HasFilePaths.of(cache::invalidateAll);
         this.cubeSupport = CubeSupport.of(new SdmxCubeResource(cache, properties, filePathSupport, sdmxParam));
-        this.tsSupport = CubeSupport.asTsProvider(NAME, logger, cubeSupport, monikerSupport, cache::invalidateAll);
+        this.dataDisplayName = new SdmxFileDataDisplayName(beanSupport, cubeSupport);
+        this.tsSupport = TsFillerAsProvider.of(NAME, TsAsyncMode.Once, TsCursorAsFiller.of(logger, cubeSupport, monikerSupport, dataDisplayName), cache::invalidateAll);
     }
 
     @Override
@@ -110,24 +118,8 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
         return pathname.getName().toLowerCase().endsWith(".xml");
     }
 
-    @Override
-    public String getDisplayName(DataSource dataSource) throws IllegalArgumentException {
-        return getSourceLabel(decodeBean(dataSource));
-    }
-
-    @Override
-    public String getDisplayName(DataSet dataSet) throws IllegalArgumentException {
-        return cubeSupport.getDisplayName(dataSet);
-    }
-
-    @Override
-    public String getDisplayName(IOException exception) throws IllegalArgumentException {
-        return cubeSupport.getDisplayName(exception);
-    }
-
-    @Override
-    public String getDisplayNodeName(DataSet dataSet) throws IllegalArgumentException {
-        return cubeSupport.getDisplayNodeName(dataSet);
+    private static String getSourceLabel(SdmxFileBean bean) {
+        return bean.getFile().getPath();
     }
 
     @lombok.AllArgsConstructor
@@ -182,7 +174,33 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
         }
     }
 
-    private static String getSourceLabel(SdmxFileBean bean) {
-        return bean.getFile().getPath();
+    @lombok.AllArgsConstructor
+    private static final class SdmxFileDataDisplayName implements HasDataDisplayName {
+
+        private final HasDataSourceBean<SdmxFileBean> beanSupport;
+        private final CubeSupport cubeSupport;
+
+        @Override
+        public String getDisplayName(DataSource dataSource) throws IllegalArgumentException {
+            return getSourceLabel(beanSupport.decodeBean(dataSource));
+        }
+
+        @Override
+        public String getDisplayName(DataSet dataSet) throws IllegalArgumentException {
+            return cubeSupport.getDisplayName(dataSet);
+        }
+
+        @Override
+        public String getDisplayName(IOException exception) throws IllegalArgumentException {
+            if (exception instanceof EOFException) {
+                return "Unexpected end-of-file: " + exception.getMessage();
+            }
+            return cubeSupport.getDisplayName(exception);
+        }
+
+        @Override
+        public String getDisplayNodeName(DataSet dataSet) throws IllegalArgumentException {
+            return cubeSupport.getDisplayNodeName(dataSet);
+        }
     }
 }

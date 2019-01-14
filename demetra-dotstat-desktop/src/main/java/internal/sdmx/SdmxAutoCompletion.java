@@ -83,7 +83,11 @@ public class SdmxAutoCompletion {
     }
 
     public ListCellRenderer getSourceRenderer() {
-        return CustomListCellRenderer.of(SdmxWebSource::getDescription, SdmxWebSource::getName);
+        return CustomListCellRenderer.of(SdmxAutoCompletion::getNameAndDescription, o -> null);
+    }
+
+    private String getNameAndDescription(SdmxWebSource o) {
+        return o.getName() + ": " + o.getDescription();
     }
 
     public AutoCompletionSource onFlows(SdmxManager manager, Supplier<String> source, ConcurrentMap cache) {
@@ -129,7 +133,13 @@ public class SdmxAutoCompletion {
 
     private List<SdmxWebSource> filterAndSortSources(List<SdmxWebSource> allValues, String term) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
-        return allValues.stream()
+        // need to filter out duplicates
+        return allValues
+                .stream()
+                .collect(Collectors.groupingBy(SdmxWebSource::getName))
+                .values()
+                .stream()
+                .flatMap(o -> o.stream().limit(1))
                 .filter(o -> filter.test(o.getDescription()) || filter.test(o.getName()))
                 .sorted(Comparator.comparing(SdmxWebSource::getDescription))
                 .collect(Collectors.toList());

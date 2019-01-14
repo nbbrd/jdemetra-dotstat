@@ -33,7 +33,6 @@ import ec.nbdemetra.ui.properties.NodePropertySetBuilder;
 import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
 import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
 import ec.tss.tsproviders.DataSet;
-import ec.tss.tsproviders.TsProviders;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxAutoCompletion;
 import java.awt.Image;
@@ -50,9 +49,15 @@ import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import be.nbb.sdmx.facade.SdmxManager;
+import be.nbb.sdmx.facade.util.HasCache;
+import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
 import java.net.ProxySelector;
+import java.util.ArrayList;
+import java.util.ServiceLoader;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocketFactory;
+import nbbrd.net.SystemProxySelector;
+import org.openide.util.Lookup;
 
 /**
  *
@@ -142,7 +147,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private static Optional<SdmxWebProvider> lookupProvider() {
-        return TsProviders.lookup(SdmxWebProvider.class, SdmxWebProvider.NAME).toJavaUtil();
+        return Optional.ofNullable(Lookup.getDefault().lookup(SdmxWebProvider.class));
     }
 
     private static Configurator<SdmxWebProviderBuddy> createConfigurator() {
@@ -150,8 +155,18 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     }
 
     private static SdmxWebManager createManager() {
-        SdmxWebManager result = SdmxWebManager.ofServiceLoader();
-        result.setCache(GuavaCaches.softValuesCacheAsMap());
+        ConcurrentMap cache = GuavaCaches.softValuesCacheAsMap();
+        List<SdmxWebDriver> drivers = new ArrayList<>();
+        ServiceLoader
+                .load(SdmxWebDriver.class)
+                .forEach(o -> {
+                    if (o instanceof HasCache) {
+                        ((HasCache) o).setCache(cache);
+                    }
+                    drivers.add(o);
+                });
+        SdmxWebManager result = SdmxWebManager.of(drivers);
+        result.setProxySelector(SystemProxySelector.ofServiceLoader());
         return result;
     }
 

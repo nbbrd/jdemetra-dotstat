@@ -21,16 +21,16 @@ import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.DataQueryDetail;
-import be.nbb.sdmx.facade.DataQuery;
+import be.nbb.sdmx.facade.DataFilter;
 import be.nbb.sdmx.facade.Series;
 import be.nbb.sdmx.facade.file.SdmxFileConnection;
 import be.nbb.sdmx.facade.util.SdmxExceptions;
 import be.nbb.sdmx.facade.util.SeriesSupport;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -58,7 +58,7 @@ public final class SdmxFileConnectionImpl implements SdmxFileConnection {
     }
 
     @Override
-    public Set<Dataflow> getFlows() throws IOException {
+    public Collection<Dataflow> getFlows() throws IOException {
         checkState();
         return Collections.singleton(dataflow);
     }
@@ -90,28 +90,40 @@ public final class SdmxFileConnectionImpl implements SdmxFileConnection {
     }
 
     @Override
-    public DataCursor getCursor(DataQuery query) throws IOException {
-        checkState();
-        Objects.requireNonNull(query);
-        return resource.loadData(resource.decode(), dataflow.getRef(), query.getKey(), query.getDetail().equals(DataQueryDetail.SERIES_KEYS_ONLY));
+    public List<Series> getData(Key key, DataFilter filter) throws IOException {
+        return SeriesSupport.asList(() -> getDataCursor(key, filter));
     }
 
     @Override
-    public DataCursor getCursor(DataflowRef flowRef, DataQuery query) throws IOException {
+    public List<Series> getData(DataflowRef flowRef, Key key, DataFilter filter) throws IOException {
+        return SeriesSupport.asList(() -> getDataCursor(flowRef, key, filter));
+    }
+
+    @Override
+    public Stream<Series> getDataStream(Key key, DataFilter filter) throws IOException {
+        return SeriesSupport.asStream(() -> getDataCursor(key, filter));
+    }
+
+    @Override
+    public Stream<Series> getDataStream(DataflowRef flowRef, Key key, DataFilter filter) throws IOException {
+        return SeriesSupport.asStream(() -> getDataCursor(flowRef, key, filter));
+    }
+
+    @Override
+    public DataCursor getDataCursor(Key key, DataFilter filter) throws IOException {
+        checkState();
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(filter);
+        return resource.loadData(resource.decode(), dataflow.getRef(), key, filter.isSeriesKeyOnly());
+    }
+
+    @Override
+    public DataCursor getDataCursor(DataflowRef flowRef, Key key, DataFilter filter) throws IOException {
         checkState();
         checkFlowRef(flowRef);
-        Objects.requireNonNull(query);
-        return resource.loadData(resource.decode(), dataflow.getRef(), query.getKey(), query.getDetail().equals(DataQueryDetail.SERIES_KEYS_ONLY));
-    }
-
-    @Override
-    public Stream<Series> getStream(DataQuery query) throws IOException {
-        return SeriesSupport.asStream(() -> getCursor(query));
-    }
-
-    @Override
-    public Stream<Series> getStream(DataflowRef flowRef, DataQuery query) throws IOException {
-        return SeriesSupport.asStream(() -> getCursor(flowRef, query));
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(filter);
+        return resource.loadData(resource.decode(), dataflow.getRef(), key, filter.isSeriesKeyOnly());
     }
 
     @Override
@@ -126,7 +138,7 @@ public final class SdmxFileConnectionImpl implements SdmxFileConnection {
 
     private void checkState() throws IOException {
         if (closed) {
-            throw SdmxExceptions.connectionClosed();
+            throw SdmxExceptions.connectionClosed("fixme");
         }
     }
 

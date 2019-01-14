@@ -21,20 +21,22 @@ import be.nbb.sdmx.facade.DataCursor;
 import be.nbb.sdmx.facade.DataStructure;
 import be.nbb.sdmx.facade.Dataflow;
 import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.DataQuery;
+import be.nbb.sdmx.facade.DataFilter;
 import be.nbb.sdmx.facade.DataStructureRef;
+import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.util.SdmxExceptions;
 import be.nbb.sdmx.facade.util.SeriesSupport;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
@@ -55,7 +57,7 @@ public class SdmxRepository {
 
     @lombok.NonNull
     @lombok.Singular
-    Set<Dataflow> flows;
+    List<Dataflow> flows;
 
     @lombok.NonNull
     Map<DataflowRef, List<Series>> data;
@@ -87,31 +89,38 @@ public class SdmxRepository {
     }
 
     @Nonnull
-    public Optional<DataCursor> getCursor(@Nonnull DataflowRef flowRef, @Nonnull DataQuery query) {
-        return getData(flowRef).map(toCursor(query));
+    public Optional<List<Series>> getData(@Nonnull DataflowRef flowRef, @Nonnull Key key, @Nonnull DataFilter filter) {
+        return getDataByFlowRef(flowRef).map(toStream(key, filter)).map(o -> o.collect(Collectors.toList()));
     }
 
     @Nonnull
-    public Optional<Stream<Series>> getStream(@Nonnull DataflowRef flowRef, @Nonnull DataQuery query) {
-        return getData(flowRef).map(toStream(query));
+    public Optional<Stream<Series>> getDataStream(@Nonnull DataflowRef flowRef, @Nonnull Key key, @Nonnull DataFilter filter) {
+        return getDataByFlowRef(flowRef).map(toStream(key, filter));
     }
 
     @Nonnull
-    private Optional<List<Series>> getData(@Nonnull DataflowRef flowRef) {
+    public Optional<DataCursor> getDataCursor(@Nonnull DataflowRef flowRef, @Nonnull Key key, @Nonnull DataFilter filter) {
+        return getDataByFlowRef(flowRef).map(toCursor(key, filter));
+    }
+
+    @Nonnull
+    private Optional<List<Series>> getDataByFlowRef(@Nonnull DataflowRef flowRef) {
         Objects.requireNonNull(flowRef);
         return Optional.ofNullable(data.get(flowRef));
     }
 
     @Nonnull
-    private static Function<List<Series>, DataCursor> toCursor(@Nonnull DataQuery query) {
-        Objects.requireNonNull(query);
-        return o -> SeriesSupport.asCursor(o, query.getKey());
+    private static Function<List<Series>, DataCursor> toCursor(@Nonnull Key key, @Nonnull DataFilter filter) {
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(filter);
+        return o -> SeriesSupport.asCursor(o, key);
     }
 
     @Nonnull
-    private static Function<List<Series>, Stream<Series>> toStream(@Nonnull DataQuery query) {
-        Objects.requireNonNull(query);
-        return o -> o.stream().filter(s -> query.getKey().contains(s.getKey()));
+    private static Function<List<Series>, Stream<Series>> toStream(@Nonnull Key key, @Nonnull DataFilter filter) {
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(filter);
+        return o -> o.stream().filter(s -> key.contains(s.getKey()));
     }
 
     public static final class Builder {
@@ -154,7 +163,7 @@ public class SdmxRepository {
         }
 
         @Override
-        public Set<Dataflow> getFlows() throws IOException {
+        public Collection<Dataflow> getFlows() throws IOException {
             checkState();
             return repo.getFlows();
         }
@@ -164,7 +173,7 @@ public class SdmxRepository {
             checkState();
             return repo
                     .getFlow(flowRef)
-                    .orElseThrow(() -> SdmxExceptions.missingFlow(flowRef));
+                    .orElseThrow(() -> SdmxExceptions.missingFlow(repo.getName(), flowRef));
         }
 
         @Override
@@ -173,23 +182,31 @@ public class SdmxRepository {
             DataStructureRef structRef = getFlow(flowRef).getStructureRef();
             return repo
                     .getStructure(structRef)
-                    .orElseThrow(() -> SdmxExceptions.missingStructure(structRef));
+                    .orElseThrow(() -> SdmxExceptions.missingStructure(repo.getName(), structRef));
         }
 
         @Override
-        public DataCursor getCursor(DataflowRef flowRef, DataQuery query) throws IOException {
+        public List<Series> getData(DataflowRef flowRef, Key key, DataFilter filter) throws IOException {
             checkState();
             return repo
-                    .getCursor(flowRef, query)
-                    .orElseThrow(() -> SdmxExceptions.missingData(flowRef));
+                    .getData(flowRef, key, filter)
+                    .orElseThrow(() -> SdmxExceptions.missingData(repo.getName(), flowRef));
         }
 
         @Override
-        public Stream<Series> getStream(DataflowRef flowRef, DataQuery query) throws IOException {
+        public Stream<Series> getDataStream(DataflowRef flowRef, Key key, DataFilter filter) throws IOException {
             checkState();
             return repo
-                    .getStream(flowRef, query)
-                    .orElseThrow(() -> SdmxExceptions.missingData(flowRef));
+                    .getDataStream(flowRef, key, filter)
+                    .orElseThrow(() -> SdmxExceptions.missingData(repo.getName(), flowRef));
+        }
+
+        @Override
+        public DataCursor getDataCursor(DataflowRef flowRef, Key key, DataFilter filter) throws IOException {
+            checkState();
+            return repo
+                    .getDataCursor(flowRef, key, filter)
+                    .orElseThrow(() -> SdmxExceptions.missingData(repo.getName(), flowRef));
         }
 
         @Override
@@ -204,7 +221,7 @@ public class SdmxRepository {
 
         private void checkState() throws IOException {
             if (closed) {
-                throw SdmxExceptions.connectionClosed();
+                throw SdmxExceptions.connectionClosed(repo.getName());
             }
         }
     }
