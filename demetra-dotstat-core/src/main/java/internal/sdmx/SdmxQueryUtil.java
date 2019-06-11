@@ -35,8 +35,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  *
@@ -48,26 +48,26 @@ public class SdmxQueryUtil {
     public final String NO_LABEL = null;
     public final OptionalTsData MISSING_DATA = OptionalTsData.absent("No results matching the query");
 
-    @Nonnull
+    @NonNull
     public TsCursor<Key> getAllSeries(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
         return conn.isSeriesKeysOnlySupported()
                 ? request(conn, flowRef, ref, labelAttribute, true)
                 : computeKeys(conn, flowRef, ref);
     }
 
-    @Nonnull
+    @NonNull
     public TsCursor<Key> getAllSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
         return conn.isSeriesKeysOnlySupported()
                 ? request(conn, flowRef, ref, labelAttribute, false)
                 : computeKeysAndRequestData(conn, flowRef, ref);
     }
 
-    @Nonnull
+    @NonNull
     public TsCursor<Key> getSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
         return request(conn, flowRef, ref, labelAttribute, false);
     }
 
-    @Nonnull
+    @NonNull
     public List<String> getChildren(SdmxConnection conn, DataflowRef flowRef, Key ref, int dimensionPosition) throws IOException {
         if (conn.isSeriesKeysOnlySupported()) {
             try (TsCursor<Key> cursor = request(conn, flowRef, ref, NO_LABEL, true)) {

@@ -16,10 +16,10 @@
  */
 package be.nbb.demetra.sdmx;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.ThreadSafe;
 import be.nbb.sdmx.facade.SdmxManager;
+import ec.tstoolkit.design.ThreadSafe;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  *
@@ -28,7 +28,7 @@ import be.nbb.sdmx.facade.SdmxManager;
 @ThreadSafe
 public interface HasSdmxProperties {
 
-    @Nonnull
+    @NonNull
     SdmxManager getSdmxManager();
 
     void setSdmxManager(@Nullable SdmxManager manager);

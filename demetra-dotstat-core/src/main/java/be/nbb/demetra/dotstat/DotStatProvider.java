@@ -34,8 +34,8 @@ import ec.tss.tsproviders.db.DbProvider;
 import internal.sdmx.SdmxPropertiesSupport;
 import java.io.IOException;
 import java.util.Map;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.LoggerFactory;
 
@@ -137,7 +137,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
         return support.checkBean(bean, DotStatBean.class).toDataSource(NAME, VERSION);
     }
 
-    @Nonnull
+    @NonNull
     public String getPreferredLanguage() {
         return getSdmxManager().getLanguages().toString();
     }
@@ -161,8 +161,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
         return getSdmxManager().getConnection(name);
     }
 
-    @Nullable
-    private static Map.Entry<String, String> getNodeDimension(DataSet dataSet) {
+    private static Map.@Nullable Entry<String, String> getNodeDimension(DataSet dataSet) {
         String[] dimColumns = DbBean.getDimArray(dataSet.getDataSource());
         int length = dimColumns.length;
         while (length > 0 && dataSet.get(dimColumns[length - 1]) == null) {

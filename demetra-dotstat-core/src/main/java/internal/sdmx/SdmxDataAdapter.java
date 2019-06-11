@@ -34,8 +34,8 @@ import java.util.Date;
 import java.util.EnumMap;
 import java.util.GregorianCalendar;
 import java.util.Map;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  *
@@ -51,7 +51,7 @@ final class SdmxDataAdapter implements TsCursor<Key> {
     private Calendar calendar;
     private ZoneId zoneId;
 
-    SdmxDataAdapter(@Nonnull Key ref, @Nonnull DataCursor cursor, @Nullable String labelAttribute) {
+    SdmxDataAdapter(@NonNull Key ref, @NonNull DataCursor cursor, @Nullable String labelAttribute) {
         this.ref = ref;
         this.cursor = cursor;
         this.labelAttribute = labelAttribute;
