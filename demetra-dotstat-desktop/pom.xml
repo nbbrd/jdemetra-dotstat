@@ -28,12 +28,6 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-        <maven-jar-plugin.version>3.1.2</maven-jar-plugin.version>
-        <nbm-maven-plugin.version>4.1</nbm-maven-plugin.version>
-
-        <!-- dependencies -->
-        <demetra.version>2.2.0</demetra.version>
-        <java-net-proxy.version>1.0.0-SNAPSHOT</java-net-proxy.version>
     </properties>
         
     <dependencyManagement>
@@ -48,7 +42,7 @@
             <dependency>
                 <groupId>eu.europa.ec.joinup.sat</groupId>
                 <artifactId>nbdemetra-parent</artifactId>
-                <version>${demetra.version}</version>
+                <version>2.2.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -62,6 +56,7 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
+        
         <!-- compile and runtime -->
         <dependency>
             <groupId>org.netbeans.api</groupId>
@@ -140,7 +135,7 @@
         <dependency>
             <groupId>be.nbb.rd</groupId>
             <artifactId>java-net-proxy</artifactId>
-            <version>${java-net-proxy.version}</version>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -160,20 +155,10 @@
     </repositories>
   
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>${maven-compiler-plugin.version}</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>${maven-jar-plugin.version}</version>
                 <configuration>
                     <!-- to have the jar plugin pickup the nbm generated manifest -->
                     <archive>
@@ -184,7 +169,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>nbm-maven-plugin</artifactId>
-                <version>${nbm-maven-plugin.version}</version>
+                <version>4.1</version>
                 <extensions>true</extensions>
                 <configuration>
                     <useOSGiDependencies>false</useOSGiDependencies>    
@@ -197,6 +182,46 @@
     </build>
     
     <profiles>
+        <!-- Base build java8 -->
+        <profile>
+            <id>base-java8</id>
+            <activation>
+                <property>
+                    <name>!skipBaseJava8</name>
+                </property>
+            </activation>
+            <properties>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <maven.compiler.target>1.8</maven.compiler.target>
+                <maven.compiler.source>1.8</maven.compiler.source>                
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.8.1</version>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>3.1.2</version>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Enforce Java8 API -->
+        <profile>
+            <id>enforce-java8-api</id>
+            <activation>
+                <jdk>11</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>8</maven.compiler.release>
+            </properties>
+        </profile>
+
         <!-- Add missing Java EE Modules on JDK11 -->
         <profile>
             <activation>
