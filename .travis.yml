@@ -8,7 +8,7 @@ env:
   global:
     - DEPLOY_JDK=openjdk8
     - DEPLOY_REPO=nbbrd/jdemetra-dotstat
-    - DEPLOY_BIN=demetra-dotstat-desktop/target/*.nbm
+    - DEPLOY_BIN=demetra-dotstat-desktop/target/binaries/*
 
 deploy:
   # Github releases from tags
