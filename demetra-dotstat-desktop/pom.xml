@@ -265,7 +265,7 @@
         <profile>
             <id>enforce-java8-api</id>
             <activation>
-                <jdk>11</jdk>
+                <jdk>[11,)</jdk>
             </activation>
             <properties>
                 <maven.compiler.release>8</maven.compiler.release>
@@ -275,7 +275,7 @@
         <!-- Add missing Java EE Modules on JDK11 -->
         <profile>
             <activation>
-                <jdk>11</jdk>
+                <jdk>[11,)</jdk>
             </activation>
             <dependencies>
                 <dependency>
