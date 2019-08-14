@@ -56,7 +56,7 @@ import java.util.ArrayList;
 import java.util.ServiceLoader;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocketFactory;
-import nbbrd.net.SystemProxySelector;
+import nbbrd.net.proxy.SystemProxySelector;
 import org.openide.util.Lookup;
 
 /**
