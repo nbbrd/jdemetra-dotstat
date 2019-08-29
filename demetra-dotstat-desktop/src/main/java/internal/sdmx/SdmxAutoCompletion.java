@@ -36,14 +36,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import javax.swing.ListCellRenderer;
 import be.nbb.sdmx.facade.SdmxManager;
+import be.nbb.sdmx.facade.parser.spi.SdmxDialectLoader;
 
 /**
  *
@@ -54,7 +53,7 @@ public class SdmxAutoCompletion {
 
     public AutoCompletionSource onDialects() {
         return ExtAutoCompletionSource
-                .builder(o -> StreamSupport.stream(ServiceLoader.load(SdmxDialect.class).spliterator(), false).collect(Collectors.toList()))
+                .builder(o -> new SdmxDialectLoader().get())
                 .behavior(AutoCompletionSource.Behavior.SYNC)
                 .postProcessor(SdmxAutoCompletion::filterAndSortDialects)
                 .valueToString(SdmxDialect::getName)
