@@ -35,6 +35,7 @@ import ec.tss.tsproviders.db.DbProvider;
 import internal.sdmx.SdmxPropertiesSupport;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.openide.util.lookup.ServiceProvider;
@@ -146,9 +147,9 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     public void setPreferredLanguage(@Nullable String lang) {
         SdmxManager manager = getSdmxManager();
         if (manager instanceof SdmxWebManager) {
-            try {
-                ((SdmxWebManager) manager).setLanguages(lang != null ? LanguagePriorityList.parse(lang) : null);
-            } catch (IllegalArgumentException ex) {
+            Optional<LanguagePriorityList> newLang = lang != null ? LanguagePriorityList.tryParse(lang) : Optional.empty();
+            if (newLang.isPresent()) {
+                setSdmxManager(((SdmxWebManager) manager).withLanguages(newLang.get()));
             }
         }
     }

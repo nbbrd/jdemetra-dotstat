@@ -51,6 +51,7 @@ import org.openide.util.lookup.ServiceProvider;
 import be.nbb.sdmx.facade.SdmxManager;
 import java.net.ProxySelector;
 import javax.annotation.Nullable;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 import nbbrd.net.proxy.SystemProxySelector;
 import org.openide.util.Lookup;
@@ -65,7 +66,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
 
     private final Configurator<SdmxWebProviderBuddy> configurator;
     private final ConcurrentMap autoCompletionCache;
-    private final SdmxWebManager webManager;
+    private SdmxWebManager webManager;
 
     public SdmxWebProviderBuddy() {
         this.configurator = createConfigurator();
@@ -134,11 +135,11 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     }
 
     public void setProxySelector(@Nullable ProxySelector proxySelector) {
-        webManager.setProxySelector(proxySelector);
+        webManager = webManager.withProxySelector(proxySelector != null ? proxySelector : ProxySelector.getDefault());
     }
 
     public void setSSLSocketFactory(@Nullable SSLSocketFactory sslSocketFactory) {
-        webManager.setSSLSocketFactory(sslSocketFactory);
+        webManager = webManager.withSslSocketFactory(sslSocketFactory != null ? sslSocketFactory : HttpsURLConnection.getDefaultSSLSocketFactory());
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
@@ -151,10 +152,9 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     }
 
     private static SdmxWebManager createManager() {
-        SdmxWebManager result = SdmxWebManager.ofServiceLoader();
-        result.setProxySelector(SystemProxySelector.ofServiceLoader());
-        result.setCache(GuavaCaches.softValuesCacheAsMap());
-        return result;
+        return SdmxWebManager.ofServiceLoader()
+                .withProxySelector(SystemProxySelector.ofServiceLoader())
+                .withCache(GuavaCaches.softValuesCacheAsMap());
     }
 
     private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, SdmxWebProviderBuddy> {
@@ -176,7 +176,8 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
                 if (manager instanceof SdmxWebManager) {
                     LanguagePriorityList
                             .tryParse(bean.getPreferredLanguage())
-                            .ifPresent(lang -> ((SdmxWebManager) manager).setLanguages(lang));
+                            .map(((SdmxWebManager) manager)::withLanguages)
+                            .ifPresent(provider::setSdmxManager);
                 }
                 provider.setDisplayCodes(bean.isDisplayCodes());
             });

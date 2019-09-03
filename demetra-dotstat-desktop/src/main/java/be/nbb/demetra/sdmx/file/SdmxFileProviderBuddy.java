@@ -127,9 +127,8 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private static SdmxFileManager createManager() {
-        SdmxFileManager result = SdmxFileManager.ofServiceLoader();
-        result.setCache(GuavaCaches.softValuesCacheAsMap());
-        return result;
+        return SdmxFileManager.ofServiceLoader()
+                .withCache(GuavaCaches.softValuesCacheAsMap());
     }
 
     private static Optional<SdmxFileProvider> lookupProvider() {

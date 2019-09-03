@@ -219,14 +219,15 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
     }
 
     void store() {
-        lookupProvider().ifPresent(o -> {
-            SdmxManager manager = o.getSdmxManager();
+        lookupProvider().ifPresent(provider -> {
+            SdmxManager manager = provider.getSdmxManager();
             if (manager instanceof SdmxWebManager) {
                 LanguagePriorityList
                         .tryParse(preferedLangTextBox.getText())
-                        .ifPresent(x -> ((SdmxWebManager) manager).setLanguages(x));
+                        .map(((SdmxWebManager) manager)::withLanguages)
+                        .ifPresent(provider::setSdmxManager);
             }
-            o.setDisplayCodes(displayCodesCheckBox.isSelected());
+            provider.setDisplayCodes(displayCodesCheckBox.isSelected());
         });
     }
 
