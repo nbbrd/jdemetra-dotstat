@@ -22,6 +22,7 @@ import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.LanguagePriorityList;
 import be.nbb.sdmx.facade.SdmxConnection;
+import be.nbb.sdmx.facade.SdmxManager;
 import be.nbb.sdmx.facade.web.SdmxWebManager;
 import com.google.common.collect.Maps;
 import ec.tss.ITsProvider;
@@ -143,9 +144,12 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     }
 
     public void setPreferredLanguage(@Nullable String lang) {
-        try {
-            getSdmxManager().setLanguages(lang != null ? LanguagePriorityList.parse(lang) : null);
-        } catch (IllegalArgumentException ex) {
+        SdmxManager manager = getSdmxManager();
+        if (manager instanceof SdmxWebManager) {
+            try {
+                ((SdmxWebManager) manager).setLanguages(lang != null ? LanguagePriorityList.parse(lang) : null);
+            } catch (IllegalArgumentException ex) {
+            }
         }
     }
 

@@ -184,12 +184,14 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
 
         @Override
         public void storeBean(SdmxWebProviderBuddy resource, BuddyConfig bean) {
-            lookupProvider().ifPresent(o -> {
-                try {
-                    o.getSdmxManager().setLanguages(LanguagePriorityList.parse(bean.getPreferredLanguage()));
-                } catch (IllegalArgumentException ex) {
+            lookupProvider().ifPresent(provider -> {
+                SdmxManager manager = provider.getSdmxManager();
+                if (manager instanceof SdmxWebManager) {
+                    LanguagePriorityList
+                            .tryParse(bean.getPreferredLanguage())
+                            .ifPresent(lang -> ((SdmxWebManager) manager).setLanguages(lang));
                 }
-                o.setDisplayCodes(bean.isDisplayCodes());
+                provider.setDisplayCodes(bean.isDisplayCodes());
             });
         }
     }
