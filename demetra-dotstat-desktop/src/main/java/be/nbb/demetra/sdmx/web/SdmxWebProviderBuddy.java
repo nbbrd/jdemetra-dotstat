@@ -20,6 +20,7 @@ import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
 import be.nbb.demetra.dotstat.DotStatProviderBuddy.BuddyConfig;
 import be.nbb.demetra.dotstat.SdmxWsAutoCompletionService;
 import be.nbb.sdmx.facade.LanguagePriorityList;
+import be.nbb.sdmx.facade.SdmxCache;
 import be.nbb.sdmx.facade.web.SdmxWebManager;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -154,7 +155,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     private static SdmxWebManager createManager() {
         return SdmxWebManager.ofServiceLoader()
                 .withProxySelector(SystemProxySelector.ofServiceLoader())
-                .withCache(GuavaCaches.softValuesCacheAsMap());
+                .withCache(SdmxCache.of(GuavaCaches.softValuesCacheAsMap()));
     }
 
     private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, SdmxWebProviderBuddy> {

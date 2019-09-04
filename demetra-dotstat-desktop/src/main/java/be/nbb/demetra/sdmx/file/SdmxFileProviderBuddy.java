@@ -17,6 +17,7 @@
 package be.nbb.demetra.sdmx.file;
 
 import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
+import be.nbb.sdmx.facade.SdmxCache;
 import be.nbb.sdmx.facade.file.SdmxFileManager;
 import be.nbb.sdmx.facade.file.SdmxFileSet;
 import com.google.common.base.Converter;
@@ -128,7 +129,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private static SdmxFileManager createManager() {
         return SdmxFileManager.ofServiceLoader()
-                .withCache(GuavaCaches.softValuesCacheAsMap());
+                .withCache(SdmxCache.of(GuavaCaches.softValuesCacheAsMap()));
     }
 
     private static Optional<SdmxFileProvider> lookupProvider() {
