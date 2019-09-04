@@ -24,7 +24,6 @@ import be.nbb.sdmx.facade.SdmxConnection;
 import be.nbb.sdmx.facade.parser.spi.SdmxDialect;
 import be.nbb.sdmx.facade.web.SdmxWebManager;
 import be.nbb.sdmx.facade.web.SdmxWebSource;
-import be.nbb.sdmx.facade.util.UnexpectedIOException;
 import com.google.common.base.Strings;
 import ec.util.completion.AutoCompletionSource;
 import static ec.util.completion.AutoCompletionSource.Behavior.ASYNC;

@@ -14,22 +14,17 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.sdmx.facade;
+package internal.sdmx;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import java.io.IOException;
 
 /**
- * Defines the ability to get a localized label from a resource.
  *
  * @author Philippe Charles
  */
-public interface HasLabel {
+public final class UnexpectedIOException extends IOException {
 
-    /**
-     * Gets a localized label for this resource.
-     *
-     * @return a non-null label
-     */
-    @NonNull
-    String getLabel();
+    public UnexpectedIOException(RuntimeException cause) {
+        super(cause);
+    }
 }

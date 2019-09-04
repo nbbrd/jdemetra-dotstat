@@ -14,17 +14,29 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.sdmx.facade.util;
+package internal.facade;
 
+import be.nbb.sdmx.facade.DataCursor;
+import be.nbb.sdmx.facade.DataFilter;
 import java.io.IOException;
+import static org.assertj.core.api.Assertions.*;
+import org.junit.Test;
 
 /**
  *
  * @author Philippe Charles
  */
-public final class UnexpectedIOException extends IOException {
+public class EmptyCursorTest {
 
-    public UnexpectedIOException(RuntimeException cause) {
-        super(cause);
+    @Test
+    @SuppressWarnings("null")
+    public void testToStream() throws IOException {
+        try (DataCursor c = new EmptyCursor()) {
+            assertThat(c.toStream(DataFilter.Detail.FULL)).isEmpty();
+        }
+
+        try (DataCursor c = new EmptyCursor()) {
+            assertThatNullPointerException().isThrownBy(() -> c.toStream(null));
+        }
     }
 }

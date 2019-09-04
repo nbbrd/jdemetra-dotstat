@@ -21,7 +21,6 @@ import be.nbb.sdmx.facade.DataflowRef;
 import be.nbb.sdmx.facade.Dimension;
 import be.nbb.sdmx.facade.Key;
 import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.util.UnexpectedIOException;
 import com.google.common.base.Converter;
 import com.google.common.collect.Maps;
 import ec.tss.tsproviders.cube.CubeAccessor;
