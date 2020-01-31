@@ -42,7 +42,6 @@ import ec.tstoolkit.utilities.GuavaCaches;
 import internal.file.SdmxFileUtil;
 import internal.sdmx.SdmxCubeItems;
 import internal.sdmx.SdmxPropertiesSupport;
-import ioutil.IO;
 import java.io.File;
 import java.io.IOException;
 import org.openide.util.lookup.ServiceProvider;
@@ -53,6 +52,7 @@ import ec.tss.TsAsyncMode;
 import ec.tss.tsproviders.cursor.TsCursorAsFiller;
 import ec.tss.tsproviders.utils.TsFillerAsProvider;
 import java.io.EOFException;
+import nbbrd.io.function.IOSupplier;
 
 /**
  *
@@ -151,7 +151,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
 
             DataflowRef flow = files.asDataflowRef();
 
-            IO.Supplier<SdmxConnection> conn = toConnection(properties, files);
+            IOSupplier<SdmxConnection> conn = toConnection(properties, files);
 
             CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), () -> SdmxCubeItems.loadStructure(conn, flow));
 
@@ -162,7 +162,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
             return new SdmxCubeItems(accessor, idParam);
         }
 
-        private static IO.Supplier<SdmxConnection> toConnection(HasSdmxProperties properties, SdmxFileSet files) {
+        private static IOSupplier<SdmxConnection> toConnection(HasSdmxProperties properties, SdmxFileSet files) {
             SdmxManager manager = properties.getSdmxManager();
 
             if (manager instanceof SdmxFileManager) {
