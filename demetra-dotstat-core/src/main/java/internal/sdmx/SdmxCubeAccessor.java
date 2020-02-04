@@ -28,12 +28,12 @@ import ec.tss.tsproviders.cube.CubeId;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tss.tsproviders.utils.IteratorWithIO;
 import ec.tstoolkit.design.VisibleForTesting;
-import ioutil.IO;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import nbbrd.io.function.IOSupplier;
 
 /**
  *
@@ -42,7 +42,7 @@ import java.util.stream.IntStream;
 @lombok.AllArgsConstructor(staticName = "of")
 public final class SdmxCubeAccessor implements CubeAccessor {
 
-    private final IO.Supplier<SdmxConnection> supplier;
+    private final IOSupplier<SdmxConnection> supplier;
     private final DataflowRef flowRef;
     private final CubeId root;
     private final String labelAttribute;

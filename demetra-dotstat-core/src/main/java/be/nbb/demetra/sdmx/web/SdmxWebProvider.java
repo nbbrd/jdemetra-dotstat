@@ -38,13 +38,13 @@ import ec.tss.tsproviders.utils.IParam;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxCubeItems;
 import internal.sdmx.SdmxPropertiesSupport;
-import ioutil.IO;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import be.nbb.sdmx.facade.SdmxManager;
+import nbbrd.io.function.IOSupplier;
 
 /**
  *
@@ -134,7 +134,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
 
             DataflowRef flow = DataflowRef.parse(bean.getFlow());
 
-            IO.Supplier<SdmxConnection> conn = toConnection(properties, bean.getSource());
+            IOSupplier<SdmxConnection> conn = toConnection(properties, bean.getSource());
 
             CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), () -> SdmxCubeItems.loadStructure(conn, flow));
 
@@ -146,7 +146,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
             return new SdmxCubeItems(accessor, idParam);
         }
 
-        private static IO.Supplier<SdmxConnection> toConnection(HasSdmxProperties properties, String name) {
+        private static IOSupplier<SdmxConnection> toConnection(HasSdmxProperties properties, String name) {
             SdmxManager manager = properties.getSdmxManager();
             return () -> manager.getConnection(name);
         }
