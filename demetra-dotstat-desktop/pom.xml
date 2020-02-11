@@ -144,7 +144,7 @@
     <repositories>
         <repository>
             <id>netbeans-releases</id>
-            <url>http://bits.netbeans.org/maven2/</url>
+            <url>https://bits.netbeans.org/maven2/</url>
         </repository>        
         <repository>
             <id>oss-jfrog-artifactory-releases</id>
