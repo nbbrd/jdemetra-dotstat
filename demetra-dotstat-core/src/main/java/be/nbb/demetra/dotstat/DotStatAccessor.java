@@ -16,11 +16,11 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.facade.DataStructure;
-import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.SdmxConnection;
+import sdmxdl.DataStructure;
+import sdmxdl.Dimension;
+import sdmxdl.DataflowRef;
+import sdmxdl.Key;
+import sdmxdl.SdmxConnection;
 import com.google.common.base.Converter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -33,7 +33,7 @@ import internal.sdmx.SdmxQueryUtil;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import be.nbb.sdmx.facade.SdmxManager;
+import sdmxdl.SdmxManager;
 
 /**
  *

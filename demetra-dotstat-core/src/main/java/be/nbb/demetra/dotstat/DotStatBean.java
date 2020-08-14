@@ -16,7 +16,7 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.sdmx.facade.DataflowRef;
+import sdmxdl.DataflowRef;
 import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.db.DbBean;
 

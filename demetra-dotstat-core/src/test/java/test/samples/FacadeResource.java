@@ -16,19 +16,20 @@
  */
 package test.samples;
 
-import be.nbb.sdmx.facade.DataCursor;
-import be.nbb.sdmx.facade.DataFilter;
-import be.nbb.sdmx.facade.DataStructure;
-import be.nbb.sdmx.facade.DataStructureRef;
-import be.nbb.sdmx.facade.Dataflow;
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.samples.ByteSource;
-import be.nbb.sdmx.facade.samples.SdmxSource;
-import be.nbb.sdmx.facade.repo.SdmxRepository;
-import be.nbb.sdmx.facade.Series;
-import be.nbb.sdmx.facade.parser.DataFactory;
-import be.nbb.sdmx.facade.xml.stream.SdmxXmlStreams;
+import sdmxdl.DataCursor;
+import sdmxdl.DataFilter;
+import sdmxdl.DataStructure;
+import sdmxdl.DataStructureRef;
+import sdmxdl.Dataflow;
+import sdmxdl.DataflowRef;
+import sdmxdl.LanguagePriorityList;
+import sdmxdl.repo.DataSet;
+import sdmxdl.samples.ByteSource;
+import sdmxdl.samples.SdmxSource;
+import sdmxdl.repo.SdmxRepository;
+import sdmxdl.Series;
+import sdmxdl.util.parser.ObsFactories;
+import sdmxdl.xml.stream.SdmxXmlStreams;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -58,7 +59,7 @@ public class FacadeResource {
             result = SdmxRepository.builder()
                     .structures(structs)
                     .flows(flows)
-                    .data(NBB_FLOW_REF, data)
+                    .dataSet(DataSet.builder().ref(NBB_FLOW_REF).data(data).build())
                     .name("NBB")
                     .seriesKeysOnlySupported(false)
                     .build();
@@ -80,7 +81,7 @@ public class FacadeResource {
             result = SdmxRepository.builder()
                     .structures(structs)
                     .flows(flows)
-                    .data(ECB_FLOW_REF, data)
+                    .dataSet(DataSet.builder().ref(ECB_FLOW_REF).data(data).build())
                     .name("ECB")
                     .seriesKeysOnlySupported(true)
                     .build();
@@ -105,7 +106,7 @@ public class FacadeResource {
     }
 
     List<Series> data20(ByteSource xml, DataStructure dsd) throws IOException {
-        try (DataCursor c = SdmxXmlStreams.genericData20(dsd, DataFactory.sdmx20()).parseReader(xml::openReader)) {
+        try (DataCursor c = SdmxXmlStreams.genericData20(dsd, ObsFactories.SDMX20).parseReader(xml::openReader)) {
             return c.toStream(DataFilter.Detail.FULL).collect(Collectors.toList());
         }
     }
@@ -119,7 +120,7 @@ public class FacadeResource {
     }
 
     List<Series> data21(ByteSource xml, DataStructure dsd) throws IOException {
-        try (DataCursor c = SdmxXmlStreams.genericData21(dsd, DataFactory.sdmx21()).parseReader(xml::openReader)) {
+        try (DataCursor c = SdmxXmlStreams.genericData21(dsd, ObsFactories.SDMX21).parseReader(xml::openReader)) {
             return c.toStream(DataFilter.Detail.FULL).collect(Collectors.toList());
         }
     }

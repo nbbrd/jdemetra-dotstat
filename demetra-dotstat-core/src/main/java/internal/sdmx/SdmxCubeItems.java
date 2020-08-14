@@ -17,11 +17,11 @@
 package internal.sdmx;
 
 import be.nbb.demetra.sdmx.file.SdmxFileBean;
-import be.nbb.sdmx.facade.DataStructure;
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.file.SdmxFileSet;
+import sdmxdl.DataStructure;
+import sdmxdl.DataflowRef;
+import sdmxdl.Dimension;
+import sdmxdl.SdmxConnection;
+import sdmxdl.file.SdmxFileSource;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.HasFilePaths;
 import ec.tss.tsproviders.cube.CubeAccessor;
@@ -67,7 +67,7 @@ public class SdmxCubeItems {
                 .collect(Collectors.toList());
     }
 
-    public static Optional<SdmxFileSet> tryResolveFileSet(HasFilePaths paths, SdmxFileBean bean) {
+    public static Optional<SdmxFileSource> tryResolveFileSet(HasFilePaths paths, SdmxFileBean bean) {
         try {
             return Optional.of(resolveFileSet(paths, bean));
         } catch (FileNotFoundException ex) {
@@ -75,8 +75,8 @@ public class SdmxCubeItems {
         }
     }
 
-    public static SdmxFileSet resolveFileSet(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {
-        SdmxFileSet.Builder result = SdmxFileSet.builder().data(paths.resolveFilePath(bean.getFile()));
+    public static SdmxFileSource resolveFileSet(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {
+        SdmxFileSource.Builder result = SdmxFileSource.builder().data(paths.resolveFilePath(bean.getFile()));
         File structure = bean.getStructureFile();
         if (structure != null && !structure.toString().isEmpty()) {
             result.structure(paths.resolveFilePath(structure));

@@ -18,9 +18,9 @@ package be.nbb.demetra.sdmx.web;
 
 import be.nbb.demetra.sdmx.HasSdmxProperties;
 import internal.sdmx.SdmxCubeAccessor;
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.web.SdmxWebManager;
+import sdmxdl.DataflowRef;
+import sdmxdl.SdmxConnection;
+import sdmxdl.web.SdmxWebManager;
 import com.google.common.cache.Cache;
 import ec.tss.ITsProvider;
 import ec.tss.tsproviders.DataSet;
@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import be.nbb.sdmx.facade.SdmxManager;
+import sdmxdl.SdmxManager;
 import nbbrd.io.function.IOSupplier;
 
 /**

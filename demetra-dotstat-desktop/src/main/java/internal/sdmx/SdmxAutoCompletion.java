@@ -16,14 +16,15 @@
  */
 package internal.sdmx;
 
-import be.nbb.sdmx.facade.Dataflow;
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.parser.spi.SdmxDialect;
-import be.nbb.sdmx.facade.web.SdmxWebManager;
-import be.nbb.sdmx.facade.web.SdmxWebSource;
+import sdmxdl.Dataflow;
+import sdmxdl.DataflowRef;
+import sdmxdl.Dimension;
+import sdmxdl.LanguagePriorityList;
+import sdmxdl.SdmxConnection;
+import sdmxdl.ext.spi.SdmxDialect;
+import sdmxdl.ext.spi.SdmxDialectLoader;
+import sdmxdl.web.SdmxWebManager;
+import sdmxdl.web.SdmxWebSource;
 import com.google.common.base.Strings;
 import ec.util.completion.AutoCompletionSource;
 import static ec.util.completion.AutoCompletionSource.Behavior.ASYNC;
@@ -40,8 +41,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.swing.ListCellRenderer;
-import be.nbb.sdmx.facade.SdmxManager;
-import be.nbb.sdmx.facade.parser.spi.SdmxDialectLoader;
+import sdmxdl.SdmxManager;
 
 /**
  *
@@ -73,11 +73,18 @@ public class SdmxAutoCompletion {
 
     public AutoCompletionSource onSources(SdmxWebManager manager) {
         return ExtAutoCompletionSource
-                .builder(o -> manager.getSources())
+                .builder(o -> getAllSources(manager))
                 .behavior(AutoCompletionSource.Behavior.SYNC)
                 .postProcessor(SdmxAutoCompletion::filterAndSortSources)
                 .valueToString(SdmxWebSource::getName)
                 .build();
+    }
+
+    private List<SdmxWebSource> getAllSources(SdmxWebManager manager) {
+        List<SdmxWebSource> result = new ArrayList<>();
+        result.addAll(manager.getCustomSources());
+        result.addAll(manager.getDefaultSources());
+        return result;
     }
 
     public ListCellRenderer getSourceRenderer() {

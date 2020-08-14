@@ -18,10 +18,10 @@ package be.nbb.demetra.sdmx.file;
 
 import be.nbb.demetra.sdmx.HasSdmxProperties;
 import internal.sdmx.SdmxCubeAccessor;
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.file.SdmxFileManager;
-import be.nbb.sdmx.facade.file.SdmxFileSet;
+import sdmxdl.DataflowRef;
+import sdmxdl.SdmxConnection;
+import sdmxdl.file.SdmxFileManager;
+import sdmxdl.file.SdmxFileSource;
 import com.google.common.cache.Cache;
 import ec.tss.ITsProvider;
 import ec.tss.tsproviders.DataSet;
@@ -39,7 +39,6 @@ import ec.tss.tsproviders.cursor.HasTsCursor;
 import ec.tss.tsproviders.utils.DataSourcePreconditions;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tstoolkit.utilities.GuavaCaches;
-import internal.file.SdmxFileUtil;
 import internal.sdmx.SdmxCubeItems;
 import internal.sdmx.SdmxPropertiesSupport;
 import java.io.File;
@@ -47,12 +46,13 @@ import java.io.IOException;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import be.nbb.sdmx.facade.SdmxManager;
+import sdmxdl.SdmxManager;
 import ec.tss.TsAsyncMode;
 import ec.tss.tsproviders.cursor.TsCursorAsFiller;
 import ec.tss.tsproviders.utils.TsFillerAsProvider;
 import java.io.EOFException;
 import nbbrd.io.function.IOSupplier;
+import sdmxdl.xml.XmlFileSource;
 
 /**
  *
@@ -147,7 +147,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
 
         private static SdmxCubeItems of(HasSdmxProperties properties, HasFilePaths paths, SdmxFileParam param, DataSource dataSource) throws IOException {
             SdmxFileBean bean = param.get(dataSource);
-            SdmxFileSet files = SdmxCubeItems.resolveFileSet(paths, bean);
+            SdmxFileSource files = SdmxCubeItems.resolveFileSet(paths, bean);
 
             DataflowRef flow = files.asDataflowRef();
 
@@ -162,14 +162,14 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
             return new SdmxCubeItems(accessor, idParam);
         }
 
-        private static IOSupplier<SdmxConnection> toConnection(HasSdmxProperties properties, SdmxFileSet files) {
+        private static IOSupplier<SdmxConnection> toConnection(HasSdmxProperties properties, SdmxFileSource files) throws IOException {
             SdmxManager manager = properties.getSdmxManager();
 
             if (manager instanceof SdmxFileManager) {
                 return () -> ((SdmxFileManager) manager).getConnection(files);
             }
 
-            String name = SdmxFileUtil.toXml(files);
+            String name = XmlFileSource.getFormatter().formatToString(files);
             return () -> manager.getConnection(name);
         }
     }

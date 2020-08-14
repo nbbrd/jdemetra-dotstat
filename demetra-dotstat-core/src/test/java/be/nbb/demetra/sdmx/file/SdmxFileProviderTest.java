@@ -16,9 +16,8 @@
  */
 package be.nbb.demetra.sdmx.file;
 
-import be.nbb.sdmx.facade.samples.ByteSource;
-import be.nbb.sdmx.facade.samples.SdmxSource;
-import static be.nbb.sdmx.facade.parser.Freqs.TIME_FORMAT_CONCEPT;
+import sdmxdl.samples.ByteSource;
+import sdmxdl.samples.SdmxSource;
 import ec.tss.TsCollectionInformation;
 import ec.tss.TsInformation;
 import ec.tss.TsInformationType;
@@ -32,6 +31,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.*;
+import static sdmxdl.util.parser.FreqFactory.TIME_FORMAT_CONCEPT;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 

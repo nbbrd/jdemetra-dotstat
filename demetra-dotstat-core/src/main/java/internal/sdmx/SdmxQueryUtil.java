@@ -16,12 +16,12 @@
  */
 package internal.sdmx;
 
-import be.nbb.sdmx.facade.DataStructure;
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.DataFilter;
-import be.nbb.sdmx.facade.SdmxConnection;
+import sdmxdl.DataStructure;
+import sdmxdl.DataflowRef;
+import sdmxdl.Dimension;
+import sdmxdl.Key;
+import sdmxdl.DataFilter;
+import sdmxdl.SdmxConnection;
 import com.google.common.collect.ImmutableList;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tss.tsproviders.utils.OptionalTsData;

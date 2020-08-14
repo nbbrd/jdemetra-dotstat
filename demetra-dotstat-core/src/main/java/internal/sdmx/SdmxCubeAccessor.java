@@ -16,11 +16,11 @@
  */
 package internal.sdmx;
 
-import be.nbb.sdmx.facade.DataStructure;
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.SdmxConnection;
+import sdmxdl.DataStructure;
+import sdmxdl.DataflowRef;
+import sdmxdl.Dimension;
+import sdmxdl.Key;
+import sdmxdl.SdmxConnection;
 import com.google.common.base.Converter;
 import com.google.common.collect.Maps;
 import ec.tss.tsproviders.cube.CubeAccessor;

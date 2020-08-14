@@ -20,7 +20,7 @@ import be.nbb.demetra.sdmx.HasSdmxProperties;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import lombok.AccessLevel;
-import be.nbb.sdmx.facade.SdmxManager;
+import sdmxdl.SdmxManager;
 
 /**
  *
