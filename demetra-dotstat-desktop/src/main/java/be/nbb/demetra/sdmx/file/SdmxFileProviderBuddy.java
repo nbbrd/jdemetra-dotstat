@@ -17,9 +17,10 @@
 package be.nbb.demetra.sdmx.file;
 
 import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
-import be.nbb.sdmx.facade.SdmxCache;
-import be.nbb.sdmx.facade.file.SdmxFileManager;
-import be.nbb.sdmx.facade.file.SdmxFileSet;
+import nbbrd.io.function.IOFunction;
+import sdmxdl.ext.SdmxCache;
+import sdmxdl.file.SdmxFileManager;
+import sdmxdl.file.SdmxFileSource;
 import com.google.common.base.Converter;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -34,13 +35,13 @@ import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.IFileLoader;
 import ec.tstoolkit.utilities.GuavaCaches;
-import internal.file.SdmxFileUtil;
 import internal.sdmx.SdmxAutoCompletion;
 import internal.sdmx.SdmxCubeItems;
 import java.awt.Image;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.io.IOException;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -51,8 +52,10 @@ import org.openide.nodes.Sheet;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import be.nbb.sdmx.facade.SdmxManager;
+import sdmxdl.SdmxManager;
 import org.openide.util.Lookup;
+import sdmxdl.util.ext.MapCache;
+import sdmxdl.xml.XmlFileSource;
 
 /**
  *
@@ -129,7 +132,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private static SdmxFileManager createManager() {
         return SdmxFileManager.ofServiceLoader()
-                .withCache(SdmxCache.of(GuavaCaches.softValuesCacheAsMap()));
+                .withCache(MapCache.of(GuavaCaches.softValuesCacheAsMap(), Clock.systemDefaultZone()));
     }
 
     private static Optional<SdmxFileProvider> lookupProvider() {
@@ -229,8 +232,8 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
                 .description(Bundle.bean_dialect_description())
                 .add();
 
-        Supplier<String> toSource = () -> SdmxCubeItems.tryResolveFileSet(loader, bean).map(SdmxFileUtil::toXml).orElse("");
-        Supplier<String> toFlow = () -> SdmxCubeItems.tryResolveFileSet(loader, bean).map(SdmxFileSet::asDataflowRef).map(Object::toString).orElse("");
+        Supplier<String> toSource = () -> SdmxCubeItems.tryResolveFileSet(loader, bean).map(IOFunction.unchecked(XmlFileSource.getFormatter()::formatToString)).orElse("");
+        Supplier<String> toFlow = () -> SdmxCubeItems.tryResolveFileSet(loader, bean).map(SdmxFileSource::asDataflowRef).map(Object::toString).orElse("");
 
         b.withAutoCompletion()
                 .select(bean, "dimensions", List.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)

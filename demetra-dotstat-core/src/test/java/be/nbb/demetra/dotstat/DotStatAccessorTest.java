@@ -17,12 +17,12 @@
 package be.nbb.demetra.dotstat;
 
 import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
-import be.nbb.sdmx.facade.DataStructure;
-import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.DataFilter;
-import be.nbb.sdmx.facade.Series;
-import be.nbb.sdmx.facade.repo.SdmxRepositoryManager;
+import sdmxdl.DataStructure;
+import sdmxdl.Dimension;
+import sdmxdl.Key;
+import sdmxdl.DataFilter;
+import sdmxdl.Series;
+import sdmxdl.repo.SdmxRepositoryManager;
 import com.google.common.base.Joiner;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbSeries;
@@ -39,7 +39,7 @@ import org.junit.Test;
 import test.samples.FacadeResource;
 import static test.samples.FacadeResource.ECB_FLOW_REF;
 import static test.samples.FacadeResource.NBB_FLOW_REF;
-import be.nbb.sdmx.facade.SdmxManager;
+import sdmxdl.SdmxManager;
 
 /**
  *

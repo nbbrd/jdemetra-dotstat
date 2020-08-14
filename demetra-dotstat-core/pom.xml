@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>be.nbb.demetra</groupId>
     <artifactId>demetra-dotstat-core</artifactId>
     <version>2.2.4-SNAPSHOT</version>
     <packaging>jar</packaging>
-    
+
     <name>Demetra - DotStat - Core</name>
     <description>SDMX extension for JDemetra+</description>
     <url>https://github.com/nbbrd/jdemetra-dotstat</url>
@@ -21,6 +22,10 @@
             <url>https://joinup.ec.europa.eu/page/eupl-text-11-12</url>
         </license>
     </licenses>
+
+    <properties>
+        <sdmx-dl.version>3.0.0-SNAPSHOT</sdmx-dl.version>
+    </properties>
 
     <dependencyManagement>
         <dependencies>
@@ -57,40 +62,30 @@
             <artifactId>org-openide-util-lookup</artifactId>
             <scope>provided</scope>
         </dependency>
-        
+
         <!-- compile and runtime -->
         <dependency>
-            <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-util</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-file</artifactId>
-            <version>${project.version}</version>
+            <groupId>be.nbb.rd</groupId>
+            <artifactId>sdmx-dl-api</artifactId>
+            <version>${sdmx-dl.version}</version>
         </dependency>
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>demetra-jdbc</artifactId>
         </dependency>
-        
+
         <!-- runtime only -->
         <dependency>
-            <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-connectors</artifactId>
-            <version>${project.version}</version>
+            <groupId>be.nbb.rd</groupId>
+            <artifactId>sdmx-dl-ri</artifactId>
+            <version>${sdmx-dl.version}</version>
         </dependency>
         <dependency>
-            <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-web-ri</artifactId>
-            <version>${project.version}</version>
+            <groupId>be.nbb.rd</groupId>
+            <artifactId>sdmx-dl-connectors</artifactId>
+            <version>${sdmx-dl.version}</version>
         </dependency>
-        
+
         <!-- test only -->
         <dependency>
             <groupId>junit</groupId>
@@ -108,13 +103,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-samples</artifactId>
-            <version>${project.version}</version>
+            <groupId>be.nbb.rd</groupId>
+            <artifactId>sdmx-dl-tck</artifactId>
+            <version>${sdmx-dl.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
-    
+
     <profiles>
         <!-- Base build java8 -->
         <profile>
@@ -127,7 +122,7 @@
             <properties>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <maven.compiler.target>1.8</maven.compiler.target>
-                <maven.compiler.source>1.8</maven.compiler.source>                
+                <maven.compiler.source>1.8</maven.compiler.source>
             </properties>
             <build>
                 <plugins>
@@ -144,7 +139,7 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <!-- Enforce Java8 API -->
         <profile>
             <id>enforce-java8-api</id>
@@ -155,7 +150,7 @@
                 <maven.compiler.release>8</maven.compiler.release>
             </properties>
         </profile>
-        
+
         <!-- Enforce dependency rules -->
         <profile>
             <id>enforce-dependency-rules</id>
@@ -246,15 +241,28 @@
             </dependencies>
         </profile>
     </profiles>
-    
+
     <repositories>
         <repository>
             <id>netbeans-releases</id>
             <url>http://bits.netbeans.org/maven2/</url>
-        </repository>        
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
         <repository>
             <id>oss-jfrog-artifactory-releases</id>
             <url>https://oss.jfrog.org/artifactory/oss-release-local</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>oss-jfrog-artifactory-snapshots</id>
+            <url>https://oss.jfrog.org/artifactory/oss-snapshot-local</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </repository>
     </repositories>
 </project>

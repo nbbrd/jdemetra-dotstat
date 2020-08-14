@@ -16,7 +16,7 @@
  */
 package be.nbb.demetra.sdmx;
 
-import be.nbb.sdmx.facade.SdmxManager;
+import sdmxdl.SdmxManager;
 import ec.tstoolkit.design.ThreadSafe;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;

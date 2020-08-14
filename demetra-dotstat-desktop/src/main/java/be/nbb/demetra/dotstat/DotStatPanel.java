@@ -17,9 +17,9 @@
 package be.nbb.demetra.dotstat;
 
 import be.nbb.demetra.sdmx.web.SdmxWebProvider;
-import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.web.SdmxWebManager;
-import be.nbb.sdmx.facade.web.SdmxWebSource;
+import sdmxdl.LanguagePriorityList;
+import sdmxdl.web.SdmxWebManager;
+import sdmxdl.web.SdmxWebSource;
 import ec.nbdemetra.ui.completion.JAutoCompletionService;
 import ec.nbdemetra.ui.nodes.AbstractNodeBuilder;
 import ec.nbdemetra.ui.properties.NodePropertySetBuilder;
@@ -41,7 +41,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
-import be.nbb.sdmx.facade.SdmxManager;
+import sdmxdl.SdmxManager;
 
 final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
 
@@ -205,7 +205,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
     private void loadSources(SdmxManager manager) {
         if (manager instanceof SdmxWebManager) {
             AbstractNodeBuilder b = new AbstractNodeBuilder();
-            ((SdmxWebManager) manager).getSources().forEach(x -> b.add(new ConfigNode(x)));
+            ((SdmxWebManager) manager).getCustomSources().forEach(x -> b.add(new ConfigNode(x)));
             em.setRootContext(b.name("hello").build());
         }
     }

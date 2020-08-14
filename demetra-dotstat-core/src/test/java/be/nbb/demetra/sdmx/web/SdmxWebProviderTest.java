@@ -17,17 +17,17 @@
 package be.nbb.demetra.sdmx.web;
 
 import be.nbb.demetra.dotstat.DotStatProvider;
-import be.nbb.sdmx.facade.DataStructure;
-import be.nbb.sdmx.facade.DataStructureRef;
-import be.nbb.sdmx.facade.Dataflow;
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.Frequency;
-import be.nbb.sdmx.facade.repo.SdmxRepository;
-import be.nbb.sdmx.facade.Obs;
-import be.nbb.sdmx.facade.repo.SdmxRepositoryManager;
-import be.nbb.sdmx.facade.Series;
+import sdmxdl.DataStructure;
+import sdmxdl.DataStructureRef;
+import sdmxdl.Dataflow;
+import sdmxdl.DataflowRef;
+import sdmxdl.Dimension;
+import sdmxdl.Key;
+import sdmxdl.Frequency;
+import sdmxdl.repo.SdmxRepository;
+import sdmxdl.Obs;
+import sdmxdl.repo.SdmxRepositoryManager;
+import sdmxdl.Series;
 import ec.tss.TsMoniker;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.DataSource;
@@ -43,7 +43,7 @@ import org.junit.Test;
 import static ec.tss.tsproviders.Assertions.assertThat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import be.nbb.sdmx.facade.SdmxManager;
+import sdmxdl.SdmxManager;
 
 /**
  *
@@ -129,9 +129,9 @@ public class SdmxWebProviderTest {
                 .name("world")
                 .structure(conjStruct)
                 .flow(conj)
-                .data(conj.getRef(), Series.builder().key(Key.of("BE", "IND")).freq(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 1)).build())
-                .data(conj.getRef(), Series.builder().key(Key.of("BE", "XXX")).freq(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 2)).build())
-                .data(conj.getRef(), Series.builder().key(Key.of("FR", "IND")).freq(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 3)).build())
+                .dataSet(sdmxdl.repo.DataSet.builder().ref(conj.getRef()).series(Series.builder().key(Key.of("BE", "IND")).freq(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 1)).build()).build())
+                .dataSet(sdmxdl.repo.DataSet.builder().ref(conj.getRef()).series(Series.builder().key(Key.of("BE", "XXX")).freq(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 2)).build()).build())
+                .dataSet(sdmxdl.repo.DataSet.builder().ref(conj.getRef()).series(Series.builder().key(Key.of("FR", "IND")).freq(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 3)).build()).build())
                 .build();
     }
 

@@ -130,11 +130,6 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>be.nbb.rd</groupId>
             <artifactId>java-net-proxy</artifactId>
             <version>1.0.0</version>

@@ -17,13 +17,13 @@
 package be.nbb.demetra.dotstat;
 
 import be.nbb.demetra.sdmx.HasSdmxProperties;
-import be.nbb.sdmx.facade.DataStructure;
-import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.SdmxManager;
-import be.nbb.sdmx.facade.web.SdmxWebManager;
+import sdmxdl.DataStructure;
+import sdmxdl.Dimension;
+import sdmxdl.Key;
+import sdmxdl.LanguagePriorityList;
+import sdmxdl.SdmxConnection;
+import sdmxdl.SdmxManager;
+import sdmxdl.web.SdmxWebManager;
 import com.google.common.collect.Maps;
 import ec.tss.ITsProvider;
 import ec.tss.TsAsyncMode;

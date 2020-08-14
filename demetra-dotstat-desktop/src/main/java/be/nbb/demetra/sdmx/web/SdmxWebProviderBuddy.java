@@ -19,9 +19,10 @@ package be.nbb.demetra.sdmx.web;
 import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
 import be.nbb.demetra.dotstat.DotStatProviderBuddy.BuddyConfig;
 import be.nbb.demetra.dotstat.SdmxWsAutoCompletionService;
-import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxCache;
-import be.nbb.sdmx.facade.web.SdmxWebManager;
+import sdmxdl.LanguagePriorityList;
+import sdmxdl.ext.SdmxCache;
+import sdmxdl.util.ext.MapCache;
+import sdmxdl.web.SdmxWebManager;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import ec.nbdemetra.db.DbIcon;
@@ -40,6 +41,7 @@ import java.awt.Image;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.io.IOException;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -49,7 +51,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import be.nbb.sdmx.facade.SdmxManager;
+import sdmxdl.SdmxManager;
 import java.net.ProxySelector;
 import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
@@ -155,7 +157,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     private static SdmxWebManager createManager() {
         return SdmxWebManager.ofServiceLoader()
                 .withProxySelector(SystemProxySelector.ofServiceLoader())
-                .withCache(SdmxCache.of(GuavaCaches.softValuesCacheAsMap()));
+                .withCache(MapCache.of(GuavaCaches.softValuesCacheAsMap(), Clock.systemDefaultZone()));
     }
 
     private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, SdmxWebProviderBuddy> {

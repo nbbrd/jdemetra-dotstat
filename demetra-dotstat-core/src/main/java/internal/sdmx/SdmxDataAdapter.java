@@ -16,9 +16,9 @@
  */
 package internal.sdmx;
 
-import be.nbb.sdmx.facade.DataCursor;
-import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.Frequency;
+import sdmxdl.DataCursor;
+import sdmxdl.Key;
+import sdmxdl.Frequency;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tss.tsproviders.utils.ObsGathering;
 import ec.tss.tsproviders.utils.OptionalTsData;
