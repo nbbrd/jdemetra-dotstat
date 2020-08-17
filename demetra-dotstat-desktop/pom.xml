@@ -2,33 +2,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>be.nbb.demetra</groupId>
+    <parent>
+        <groupId>be.nbb.demetra</groupId>
+        <artifactId>demetra-dotstat-parent</artifactId>
+        <version>2.2.4-SNAPSHOT</version>
+    </parent>
+
     <artifactId>demetra-dotstat-desktop</artifactId>
-    <version>2.2.4-SNAPSHOT</version>
     <packaging>nbm</packaging>
 
     <name>Demetra - DotStat - Desktop</name>
-    <description>SDMX extension for JDemetra+</description>
-    <url>https://github.com/nbbrd/jdemetra-dotstat</url>
-
-    <organization>
-        <name>National Bank of Belgium</name>
-    </organization>
-
-    <licenses>
-        <license>
-            <name>European Union Public Licence (EUPL)</name>
-            <url>https://joinup.ec.europa.eu/page/eupl-text-11-12</url>
-        </license>
-    </licenses>
 
     <properties>
-        <!-- build -->
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-        
         <project.x.binaries>${project.build.directory}/binaries</project.x.binaries>
     </properties>
         
@@ -44,7 +29,7 @@
             <dependency>
                 <groupId>eu.europa.ec.joinup.sat</groupId>
                 <artifactId>nbdemetra-parent</artifactId>
-                <version>2.2.0</version>
+                <version>${demetra.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -135,21 +120,6 @@
             <version>1.0.0</version>
         </dependency>
     </dependencies>
-
-    <repositories>
-        <repository>
-            <id>netbeans-releases</id>
-            <url>http://bits.netbeans.org/maven2/</url>
-        </repository>        
-        <repository>
-            <id>oss-jfrog-artifactory-releases</id>
-            <url>https://oss.jfrog.org/artifactory/oss-release-local</url>
-        </repository>
-        <repository>
-            <id>oss-jfrog-artifactory-snapshots</id>
-            <url>https://oss.jfrog.org/artifactory/oss-snapshot-local</url>
-        </repository>
-    </repositories>
   
     <build>
         <plugins>
@@ -225,130 +195,4 @@
             </plugin>
         </plugins>
     </build>
-    
-    <profiles>
-        <!-- Base build java8 -->
-        <profile>
-            <id>base-java8</id>
-            <activation>
-                <property>
-                    <name>!skipBaseJava8</name>
-                </property>
-            </activation>
-            <properties>
-                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-                <maven.compiler.target>1.8</maven.compiler.target>
-                <maven.compiler.source>1.8</maven.compiler.source>                
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <version>3.8.1</version>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>3.2.0</version>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <!-- Enforce Java8 API -->
-        <profile>
-            <id>enforce-java8-api</id>
-            <activation>
-                <jdk>[11,)</jdk>
-            </activation>
-            <properties>
-                <maven.compiler.release>8</maven.compiler.release>
-            </properties>
-        </profile>
-
-        <!-- Enforce dependency rules -->
-        <profile>
-            <id>enforce-dependency-rules</id>
-            <activation>
-                <property>
-                    <name>!skipEnforceDependencyRules</name>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-enforcer-plugin</artifactId>
-                        <version>3.0.0-M3</version>
-                        <executions>
-                            <execution>
-                                <id>enforce</id>
-                                <configuration>
-                                    <rules>
-                                        <requireMavenVersion>
-                                            <version>3.3.9</version>
-                                        </requireMavenVersion>
-                                        <DependencyConvergence/>
-                                        <requireReleaseDeps>
-                                            <onlyWhenRelease>true</onlyWhenRelease>
-                                        </requireReleaseDeps>
-                                    </rules>
-                                </configuration>
-                                <goals>
-                                    <goal>enforce</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <!-- Enforce modern API -->
-        <profile>
-            <id>enforce-modern-api</id>
-            <activation>
-                <property>
-                    <name>!skipEnforceModernAPI</name>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.gaul</groupId>
-                        <artifactId>modernizer-maven-plugin</artifactId>
-                        <version>2.1.0</version>
-                        <configuration>
-                            <javaVersion>1.8</javaVersion>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>modernizer</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>modernizer</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <!-- Add missing Java EE Modules on JDK11 -->
-        <profile>
-            <activation>
-                <jdk>[11,)</jdk>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>javax.annotation</groupId>
-                    <artifactId>javax.annotation-api</artifactId>
-                    <version>1.3.2</version>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
-        </profile>
-    </profiles>
 </project>
