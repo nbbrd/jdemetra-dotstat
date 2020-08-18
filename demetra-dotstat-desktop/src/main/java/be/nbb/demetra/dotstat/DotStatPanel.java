@@ -35,12 +35,16 @@ import java.util.Optional;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.netbeans.api.actions.Editable;
+import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.lookup.AbstractLookup;
+import org.openide.util.lookup.InstanceContent;
 import org.openide.util.lookup.Lookups;
+import org.openide.util.lookup.ProxyLookup;
 import sdmxdl.SdmxManager;
 
 final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
@@ -52,20 +56,32 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         this.controller = controller;
         initComponents();
 
-        this.em = new ExplorerManager();
-        outlineView1.getOutline().setRootVisible(false);
         addButton.setEnabled(false);
         removeButton.setEnabled(false);
         editButton.setEnabled(false);
         resetButton.setEnabled(false);
+
+        this.em = new ExplorerManager();
         em.addVetoableChangeListener((PropertyChangeEvent evt) -> {
-            if (ExplorerManager.PROP_SELECTED_NODES.equals(evt.getPropertyName())) {
-                Node[] nodes = (Node[]) evt.getNewValue();
-//                    removeButton.setEnabled(nodes.length == 1);
-                editButton.setEnabled(nodes.length == 1);
+            switch (evt.getPropertyName()) {
+                case ExplorerManager.PROP_SELECTED_NODES:
+                    onNodeSelectionChange(evt);
+                    break;
             }
         });
+
+        outlineView1.getOutline().setRootVisible(false);
+        ((DefaultOutlineModel) outlineView1.getOutline().getModel()).setNodesColumnLabel("Web source");
+        outlineView1.setPropertyColumns("description", "Description");
+        outlineView1.getOutline().setColumnHidingAllowed(false);
+
         JAutoCompletionService.forPathBind(JAutoCompletionService.LOCALE_PATH, preferedLangTextBox);
+    }
+
+    private void onNodeSelectionChange(PropertyChangeEvent evt) {
+        Node[] nodes = (Node[]) evt.getNewValue();
+//                    removeButton.setEnabled(nodes.length == 1);
+        editButton.setEnabled(nodes.length == 1 && nodes[0].getLookup().lookup(Editable.class) != null);
     }
 
     /**
@@ -76,7 +92,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        outlineView1 = new org.openide.explorer.view.OutlineView("Web service entry points");
+        outlineView1 = new org.openide.explorer.view.OutlineView();
         jToolBar1 = new javax.swing.JToolBar();
         addButton = new javax.swing.JButton();
         removeButton = new javax.swing.JButton();
@@ -170,10 +186,11 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
                     .addComponent(preferedLangTextBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(displayCodesCheckBox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(outlineView1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 157, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(236, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 157, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(125, Short.MAX_VALUE))
+                    .addComponent(outlineView1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -186,7 +203,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
     }//GEN-LAST:event_removeButtonActionPerformed
 
     private void editButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editButtonActionPerformed
-        ((Editable) em.getSelectedNodes()[0]).edit();
+        em.getSelectedNodes()[0].getLookup().lookup(Editable.class).edit();
     }//GEN-LAST:event_editButtonActionPerformed
 
     private void resetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resetButtonActionPerformed
@@ -204,9 +221,11 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
     private void loadSources(SdmxManager manager) {
         if (manager instanceof SdmxWebManager) {
+            SdmxWebManager webManager = (SdmxWebManager) manager;
             AbstractNodeBuilder b = new AbstractNodeBuilder();
-            ((SdmxWebManager) manager).getCustomSources().forEach(x -> b.add(new ConfigNode(x)));
-            em.setRootContext(b.name("hello").build());
+            webManager.getCustomSources().forEach(x -> b.add(new ConfigNode(x, true)));
+            webManager.getDefaultSources().forEach(x -> b.add(new ConfigNode(x, false)));
+            em.setRootContext(b.name("root").build());
         }
     }
 
@@ -248,12 +267,20 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
     private javax.swing.JButton resetButton;
     // End of variables declaration//GEN-END:variables
 
-    private static final class ConfigNode extends AbstractNode implements Editable {
+    private static final class ConfigNode extends AbstractNode {
 
-        public ConfigNode(SdmxWebSource o) {
-            super(Children.LEAF, Lookups.singleton(o));
-            setDisplayName(o.getName());
-            setShortDescription(o.getDescription());
+        public ConfigNode(SdmxWebSource source, boolean customSource) {
+            this(source, customSource, new InstanceContent());
+        }
+
+        private ConfigNode(SdmxWebSource source, boolean customSource, InstanceContent abilities) {
+            super(Children.LEAF, new ProxyLookup(Lookups.singleton(source), new AbstractLookup(abilities)));
+            setDisplayName(source.getName());
+            setShortDescription(source.toString());
+
+            if (customSource) {
+                abilities.add(new EditableImpl());
+            }
         }
 
         @Override
@@ -284,7 +311,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
                     .display("Driver")
                     .add();
             b.with(String.class)
-                    .select("endpoint", bean.getEndpoint().toString())
+                    .selectConst("endpoint", bean.getEndpoint().toString())
                     .display("Endpoint")
                     .add();
             result.put(b.build());
@@ -296,15 +323,18 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
             return new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    edit();
+                    Optional.ofNullable(getLookup().lookup(Editable.class)).ifPresent(Editable::edit);
                 }
             };
         }
 
-        @Override
-        public void edit() {
-            if (new PropertySheetDialogBuilder().title("Edit entry point").icon(getIcon(BeanInfo.ICON_MONO_16x16)).editNode(this)) {
-                setDisplayName(getLookup().lookup(SdmxWebSource.class).getName());
+        private final class EditableImpl implements Editable {
+
+            @Override
+            public void edit() {
+                if (new PropertySheetDialogBuilder().title("Edit web source").icon(getIcon(BeanInfo.ICON_MONO_16x16)).editNode(ConfigNode.this)) {
+                    setDisplayName(getLookup().lookup(SdmxWebSource.class).getName());
+                }
             }
         }
     }
