@@ -47,6 +47,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     private final CubeId root;
     private final String labelAttribute;
     private final String sourceLabel;
+    private final boolean displayCodes;
 
     @Override
     public IOException testConnection() {
@@ -134,8 +135,9 @@ public final class SdmxCubeAccessor implements CubeAccessor {
             return "All";
         }
         try (SdmxConnection conn = supplier.getWithIO()) {
-            Map<String, Dimension> dimensionById = dimensionById(conn.getStructure(flowRef));
-            return getDisplayNodeName(dimensionById, id);
+            return displayCodes
+                    ? getDimensionCodeId(id)
+                    : getDimensionCodeLabel(id, dimensionById(conn.getStructure(flowRef)));
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);
         }
@@ -186,13 +188,19 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         return ex;
     }
 
-    private static String getDisplayNodeName(Map<String, Dimension> dimensionById, CubeId ref) {
+    private static String getDimensionCodeId(CubeId ref) {
+        int index = ref.getLevel() - 1;
+        String codeId = ref.getDimensionValue(index);
+        return codeId;
+    }
+
+    private static String getDimensionCodeLabel(CubeId ref, Map<String, Dimension> dimensionById) {
         if (ref.isRoot()) {
             return "Invalid reference '" + dump(ref) + "'";
         }
         int index = ref.getLevel() - 1;
-        Map<String, String> codes = dimensionById.get(ref.getDimensionId(index)).getCodes();
         String codeId = ref.getDimensionValue(index);
+        Map<String, String> codes = dimensionById.get(ref.getDimensionId(index)).getCodes();
         return codes.getOrDefault(codeId, codeId);
     }
 
