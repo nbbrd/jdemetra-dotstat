@@ -100,7 +100,7 @@ final class SdmxDataAdapter implements TsCursor<Key> {
 
     @Override
     public OptionalTsData getSeriesData() throws IOException {
-        return hasTime(cursor.getSeriesFrequency()) ? toDataByDate(cursor) : toDataByLocalDate(cursor);
+        return cursor.getSeriesFrequency().hasTime() ? toDataByDate(cursor) : toDataByLocalDate(cursor);
     }
 
     @Override
@@ -138,16 +138,6 @@ final class SdmxDataAdapter implements TsCursor<Key> {
             }
         }
         return result.build();
-    }
-
-    private static boolean hasTime(Frequency freq) {
-        switch (freq) {
-            case HOURLY:
-            case MINUTELY:
-                return true;
-            default:
-                return false;
-        }
     }
 
     private static final Map<Frequency, ObsGathering> GATHERINGS = initGatherings();

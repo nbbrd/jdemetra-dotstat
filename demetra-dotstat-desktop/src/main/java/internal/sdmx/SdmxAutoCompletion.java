@@ -81,10 +81,7 @@ public class SdmxAutoCompletion {
     }
 
     private List<SdmxWebSource> getAllSources(SdmxWebManager manager) {
-        List<SdmxWebSource> result = new ArrayList<>();
-        result.addAll(manager.getCustomSources());
-        result.addAll(manager.getDefaultSources());
-        return result;
+        return new ArrayList<>(manager.getSources().values());
     }
 
     public ListCellRenderer getSourceRenderer() {
@@ -138,13 +135,8 @@ public class SdmxAutoCompletion {
 
     private List<SdmxWebSource> filterAndSortSources(List<SdmxWebSource> allValues, String term) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
-        // need to filter out duplicates
         return allValues
                 .stream()
-                .collect(Collectors.groupingBy(SdmxWebSource::getName))
-                .values()
-                .stream()
-                .flatMap(o -> o.stream().limit(1))
                 .filter(o -> filter.test(o.getDescription()) || filter.test(o.getName()))
                 .sorted(Comparator.comparing(SdmxWebSource::getDescription))
                 .collect(Collectors.toList());
