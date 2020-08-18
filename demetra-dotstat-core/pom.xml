@@ -27,6 +27,13 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>be.nbb.rd</groupId>
+                <artifactId>sdmx-dl-parent</artifactId>
+                <version>${sdmx-dl.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -35,7 +42,6 @@
         <dependency>
             <groupId>org.checkerframework</groupId>
             <artifactId>checker-qual</artifactId>
-            <version>3.6.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -53,23 +59,18 @@
         <dependency>
             <groupId>be.nbb.rd</groupId>
             <artifactId>sdmx-dl-api</artifactId>
-            <version>${sdmx-dl.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>be.nbb.rd</groupId>
+            <artifactId>sdmx-dl-util</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>be.nbb.rd</groupId>
+            <artifactId>sdmx-dl-xml</artifactId>
         </dependency>
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>demetra-jdbc</artifactId>
-        </dependency>
-
-        <!-- runtime only -->
-        <dependency>
-            <groupId>be.nbb.rd</groupId>
-            <artifactId>sdmx-dl-ri</artifactId>
-            <version>${sdmx-dl.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>be.nbb.rd</groupId>
-            <artifactId>sdmx-dl-connectors</artifactId>
-            <version>${sdmx-dl.version}</version>
         </dependency>
 
         <!-- test only -->
@@ -91,7 +92,6 @@
         <dependency>
             <groupId>be.nbb.rd</groupId>
             <artifactId>sdmx-dl-tck</artifactId>
-            <version>${sdmx-dl.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

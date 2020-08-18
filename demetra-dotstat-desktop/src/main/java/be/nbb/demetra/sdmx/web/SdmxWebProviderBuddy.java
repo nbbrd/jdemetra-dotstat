@@ -21,7 +21,6 @@ import be.nbb.demetra.dotstat.DotStatProviderBuddy.BuddyConfig;
 import be.nbb.demetra.dotstat.SdmxWsAutoCompletionService;
 import sdmxdl.LanguagePriorityList;
 import sdmxdl.ext.SdmxCache;
-import sdmxdl.util.ext.MapCache;
 import sdmxdl.web.SdmxWebManager;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -30,6 +29,7 @@ import ec.nbdemetra.ui.BeanHandler;
 import ec.nbdemetra.ui.Config;
 import ec.nbdemetra.ui.Configurator;
 import ec.nbdemetra.ui.IConfigurable;
+import ec.nbdemetra.ui.notification.MessageUtil;
 import ec.nbdemetra.ui.properties.DhmsPropertyEditor;
 import ec.nbdemetra.ui.properties.NodePropertySetBuilder;
 import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
@@ -41,7 +41,6 @@ import java.awt.Image;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.io.IOException;
-import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -57,7 +56,13 @@ import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 import nbbrd.net.proxy.SystemProxySelector;
+import org.openide.awt.StatusDisplayer;
 import org.openide.util.Lookup;
+import sdmxdl.kryo.KryoSerialization;
+import sdmxdl.util.ext.FileCache;
+import sdmxdl.util.ext.Serializer;
+import sdmxdl.web.SdmxWebListener;
+import sdmxdl.web.SdmxWebSource;
 
 /**
  *
@@ -156,8 +161,33 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
 
     private static SdmxWebManager createManager() {
         return SdmxWebManager.ofServiceLoader()
-                .withProxySelector(SystemProxySelector.ofServiceLoader())
-                .withCache(MapCache.of(GuavaCaches.softValuesCacheAsMap(), Clock.systemDefaultZone()));
+                .toBuilder()
+                .proxySelector(SystemProxySelector.ofServiceLoader())
+                .cache(getCache())
+                .eventListener(BuddyEventListener.INSTANCE)
+                .build();
+    }
+
+    private static SdmxCache getCache() {
+        return FileCache
+                .builder()
+                .serializer(Serializer.gzip(new KryoSerialization()))
+                .onIOException(MessageUtil::showException)
+                .build();
+    }
+
+    private enum BuddyEventListener implements SdmxWebListener {
+        INSTANCE;
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
+
+        @Override
+        public void onSourceEvent(SdmxWebSource source, String message) {
+            StatusDisplayer.getDefault().setStatusText(message);
+        }
     }
 
     private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, SdmxWebProviderBuddy> {
