@@ -94,5 +94,10 @@
             <artifactId>sdmx-dl-tck</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>be.nbb.rd</groupId>
+            <artifactId>sdmx-dl-ri</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>
