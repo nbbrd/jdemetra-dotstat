@@ -15,7 +15,7 @@
     <name>Demetra - DotStat - Core</name>
 
     <properties>
-        <sdmx-dl.version>3.0.0-SNAPSHOT</sdmx-dl.version>
+        <sdmx-dl.version>924fe75d0ad8275239615e971f9233fab9869a22</sdmx-dl.version>
     </properties>
 
     <dependencyManagement>
@@ -28,7 +28,7 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>be.nbb.rd</groupId>
+                <groupId>com.github.nbbrd.sdmx-dl</groupId>
                 <artifactId>sdmx-dl-parent</artifactId>
                 <version>${sdmx-dl.version}</version>
                 <type>pom</type>
@@ -57,15 +57,15 @@
 
         <!-- compile and runtime -->
         <dependency>
-            <groupId>be.nbb.rd</groupId>
+            <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>be.nbb.rd</groupId>
+            <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-util</artifactId>
         </dependency>
         <dependency>
-            <groupId>be.nbb.rd</groupId>
+            <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-xml</artifactId>
         </dependency>
         <dependency>
@@ -90,12 +90,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>be.nbb.rd</groupId>
+            <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-tck</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>be.nbb.rd</groupId>
+            <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-ri</artifactId>
             <scope>test</scope>
         </dependency>
