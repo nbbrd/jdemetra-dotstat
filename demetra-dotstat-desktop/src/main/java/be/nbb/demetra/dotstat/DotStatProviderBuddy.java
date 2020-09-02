@@ -37,6 +37,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.lookup.ServiceProvider;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxAutoCompletion;
+import java.io.File;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -174,6 +175,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
         String preferredLanguage;
         boolean displayCodes;
+        File customSources;
 
         public static Converter<BuddyConfig, Config> converter() {
             return new BuddyConfigConverter();
@@ -181,22 +183,25 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
         private static final class BuddyConfigConverter extends Converter<BuddyConfig, Config> {
 
-            private final IParam<Config, String> prefferedLanguageParam = Params.onString("en", "preferredLanguage");
+            private final IParam<Config, String> preferredLanguageParam = Params.onString("en", "preferredLanguage");
             private final IParam<Config, Boolean> displayCodesParam = Params.onBoolean(false, "displayCodes");
+            private final IParam<Config, File> customSourcesParam = Params.onFile(new File(""), "customSources");
 
             @Override
             protected Config doForward(BuddyConfig a) {
                 Config.Builder result = Config.builder(BuddyConfig.class.getName(), "INSTANCE", "20150225");
-                prefferedLanguageParam.set(result, a.getPreferredLanguage());
+                preferredLanguageParam.set(result, a.getPreferredLanguage());
                 displayCodesParam.set(result, a.isDisplayCodes());
+                customSourcesParam.set(result, a.getCustomSources());
                 return result.build();
             }
 
             @Override
             protected BuddyConfig doBackward(Config b) {
                 BuddyConfig result = new BuddyConfig();
-                result.setPreferredLanguage(prefferedLanguageParam.get(b));
+                result.setPreferredLanguage(preferredLanguageParam.get(b));
                 result.setDisplayCodes(displayCodesParam.get(b));
+                result.setCustomSources(customSourcesParam.get(b));
                 return result;
             }
         }

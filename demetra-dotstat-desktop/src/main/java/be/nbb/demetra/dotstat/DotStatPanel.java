@@ -16,24 +16,31 @@
  */
 package be.nbb.demetra.dotstat;
 
-import be.nbb.demetra.sdmx.web.SdmxWebProvider;
-import sdmxdl.LanguagePriorityList;
+import be.nbb.demetra.sdmx.web.SdmxWebProviderBuddy;
 import sdmxdl.web.SdmxWebManager;
 import sdmxdl.web.SdmxWebSource;
 import ec.nbdemetra.ui.completion.JAutoCompletionService;
 import ec.nbdemetra.ui.nodes.AbstractNodeBuilder;
 import ec.nbdemetra.ui.properties.NodePropertySetBuilder;
 import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
-import ec.tss.tsproviders.TsProviders;
+import ec.util.completion.ext.DesktopFileAutoCompletionSource;
+import ec.util.completion.swing.FileListCellRenderer;
+import ec.util.completion.swing.JAutoCompletion;
 import ec.util.various.swing.FontAwesome;
 import ec.util.various.swing.ext.FontAwesomeUtils;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.beans.BeanInfo;
 import java.beans.PropertyChangeEvent;
+import java.io.File;
+import java.io.FileFilter;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.concurrent.Executors;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.netbeans.api.actions.Editable;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.openide.explorer.ExplorerManager;
@@ -41,11 +48,11 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.Lookup;
 import org.openide.util.lookup.AbstractLookup;
 import org.openide.util.lookup.InstanceContent;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
-import sdmxdl.SdmxManager;
 
 final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
 
@@ -55,6 +62,13 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
     DotStatPanel(DotStatOptionsPanelController controller) {
         this.controller = controller;
         initComponents();
+
+        FileFilter xmlFilter = file -> file.isDirectory() || file.toString().toLowerCase(Locale.ROOT).endsWith(".xml");
+        JAutoCompletion customSourcesCompletion = new JAutoCompletion(customSources);
+        customSourcesCompletion.setSource(new DesktopFileAutoCompletionSource(xmlFilter, new File[0]));
+        customSourcesCompletion.getList().setCellRenderer(new FileListCellRenderer(Executors.newSingleThreadExecutor()));
+        selectCustomSources.setText("");
+        selectCustomSources.setIcon(FontAwesome.FA_FILE_O.getIcon(selectCustomSources.getForeground(), selectCustomSources.getFont().getSize2D()));
 
         addButton.setEnabled(false);
         removeButton.setEnabled(false);
@@ -71,7 +85,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         });
 
         outlineView1.getOutline().setRootVisible(false);
-        ((DefaultOutlineModel) outlineView1.getOutline().getModel()).setNodesColumnLabel("Web source");
+        ((DefaultOutlineModel) outlineView1.getOutline().getModel()).setNodesColumnLabel("Default source");
         outlineView1.setPropertyColumns("description", "Description");
         outlineView1.getOutline().setColumnHidingAllowed(false);
 
@@ -92,6 +106,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jButton1 = new javax.swing.JButton();
         outlineView1 = new org.openide.explorer.view.OutlineView();
         jToolBar1 = new javax.swing.JToolBar();
         addButton = new javax.swing.JButton();
@@ -102,6 +117,11 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         jLabel1 = new javax.swing.JLabel();
         preferedLangTextBox = new javax.swing.JTextField();
         displayCodesCheckBox = new javax.swing.JCheckBox();
+        jLabel2 = new javax.swing.JLabel();
+        customSources = new javax.swing.JTextField();
+        selectCustomSources = new javax.swing.JButton();
+
+        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(DotStatPanel.class, "DotStatPanel.jButton1.text")); // NOI18N
 
         jToolBar1.setFloatable(false);
         jToolBar1.setOrientation(javax.swing.SwingConstants.VERTICAL);
@@ -162,21 +182,41 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
         org.openide.awt.Mnemonics.setLocalizedText(displayCodesCheckBox, org.openide.util.NbBundle.getMessage(DotStatPanel.class, "DotStatPanel.displayCodesCheckBox.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(DotStatPanel.class, "DotStatPanel.jLabel2.text")); // NOI18N
+
+        customSources.setText(org.openide.util.NbBundle.getMessage(DotStatPanel.class, "DotStatPanel.customSources.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(selectCustomSources, org.openide.util.NbBundle.getMessage(DotStatPanel.class, "DotStatPanel.selectCustomSources.text")); // NOI18N
+        selectCustomSources.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                selectCustomSourcesActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(outlineView1, javax.swing.GroupLayout.DEFAULT_SIZE, 487, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(outlineView1, javax.swing.GroupLayout.DEFAULT_SIZE, 487, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel2)
+                                .addGap(18, 18, 18)
+                                .addComponent(customSources, javax.swing.GroupLayout.PREFERRED_SIZE, 240, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel1)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(preferedLangTextBox, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(displayCodesCheckBox)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(selectCustomSources, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(preferedLangTextBox, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(displayCodesCheckBox)
-                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -186,10 +226,15 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
                     .addComponent(preferedLangTextBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(displayCodesCheckBox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(customSources, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(selectCustomSources))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 157, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(125, Short.MAX_VALUE))
+                        .addContainerGap(105, Short.MAX_VALUE))
                     .addComponent(outlineView1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -210,43 +255,47 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         // TODO add your handling code here:
     }//GEN-LAST:event_resetButtonActionPerformed
 
+    private void selectCustomSourcesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectCustomSourcesActionPerformed
+        JFileChooser fileChooser = new JFileChooser(new File(customSources.getText()));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Xml file", "xml"));
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            customSources.setText(fileChooser.getSelectedFile().toString());
+        }
+    }//GEN-LAST:event_selectCustomSourcesActionPerformed
+
     @Override
     public ExplorerManager getExplorerManager() {
         return em;
     }
 
-    private static Optional<SdmxWebProvider> lookupProvider() {
-        return TsProviders.lookup(SdmxWebProvider.class, SdmxWebProvider.NAME).toJavaUtil();
+    private static Optional<SdmxWebProviderBuddy> lookupBuddy() {
+        return Optional.ofNullable(Lookup.getDefault().lookup(SdmxWebProviderBuddy.class));
     }
 
-    private void loadSources(SdmxManager manager) {
-        if (manager instanceof SdmxWebManager) {
-            SdmxWebManager webManager = (SdmxWebManager) manager;
-            AbstractNodeBuilder b = new AbstractNodeBuilder();
-            webManager.getCustomSources().forEach(x -> b.add(new ConfigNode(x, true)));
-            webManager.getDefaultSources().forEach(x -> b.add(new ConfigNode(x, false)));
-            em.setRootContext(b.name("root").build());
-        }
+    private void loadSources(SdmxWebManager webManager) {
+        AbstractNodeBuilder b = new AbstractNodeBuilder();
+       // webManager.getCustomSources().forEach(x -> b.add(new ConfigNode(x, true)));
+        webManager.getDefaultSources().forEach(x -> b.add(new ConfigNode(x, false)));
+        em.setRootContext(b.name("root").build());
     }
 
     void load() {
-        lookupProvider().ifPresent(o -> {
-            preferedLangTextBox.setText(o.getSdmxManager().getLanguages().toString());
-            displayCodesCheckBox.setSelected(o.isDisplayCodes());
-            loadSources(o.getSdmxManager());
+        lookupBuddy().ifPresent(buddy -> {
+            DotStatProviderBuddy.BuddyConfig bean = DotStatProviderBuddy.BuddyConfig.converter().reverse().convert(buddy.getConfig());
+            preferedLangTextBox.setText(bean.getPreferredLanguage());
+            displayCodesCheckBox.setSelected(bean.isDisplayCodes());
+            customSources.setText(bean.getCustomSources().toString());
+            loadSources(buddy.getWebManager());
         });
     }
 
     void store() {
-        lookupProvider().ifPresent(provider -> {
-            SdmxManager manager = provider.getSdmxManager();
-            if (manager instanceof SdmxWebManager) {
-                LanguagePriorityList
-                        .tryParse(preferedLangTextBox.getText())
-                        .map(((SdmxWebManager) manager)::withLanguages)
-                        .ifPresent(provider::setSdmxManager);
-            }
-            provider.setDisplayCodes(displayCodesCheckBox.isSelected());
+        lookupBuddy().ifPresent(buddy -> {
+            DotStatProviderBuddy.BuddyConfig bean = new DotStatProviderBuddy.BuddyConfig();
+            bean.setPreferredLanguage(preferedLangTextBox.getText());
+            bean.setDisplayCodes(displayCodesCheckBox.isSelected());
+            bean.setCustomSources(new File(customSources.getText()));
+            buddy.setConfig(DotStatProviderBuddy.BuddyConfig.converter().convert(bean));
         });
     }
 
@@ -256,15 +305,19 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addButton;
+    private javax.swing.JTextField customSources;
     private javax.swing.JCheckBox displayCodesCheckBox;
     private javax.swing.JButton editButton;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JToolBar.Separator jSeparator1;
     private javax.swing.JToolBar jToolBar1;
     private org.openide.explorer.view.OutlineView outlineView1;
     private javax.swing.JTextField preferedLangTextBox;
     private javax.swing.JButton removeButton;
     private javax.swing.JButton resetButton;
+    private javax.swing.JButton selectCustomSources;
     // End of variables declaration//GEN-END:variables
 
     private static final class ConfigNode extends AbstractNode {

@@ -115,11 +115,6 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>be.nbb.rd</groupId>
-            <artifactId>java-net-proxy</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-ri</artifactId>
         </dependency>
@@ -130,6 +125,16 @@
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-kryo</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.nbbrd.sdmx-dl</groupId>
+            <artifactId>sdmx-dl-sys</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
   
