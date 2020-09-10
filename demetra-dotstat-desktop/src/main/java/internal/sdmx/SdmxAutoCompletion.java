@@ -81,7 +81,12 @@ public class SdmxAutoCompletion {
     }
 
     private List<SdmxWebSource> getAllSources(SdmxWebManager manager) {
-        return new ArrayList<>(manager.getSources().values());
+        return manager
+                .getSources()
+                .values()
+                .stream()
+                .filter(source -> !source.isAlias())
+                .collect(Collectors.toList());
     }
 
     public ListCellRenderer getSourceRenderer() {
@@ -137,9 +142,14 @@ public class SdmxAutoCompletion {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return allValues
                 .stream()
-                .filter(o -> filter.test(o.getDescription()) || filter.test(o.getName()))
-                .sorted(Comparator.comparing(SdmxWebSource::getDescription))
+                .filter(source -> filterSource(source, filter))
                 .collect(Collectors.toList());
+    }
+
+    private static boolean filterSource(SdmxWebSource source, Predicate<String> filter) {
+        return filter.test(source.getDescription())
+                || filter.test(source.getName())
+                || source.getAliases().stream().anyMatch(filter);
     }
 
     private boolean canLoadFlows(Supplier<String> source) {

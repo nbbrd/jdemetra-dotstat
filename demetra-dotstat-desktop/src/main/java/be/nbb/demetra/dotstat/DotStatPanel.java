@@ -26,6 +26,7 @@ import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
 import ec.util.completion.ext.DesktopFileAutoCompletionSource;
 import ec.util.completion.swing.FileListCellRenderer;
 import ec.util.completion.swing.JAutoCompletion;
+import ec.util.grid.swing.XTable;
 import ec.util.various.swing.FontAwesome;
 import ec.util.various.swing.ext.FontAwesomeUtils;
 import java.awt.Image;
@@ -37,6 +38,7 @@ import java.io.FileFilter;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JFileChooser;
@@ -85,9 +87,10 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         });
 
         outlineView1.getOutline().setRootVisible(false);
-        ((DefaultOutlineModel) outlineView1.getOutline().getModel()).setNodesColumnLabel("Default source");
-        outlineView1.setPropertyColumns("description", "Description");
+        ((DefaultOutlineModel) outlineView1.getOutline().getModel()).setNodesColumnLabel("Source");
+        outlineView1.setPropertyColumns("description", "Description", "aliases", "Aliases");
         outlineView1.getOutline().setColumnHidingAllowed(false);
+        XTable.setWidthAsPercentages(outlineView1.getOutline(), .2, .6, .2);
 
         JAutoCompletionService.forPathBind(JAutoCompletionService.LOCALE_PATH, preferedLangTextBox);
     }
@@ -274,8 +277,8 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
     private void loadSources(SdmxWebManager webManager) {
         AbstractNodeBuilder b = new AbstractNodeBuilder();
-       // webManager.getCustomSources().forEach(x -> b.add(new ConfigNode(x, true)));
-        webManager.getDefaultSources().forEach(x -> b.add(new ConfigNode(x, false)));
+        // webManager.getCustomSources().forEach(x -> b.add(new ConfigNode(x, true)));
+        webManager.getSources().values().stream().filter(source -> !source.isAlias()).forEach(x -> b.add(new ConfigNode(x, false)));
         em.setRootContext(b.name("root").build());
     }
 
@@ -358,6 +361,10 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
             b.with(String.class)
                     .select(bean, "getDescription", null)
                     .display("Description")
+                    .add();
+            b.with(String.class)
+                    .selectConst("aliases", bean.getAliases().stream().collect(Collectors.joining(", ")))
+                    .display("Aliases")
                     .add();
             b.with(String.class)
                     .select(bean, "getDriver", null)
