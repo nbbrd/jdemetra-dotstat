@@ -15,7 +15,7 @@
     <name>Demetra - DotStat - Core</name>
 
     <properties>
-        <sdmx-dl.version>e4f152c393e2e4cf5e80fd8ee99de4b3d84124e6</sdmx-dl.version>
+        <sdmx-dl.version>3.0.0-beta.1</sdmx-dl.version>
     </properties>
 
     <dependencyManagement>
