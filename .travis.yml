@@ -1,33 +1,9 @@
-dist: xenial
-language: java
-jdk:
-  - openjdk8
-  - openjdk11
-  - openjdk-ea
-
-matrix:
-  allow_failures:
-    - jdk: openjdk-ea
+version: ~> 1.0
+import:
+  - nbbrd/travis-ci:config/java8_application.yml@main
 
 env:
   global:
-    - DEPLOY_JDK=openjdk8
+    - DEPLOY_JOB_NAME=linux-amd64-openjdk8
     - DEPLOY_REPO=nbbrd/jdemetra-dotstat
     - DEPLOY_BIN=demetra-dotstat-desktop/target/binaries/*
-
-deploy:
-  # Github releases from tags
-  - provider: releases
-    api_key: "${GITHUB_KEY}"
-    skip_cleanup: true
-    draft: true
-    file_glob: true
-    file: "${DEPLOY_BIN}"
-    on:
-      tags: true
-      repo: "${DEPLOY_REPO}"
-      condition: $TRAVIS_PULL_REQUEST == "false" && $TRAVIS_JDK_VERSION == $DEPLOY_JDK
-
-cache:
-  directories:
-    - $HOME/.m2
