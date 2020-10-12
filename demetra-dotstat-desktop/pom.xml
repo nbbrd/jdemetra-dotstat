@@ -15,6 +15,7 @@
 
     <properties>
         <project.x.binaries>${project.build.directory}/binaries</project.x.binaries>
+        <maven.nbm.verify>warn</maven.nbm.verify>
     </properties>
         
     <dependencyManagement>

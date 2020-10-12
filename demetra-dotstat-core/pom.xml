@@ -15,7 +15,7 @@
     <name>Demetra - DotStat - Core</name>
 
     <properties>
-        <sdmx-dl.version>e4f152c393e2e4cf5e80fd8ee99de4b3d84124e6</sdmx-dl.version>
+        <sdmx-dl.version>8a7a5095f1a3152132ba73d5c0fe6811374ed3ca</sdmx-dl.version>
     </properties>
 
     <dependencyManagement>
@@ -52,6 +52,7 @@
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-openide-util-lookup</artifactId>
+            <version>RELEASE112</version>
             <scope>provided</scope>
         </dependency>
 
