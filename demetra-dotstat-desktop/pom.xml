@@ -14,7 +14,7 @@
     <name>Demetra - DotStat - Desktop</name>
 
     <properties>
-        <project.x.binaries>${project.build.directory}/binaries</project.x.binaries>
+        <project.x.binaries>${project.basedir}/../binaries</project.x.binaries>
         <maven.nbm.verify>warn</maven.nbm.verify>
     </properties>
         
@@ -141,6 +141,19 @@
   
     <build>
         <plugins>
+            <!-- Clean binaries directory -->
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${project.x.binaries}</directory>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+
             <!-- Generates NBM file -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -170,7 +183,7 @@
                 <version>3.0.0</version>
                 <executions>
                     <execution>
-                        <phase>verify</phase>
+                        <phase>package</phase>
                         <configuration>
                             <target>
                                 <copy file="${project.build.directory}/${project.build.finalName}.nbm" 
@@ -191,6 +204,7 @@
                 <version>1.9</version>
                 <executions>
                     <execution>
+                        <phase>package</phase>
                         <goals>
                             <goal>files</goal>
                         </goals>

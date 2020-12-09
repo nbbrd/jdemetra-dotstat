@@ -1,9 +1,0 @@
-version: ~> 1.0
-import:
-  - nbbrd/travis-ci:config/java8_application.yml@main
-
-env:
-  global:
-    - DEPLOY_JOB_NAME=linux-amd64-openjdk8
-    - DEPLOY_REPO=nbbrd/jdemetra-dotstat
-    - DEPLOY_BIN=demetra-dotstat-desktop/target/binaries/*
