@@ -50,14 +50,14 @@ public class SdmxQueryUtil {
 
     @NonNull
     public TsCursor<Key> getAllSeries(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
-        return conn.isSeriesKeysOnlySupported()
+        return conn.isDetailSupported()
                 ? request(conn, flowRef, ref, labelAttribute, true)
                 : computeKeys(conn, flowRef, ref);
     }
 
     @NonNull
     public TsCursor<Key> getAllSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
-        return conn.isSeriesKeysOnlySupported()
+        return conn.isDetailSupported()
                 ? request(conn, flowRef, ref, labelAttribute, false)
                 : computeKeysAndRequestData(conn, flowRef, ref);
     }
@@ -69,7 +69,7 @@ public class SdmxQueryUtil {
 
     @NonNull
     public List<String> getChildren(SdmxConnection conn, DataflowRef flowRef, Key ref, int dimensionPosition) throws IOException {
-        if (conn.isSeriesKeysOnlySupported()) {
+        if (conn.isDetailSupported()) {
             try (TsCursor<Key> cursor = request(conn, flowRef, ref, NO_LABEL, true)) {
                 int index = dimensionPosition - 1;
                 TreeSet<String> result = new TreeSet<>();
@@ -84,8 +84,8 @@ public class SdmxQueryUtil {
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private TsCursor<Key> request(SdmxConnection conn, DataflowRef flowRef, Key key, String labelAttribute, boolean seriesKeysOnly) throws IOException {
-        return new SdmxDataAdapter(key, conn.getDataCursor(flowRef, key, seriesKeysOnly ? DataFilter.SERIES_KEYS_ONLY : DataFilter.ALL), labelAttribute);
+    private TsCursor<Key> request(SdmxConnection conn, DataflowRef flowRef, Key key, String labelAttribute, boolean noData) throws IOException {
+        return new SdmxDataAdapter(key, conn.getDataCursor(flowRef, key, noData ? DataFilter.NO_DATA : DataFilter.FULL), labelAttribute);
     }
 
     private TsCursor<Key> computeKeys(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {

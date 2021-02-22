@@ -18,7 +18,6 @@ package be.nbb.demetra.sdmx.file;
 
 import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
 import nbbrd.io.function.IOFunction;
-import sdmxdl.ext.SdmxCache;
 import sdmxdl.file.SdmxFileManager;
 import sdmxdl.file.SdmxFileSource;
 import com.google.common.base.Converter;
@@ -35,6 +34,7 @@ import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.IFileLoader;
 import ec.tstoolkit.utilities.GuavaCaches;
+import internal.sdmx.BuddyEventListener;
 import internal.sdmx.SdmxAutoCompletion;
 import internal.sdmx.SdmxCubeItems;
 import java.awt.Image;
@@ -132,7 +132,14 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private static SdmxFileManager createManager() {
         return SdmxFileManager.ofServiceLoader()
-                .withCache(MapCache.of(GuavaCaches.softValuesCacheAsMap(), Clock.systemDefaultZone()));
+                .toBuilder()
+                .eventListener(BuddyEventListener.INSTANCE)
+                .cache(getCache())
+                .build();
+    }
+
+    private static MapCache getCache() {
+        return MapCache.of(GuavaCaches.softValuesCacheAsMap(), Clock.systemDefaultZone());
     }
 
     private static Optional<SdmxFileProvider> lookupProvider() {

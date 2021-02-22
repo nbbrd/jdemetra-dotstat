@@ -16,6 +16,7 @@
  */
 package be.nbb.demetra.sdmx.web;
 
+import internal.sdmx.BuddyEventListener;
 import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
 import be.nbb.demetra.dotstat.DotStatProviderBuddy.BuddyConfig;
 import be.nbb.demetra.dotstat.SdmxWsAutoCompletionService;
@@ -37,11 +38,13 @@ import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
 import ec.tss.tsproviders.DataSet;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxAutoCompletion;
+import internal.sdmx.SdmxPropertiesSupport;
 import java.awt.Image;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.io.File;
 import java.io.IOException;
+import java.net.PasswordAuthentication;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -56,6 +59,8 @@ import java.net.ProxySelector;
 import java.util.Collections;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocketFactory;
+import nbbrd.net.proxy.SystemProxySelector;
+import nl.altindag.ssl.SSLFactory;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Lookup;
 import sdmxdl.kryo.KryoSerialization;
@@ -63,7 +68,6 @@ import sdmxdl.sys.SdmxSystemUtil;
 import sdmxdl.util.ext.FileCache;
 import sdmxdl.util.ext.Serializer;
 import sdmxdl.web.SdmxWebAuthenticator;
-import sdmxdl.web.SdmxWebListener;
 import sdmxdl.web.SdmxWebSource;
 import sdmxdl.xml.XmlWebSource;
 
@@ -168,17 +172,21 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     }
 
     private static SdmxWebManager createManager() {
-        SdmxWebManager.Builder result = SdmxWebManager.ofServiceLoader()
+        SSLFactory sslFactory = SSLFactory
+                .builder()
+                .withDefaultTrustMaterial()
+                .withSystemTrustMaterial()
+                .build();
+
+        return SdmxWebManager.ofServiceLoader()
                 .toBuilder()
-                .cache(getCache())
                 .eventListener(BuddyEventListener.INSTANCE)
-                .authenticator(getNetBeansAuthenticator());
-
-        SdmxSystemUtil.configureProxy(result, MessageUtil::showException);
-        SdmxSystemUtil.configureSsl(result, MessageUtil::showException);
-        SdmxSystemUtil.configureAuth(result, MessageUtil::showException);
-
-        return result.build();
+                .proxySelector(SystemProxySelector.ofServiceLoader())
+                .sslSocketFactory(sslFactory.getSslSocketFactory())
+                .hostnameVerifier(sslFactory.getHostnameVerifier())
+                .cache(getCache())
+                .authenticator(getNetBeansAuthenticator())
+                .build();
     }
 
     private static SdmxCache getCache() {
@@ -190,7 +198,9 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     }
 
     private static SdmxWebAuthenticator getNetBeansAuthenticator() {
-        return SdmxWebAuthenticator.noOp();
+        PasswordAuthentication noUser = new PasswordAuthentication(null, new char[0]);
+        SdmxWebAuthenticator result = SdmxSystemUtil.getAuthenticatorOrNull(noUser, MessageUtil::showException);
+        return result != null ? result : SdmxWebAuthenticator.noOp();
     }
 
     private static List<SdmxWebSource> loadSources(File file) {
@@ -202,20 +212,6 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
             }
         }
         return Collections.emptyList();
-    }
-
-    private enum BuddyEventListener implements SdmxWebListener {
-        INSTANCE;
-
-        @Override
-        public boolean isEnabled() {
-            return true;
-        }
-
-        @Override
-        public void onSourceEvent(SdmxWebSource source, String message) {
-            StatusDisplayer.getDefault().setStatusText(message);
-        }
     }
 
     private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, SdmxWebProviderBuddy> {
@@ -237,7 +233,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
             resource.webManager = resource.webManager
                     .toBuilder()
                     .customSources(loadSources(resource.customSources))
-                    .languages(LanguagePriorityList.tryParse(bean.getPreferredLanguage()).orElse(LanguagePriorityList.ANY))
+                    .languages(SdmxPropertiesSupport.tryParseLangs(bean.getPreferredLanguage()).orElse(LanguagePriorityList.ANY))
                     .build();
             lookupProvider().ifPresent(provider -> {
                 provider.setDisplayCodes(bean.isDisplayCodes());

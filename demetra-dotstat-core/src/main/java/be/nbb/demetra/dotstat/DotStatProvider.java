@@ -20,7 +20,6 @@ import be.nbb.demetra.sdmx.HasSdmxProperties;
 import sdmxdl.DataStructure;
 import sdmxdl.Dimension;
 import sdmxdl.Key;
-import sdmxdl.LanguagePriorityList;
 import sdmxdl.SdmxConnection;
 import sdmxdl.SdmxManager;
 import sdmxdl.web.SdmxWebManager;
@@ -35,7 +34,6 @@ import ec.tss.tsproviders.db.DbProvider;
 import internal.sdmx.SdmxPropertiesSupport;
 import java.io.IOException;
 import java.util.Map;
-import java.util.Optional;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.openide.util.lookup.ServiceProvider;
@@ -146,11 +144,9 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
 
     public void setPreferredLanguage(@Nullable String lang) {
         SdmxManager manager = getSdmxManager();
-        if (manager instanceof SdmxWebManager) {
-            Optional<LanguagePriorityList> newLang = lang != null ? LanguagePriorityList.tryParse(lang) : Optional.empty();
-            if (newLang.isPresent()) {
-                setSdmxManager(((SdmxWebManager) manager).withLanguages(newLang.get()));
-            }
+        if (manager instanceof SdmxWebManager && lang != null) {
+            SdmxPropertiesSupport.tryParseLangs(lang)
+                    .ifPresent(newLang -> setSdmxManager(((SdmxWebManager) manager).toBuilder().languages(newLang).build()));
         }
     }
 

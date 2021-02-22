@@ -17,7 +17,6 @@
 package test.samples;
 
 import sdmxdl.DataCursor;
-import sdmxdl.DataFilter;
 import sdmxdl.DataStructure;
 import sdmxdl.DataStructureRef;
 import sdmxdl.Dataflow;
@@ -61,7 +60,7 @@ public class FacadeResource {
                     .flows(flows)
                     .dataSet(DataSet.builder().ref(NBB_FLOW_REF).data(data).build())
                     .name("NBB")
-                    .seriesKeysOnlySupported(false)
+                    .detailSupported(false)
                     .build();
 
             NBB.set(result);
@@ -83,7 +82,7 @@ public class FacadeResource {
                     .flows(flows)
                     .dataSet(DataSet.builder().ref(ECB_FLOW_REF).data(data).build())
                     .name("ECB")
-                    .seriesKeysOnlySupported(true)
+                    .detailSupported(true)
                     .build();
 
             ECB.set(result);
@@ -107,7 +106,7 @@ public class FacadeResource {
 
     List<Series> data20(ByteSource xml, DataStructure dsd) throws IOException {
         try (DataCursor c = SdmxXmlStreams.genericData20(dsd, ObsFactories.SDMX20).parseReader(xml::openReader)) {
-            return c.toStream(DataFilter.Detail.FULL).collect(Collectors.toList());
+            return c.toStream().collect(Collectors.toList());
         }
     }
 
@@ -121,7 +120,7 @@ public class FacadeResource {
 
     List<Series> data21(ByteSource xml, DataStructure dsd) throws IOException {
         try (DataCursor c = SdmxXmlStreams.genericData21(dsd, ObsFactories.SDMX21).parseReader(xml::openReader)) {
-            return c.toStream(DataFilter.Detail.FULL).collect(Collectors.toList());
+            return c.toStream().collect(Collectors.toList());
         }
     }
 
