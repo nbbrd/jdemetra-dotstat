@@ -14,23 +14,12 @@
 
     <name>Demetra - DotStat - Core</name>
 
-    <properties>
-        <sdmx-dl.version>21d0b1326946c45de480b0b87c49041ffc293459</sdmx-dl.version>
-    </properties>
-
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>eu.europa.ec.joinup.sat</groupId>
                 <artifactId>demetra-parent</artifactId>
                 <version>${demetra.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.github.nbbrd.sdmx-dl</groupId>
-                <artifactId>sdmx-dl-parent</artifactId>
-                <version>${sdmx-dl.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -58,16 +47,16 @@
 
         <!-- compile and runtime -->
         <dependency>
-            <groupId>com.github.nbbrd.sdmx-dl</groupId>
-            <artifactId>sdmx-dl-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.nbbrd.sdmx-dl</groupId>
-            <artifactId>sdmx-dl-util</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.nbbrd.sdmx-dl</groupId>
-            <artifactId>sdmx-dl-xml</artifactId>
+            <groupId>be.nbb.demetra</groupId>
+            <artifactId>demetra-dotstat-lib</artifactId>
+            <version>${project.version}</version>
+            <exclusions>
+                <!-- Fix strange bug: shaded lib should not have dependencies -->
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
@@ -93,12 +82,18 @@
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-tck</artifactId>
+            <version>${sdmx-dl.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.nbbrd.sdmx-dl</groupId>
-            <artifactId>sdmx-dl-ri</artifactId>
-            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>be.nbb.rd</groupId>
+                    <artifactId>java-io-base</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>be.nbb.rd</groupId>
+                    <artifactId>java-io-xml</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 </project>
