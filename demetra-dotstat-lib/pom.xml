@@ -58,6 +58,16 @@
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-kryo</artifactId>
             <version>${sdmx-dl.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>be.nbb.rd</groupId>
+                    <artifactId>java-io-base</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>be.nbb.rd</groupId>
+                    <artifactId>java-io-xml</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
@@ -123,9 +133,6 @@
                             <shadedPattern>shaded.dotstat.internal.io.</shadedPattern>
                         </relocation>                        
                     </relocations>
-                    <excludes>
-                        <exclude>module-info.java</exclude>
-                    </excludes>
                 </configuration>
             </plugin>
         </plugins>
