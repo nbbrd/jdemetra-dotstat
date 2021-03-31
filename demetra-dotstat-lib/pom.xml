@@ -12,12 +12,8 @@
     <packaging>jar</packaging>
     
     <name>Demetra - DotStat - Libraries</name>
-    
-    <properties>
-        <!-- jitpack cannot get right version from dependencyManagement -->
-        <java-io.version>0.0.11</java-io.version>
-    </properties>
-    
+    <description>Shade sdmx-dl and relocate java-io-util</description>
+
     <dependencies>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
@@ -28,67 +24,21 @@
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-connectors</artifactId>
             <version>${sdmx-dl.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>be.nbb.rd</groupId>
-                    <artifactId>java-io-base</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>be.nbb.rd</groupId>
-                    <artifactId>java-io-xml</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-ri</artifactId>
             <version>${sdmx-dl.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>be.nbb.rd</groupId>
-                    <artifactId>java-io-base</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>be.nbb.rd</groupId>
-                    <artifactId>java-io-xml</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-kryo</artifactId>
             <version>${sdmx-dl.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>be.nbb.rd</groupId>
-                    <artifactId>java-io-base</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>be.nbb.rd</groupId>
-                    <artifactId>java-io-xml</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-sys</artifactId>
             <version>${sdmx-dl.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>be.nbb.rd</groupId>
-                    <artifactId>java-io-base</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>be.nbb.rd</groupId>
-            <artifactId>java-io-base</artifactId>
-            <version>${java-io.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>be.nbb.rd</groupId>
-            <artifactId>java-io-xml</artifactId>
-            <version>${java-io.version}</version>
         </dependency>
     </dependencies>
     

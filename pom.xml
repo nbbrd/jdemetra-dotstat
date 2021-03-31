@@ -40,7 +40,7 @@
 
     <properties>
         <demetra.version>2.2.3</demetra.version>
-        <sdmx-dl.version>f1769d0d9712483678255d0b6c849f6ea23373ef</sdmx-dl.version>
+        <sdmx-dl.version>3.0.0-SNAPSHOT</sdmx-dl.version>
     </properties>
 
     <modules>
@@ -252,18 +252,12 @@
 
     <repositories>
         <repository>
-            <id>oss-jfrog-artifactory-releases</id>
-            <url>https://oss.jfrog.org/artifactory/oss-release-local</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
+            <id>jfrog-maven-mirror</id>
+            <url>https://raw.githubusercontent.com/nbbrd/jfrog-maven-mirror/main</url>
         </repository>
         <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
+            <id>ossrh-snapshots</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
         </repository>
     </repositories>
 </project>

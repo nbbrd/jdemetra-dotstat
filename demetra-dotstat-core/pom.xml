@@ -86,12 +86,8 @@
             <scope>test</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>be.nbb.rd</groupId>
-                    <artifactId>java-io-base</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>be.nbb.rd</groupId>
-                    <artifactId>java-io-xml</artifactId>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
