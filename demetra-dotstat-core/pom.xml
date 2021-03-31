@@ -13,6 +13,8 @@
     <packaging>jar</packaging>
 
     <name>Demetra - DotStat - Core</name>
+    <description>SDMX extension for JDemetra+</description>
+    <url>https://github.com/nbbrd/jdemetra-dotstat</url>
 
     <dependencyManagement>
         <dependencies>

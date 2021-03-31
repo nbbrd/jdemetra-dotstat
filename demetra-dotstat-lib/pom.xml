@@ -13,6 +13,7 @@
     
     <name>Demetra - DotStat - Libraries</name>
     <description>Shade sdmx-dl and relocate java-io-util</description>
+    <url>https://github.com/nbbrd/jdemetra-dotstat</url>
 
     <dependencies>
         <dependency>

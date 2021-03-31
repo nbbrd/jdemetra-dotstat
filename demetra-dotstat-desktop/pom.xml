@@ -12,6 +12,8 @@
     <packaging>nbm</packaging>
 
     <name>Demetra - DotStat - Desktop</name>
+    <description>SDMX extension for JDemetra+</description>
+    <url>https://github.com/nbbrd/jdemetra-dotstat</url>
 
     <properties>
         <project.x.binaries>${project.basedir}/../binaries</project.x.binaries>
@@ -183,26 +185,34 @@
                     </publicPackages>
                 </configuration>
             </plugin>
+
+            <!-- Copies files to binaries -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>3.0.0</version>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.2.0</version>
                 <executions>
                     <execution>
-                        <phase>package</phase>
-                        <configuration>
-                            <target>
-                                <copy file="${project.build.directory}/${project.build.finalName}.nbm" 
-                                      tofile="${project.x.binaries}/${project.build.finalName}.nbm"/>
-                            </target>
-                        </configuration>
+                        <phase>install</phase>
                         <goals>
-                            <goal>run</goal>
+                            <goal>copy-resources</goal>
                         </goals>
+                        <configuration>
+                            <outputDirectory>${project.x.binaries}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.build.directory}</directory>
+                                    <includes>
+                                        <include>*.nbm</include>
+                                        <include>*.nbm.asc</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
-            
+
             <!-- Generates SHA256 on binaries -->
             <plugin>
                 <groupId>net.nicoulaj.maven.plugins</groupId>
@@ -210,7 +220,7 @@
                 <version>1.9</version>
                 <executions>
                     <execution>
-                        <phase>package</phase>
+                        <phase>install</phase>
                         <goals>
                             <goal>files</goal>
                         </goals>
@@ -225,6 +235,7 @@
                             <directory>${project.x.binaries}</directory>
                             <excludes>
                                 <exclude>*.sha256</exclude>
+                                <exclude>*.asc</exclude>
                             </excludes>
                         </fileSet>
                     </fileSets>
