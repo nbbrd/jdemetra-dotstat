@@ -23,12 +23,12 @@
         </dependency>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
-            <artifactId>sdmx-dl-connectors</artifactId>
+            <artifactId>sdmx-dl-provider-connectors</artifactId>
             <version>${sdmx-dl.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
-            <artifactId>sdmx-dl-ri</artifactId>
+            <artifactId>sdmx-dl-provider-ri</artifactId>
             <version>${sdmx-dl.version}</version>
         </dependency>
         <dependency>

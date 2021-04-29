@@ -136,8 +136,9 @@ public class SdmxWebProviderTest {
     }
 
     private static List<Obs> toSeries(TsFrequency freq, int seed) {
+        Obs.Builder builder = Obs.builder();
         return TsData.random(freq, seed).stream()
-                .map(o -> Obs.of(LocalDateTime.ofInstant(o.getPeriod().middle().toInstant(), ZoneId.systemDefault()), o.getValue()))
+                .map(o -> builder.period(LocalDateTime.ofInstant(o.getPeriod().middle().toInstant(), ZoneId.systemDefault())).value(o.getValue()).build())
                 .collect(Collectors.toList());
     }
 }
