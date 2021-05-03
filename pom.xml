@@ -40,7 +40,7 @@
 
     <properties>
         <demetra.version>2.2.3</demetra.version>
-        <sdmx-dl.version>3.0.0-SNAPSHOT</sdmx-dl.version>
+        <sdmx-dl.version>3.0.0-beta.2</sdmx-dl.version>
     </properties>
 
     <modules>
@@ -330,9 +330,9 @@
             <id>jfrog-maven-mirror</id>
             <url>https://raw.githubusercontent.com/nbbrd/jfrog-maven-mirror/main</url>
         </repository>
-        <repository>
-            <id>ossrh-snapshots</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-        </repository>
+<!--        <repository>-->
+<!--            <id>ossrh-snapshots</id>-->
+<!--            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>-->
+<!--        </repository>-->
     </repositories>
 </project>
