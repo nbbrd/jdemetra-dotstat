@@ -2,38 +2,22 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>be.nbb.demetra</groupId>
+    <parent>
+        <groupId>be.nbb.demetra</groupId>
+        <artifactId>demetra-dotstat-parent</artifactId>
+        <version>2.2.4</version>
+    </parent>
+
     <artifactId>demetra-dotstat-desktop</artifactId>
-    <version>2.2.3</version>
     <packaging>nbm</packaging>
 
     <name>Demetra - DotStat - Desktop</name>
     <description>SDMX extension for JDemetra+</description>
     <url>https://github.com/nbbrd/jdemetra-dotstat</url>
 
-    <organization>
-        <name>National Bank of Belgium</name>
-    </organization>
-
-    <licenses>
-        <license>
-            <name>European Union Public Licence (EUPL)</name>
-            <url>https://joinup.ec.europa.eu/page/eupl-text-11-12</url>
-        </license>
-    </licenses>
-
     <properties>
-        <!-- build -->
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
-        <maven-jar-plugin.version>3.1.1</maven-jar-plugin.version>
-        <nbm-maven-plugin.version>4.1</nbm-maven-plugin.version>
-
-        <!-- dependencies -->
-        <demetra.version>2.2.0</demetra.version>
-        <java-net-proxy.version>1.0.0-SNAPSHOT</java-net-proxy.version>
+        <project.x.binaries>${project.basedir}/../binaries</project.x.binaries>
+        <maven.nbm.verify>warn</maven.nbm.verify>
     </properties>
         
     <dependencyManagement>
@@ -58,10 +42,16 @@
     <dependencies>
         <!-- compile only -->
         <dependency>
+            <groupId>org.checkerframework</groupId>
+            <artifactId>checker-qual</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
+        
         <!-- compile and runtime -->
         <dependency>
             <groupId>org.netbeans.api</groupId>
@@ -111,14 +101,32 @@
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>nbdemetra-ui</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-netbeans-modules-javahelp</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>nbdemetra-jdbc</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-netbeans-modules-javahelp</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>nbdemetra-sdmx</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-netbeans-modules-javahelp</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         
         <dependency>
@@ -133,47 +141,36 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-api</artifactId>
-            <version>${project.version}</version>
+            <groupId>com.github.nbbrd.java-net-proxy</groupId>
+            <artifactId>java-net-proxy</artifactId>
+            <version>1.0.1</version>
         </dependency>
         <dependency>
-            <groupId>be.nbb.rd</groupId>
-            <artifactId>java-net-proxy</artifactId>
-            <version>${java-net-proxy.version}</version>
+            <groupId>io.github.hakky54</groupId>
+            <artifactId>sslcontext-kickstart</artifactId>
+            <version>6.6.0</version>
         </dependency>
     </dependencies>
-
-    <repositories>
-        <repository>
-            <id>netbeans-releases</id>
-            <url>http://bits.netbeans.org/maven2/</url>
-        </repository>        
-        <repository>
-            <id>oss-jfrog-artifactory-releases</id>
-            <url>https://oss.jfrog.org/artifactory/oss-release-local</url>
-        </repository>
-        <repository>
-            <id>oss-jfrog-artifactory-snapshots</id>
-            <url>https://oss.jfrog.org/artifactory/oss-snapshot-local</url>
-        </repository>
-    </repositories>
   
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>${maven-compiler-plugin.version}</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         <plugins>
+            <!-- Clean binaries directory -->
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${project.x.binaries}</directory>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+
+            <!-- Generates NBM file -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>${maven-jar-plugin.version}</version>
                 <configuration>
                     <!-- to have the jar plugin pickup the nbm generated manifest -->
                     <archive>
@@ -182,9 +179,9 @@
                 </configuration>
             </plugin>            
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
+                <groupId>org.apache.netbeans.utilities</groupId>
                 <artifactId>nbm-maven-plugin</artifactId>
-                <version>${nbm-maven-plugin.version}</version>
+                <version>4.6</version>
                 <extensions>true</extensions>
                 <configuration>
                     <useOSGiDependencies>false</useOSGiDependencies>    
@@ -193,23 +190,63 @@
                     </publicPackages>
                 </configuration>
             </plugin>
+
+            <!-- Copies files to binaries -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.x.binaries}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.build.directory}</directory>
+                                    <includes>
+                                        <include>*.nbm</include>
+                                        <include>*.nbm.asc</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Generates SHA256 on binaries -->
+            <plugin>
+                <groupId>net.nicoulaj.maven.plugins</groupId>
+                <artifactId>checksum-maven-plugin</artifactId>
+                <version>1.9</version>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>files</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <algorithms>
+                        <algorithm>SHA-256</algorithm>
+                    </algorithms>
+                    <fileSets>
+                        <fileSet>
+                            <directory>${project.x.binaries}</directory>
+                            <excludes>
+                                <exclude>*.sha256</exclude>
+                                <exclude>*.asc</exclude>
+                            </excludes>
+                        </fileSet>
+                    </fileSets>
+                    <csvSummary>false</csvSummary>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
-    
-    <profiles>
-        <!-- Add missing Java EE Modules on JDK11 -->
-        <profile>
-            <activation>
-                <jdk>11</jdk>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>javax.annotation</groupId>
-                    <artifactId>javax.annotation-api</artifactId>
-                    <version>1.3.2</version>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
-        </profile>
-    </profiles>
 </project>

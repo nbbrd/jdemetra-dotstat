@@ -1,38 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>be.nbb.demetra</groupId>
+    <parent>
+        <groupId>be.nbb.demetra</groupId>
+        <artifactId>demetra-dotstat-parent</artifactId>
+        <version>2.2.4</version>
+    </parent>
+
     <artifactId>demetra-dotstat-core</artifactId>
-    <version>2.2.3</version>
     <packaging>jar</packaging>
-    
+
     <name>Demetra - DotStat - Core</name>
     <description>SDMX extension for JDemetra+</description>
     <url>https://github.com/nbbrd/jdemetra-dotstat</url>
-
-    <organization>
-        <name>National Bank of Belgium</name>
-    </organization>
-
-    <licenses>
-        <license>
-            <name>European Union Public Licence (EUPL)</name>
-            <url>https://joinup.ec.europa.eu/page/eupl-text-11-12</url>
-        </license>
-    </licenses>
-
-    <properties>
-        <!-- build -->
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
-
-        <!-- dependencies -->
-        <demetra.version>2.2.0</demetra.version>
-        <lombok.version>1.18.4</lombok.version>
-    </properties>
 
     <dependencyManagement>
         <dependencies>
@@ -43,19 +25,14 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <version>${lombok.version}</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
         <!-- compile only -->
-        <dependency>     
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
+        <dependency>
+            <groupId>org.checkerframework</groupId>
+            <artifactId>checker-qual</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -66,39 +43,28 @@
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-openide-util-lookup</artifactId>
+            <version>RELEASE123</version>
             <scope>provided</scope>
         </dependency>
+
         <!-- compile and runtime -->
         <dependency>
-            <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-api</artifactId>
+            <groupId>be.nbb.demetra</groupId>
+            <artifactId>demetra-dotstat-lib</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-util</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-file</artifactId>
-            <version>${project.version}</version>
+            <exclusions>
+                <!-- Fix strange bug: shaded lib should not have dependencies -->
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>demetra-jdbc</artifactId>
         </dependency>
-        <!-- runtime only -->
-        <dependency>
-            <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-connectors</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-web-ri</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+
         <!-- test only -->
         <dependency>
             <groupId>junit</groupId>
@@ -116,63 +82,16 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>be.nbb.sdmx</groupId>
-            <artifactId>sdmx-facade-samples</artifactId>
-            <version>${project.version}</version>
+            <groupId>com.github.nbbrd.sdmx-dl</groupId>
+            <artifactId>sdmx-dl-tck</artifactId>
+            <version>${sdmx-dl.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
-    
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>${maven-compiler-plugin.version}</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-    </build>
-    
-    <profiles>
-        <!-- Add missing Java EE Modules on JDK11 -->
-        <profile>
-            <activation>
-                <jdk>11</jdk>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>javax.xml.bind</groupId>
-                    <artifactId>jaxb-api</artifactId>
-                    <version>2.4.0-b180830.0359</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.glassfish.jaxb</groupId>
-                    <artifactId>jaxb-runtime</artifactId>
-                    <version>2.4.0-b180830.0438</version>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
-        </profile>
-    </profiles>
-    
-    <repositories>
-        <repository>
-            <id>netbeans-releases</id>
-            <url>http://bits.netbeans.org/maven2/</url>
-        </repository>        
-        <repository>
-            <id>oss-jfrog-artifactory-releases</id>
-            <url>https://oss.jfrog.org/artifactory/oss-release-local</url>
-        </repository>
-        <repository>
-            <id>projectlombok.org</id>
-            <url>https://projectlombok.org/edge-releases</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
 </project>

@@ -16,9 +16,9 @@
  */
 package internal.sdmx;
 
-import be.nbb.sdmx.facade.DataCursor;
-import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.Frequency;
+import sdmxdl.DataCursor;
+import sdmxdl.Key;
+import sdmxdl.Frequency;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tss.tsproviders.utils.ObsGathering;
 import ec.tss.tsproviders.utils.OptionalTsData;
@@ -34,8 +34,8 @@ import java.util.Date;
 import java.util.EnumMap;
 import java.util.GregorianCalendar;
 import java.util.Map;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  *
@@ -51,7 +51,7 @@ final class SdmxDataAdapter implements TsCursor<Key> {
     private Calendar calendar;
     private ZoneId zoneId;
 
-    SdmxDataAdapter(@Nonnull Key ref, @Nonnull DataCursor cursor, @Nullable String labelAttribute) {
+    SdmxDataAdapter(@NonNull Key ref, @NonNull DataCursor cursor, @Nullable String labelAttribute) {
         this.ref = ref;
         this.cursor = cursor;
         this.labelAttribute = labelAttribute;
@@ -100,7 +100,7 @@ final class SdmxDataAdapter implements TsCursor<Key> {
 
     @Override
     public OptionalTsData getSeriesData() throws IOException {
-        return hasTime(cursor.getSeriesFrequency()) ? toDataByDate(cursor) : toDataByLocalDate(cursor);
+        return cursor.getSeriesFrequency().hasTime() ? toDataByDate(cursor) : toDataByLocalDate(cursor);
     }
 
     @Override
@@ -138,16 +138,6 @@ final class SdmxDataAdapter implements TsCursor<Key> {
             }
         }
         return result.build();
-    }
-
-    private static boolean hasTime(Frequency freq) {
-        switch (freq) {
-            case HOURLY:
-            case MINUTELY:
-                return true;
-            default:
-                return false;
-        }
     }
 
     private static final Map<Frequency, ObsGathering> GATHERINGS = initGatherings();

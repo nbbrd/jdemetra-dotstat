@@ -17,12 +17,12 @@
 package be.nbb.demetra.dotstat;
 
 import be.nbb.demetra.sdmx.HasSdmxProperties;
-import be.nbb.sdmx.facade.DataStructure;
-import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.web.SdmxWebManager;
+import sdmxdl.DataStructure;
+import sdmxdl.Dimension;
+import sdmxdl.Key;
+import sdmxdl.SdmxConnection;
+import sdmxdl.SdmxManager;
+import sdmxdl.web.SdmxWebManager;
 import com.google.common.collect.Maps;
 import ec.tss.ITsProvider;
 import ec.tss.TsAsyncMode;
@@ -34,8 +34,8 @@ import ec.tss.tsproviders.db.DbProvider;
 import internal.sdmx.SdmxPropertiesSupport;
 import java.io.IOException;
 import java.util.Map;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.LoggerFactory;
 
@@ -137,15 +137,16 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
         return support.checkBean(bean, DotStatBean.class).toDataSource(NAME, VERSION);
     }
 
-    @Nonnull
+    @NonNull
     public String getPreferredLanguage() {
         return getSdmxManager().getLanguages().toString();
     }
 
     public void setPreferredLanguage(@Nullable String lang) {
-        try {
-            getSdmxManager().setLanguages(lang != null ? LanguagePriorityList.parse(lang) : null);
-        } catch (IllegalArgumentException ex) {
+        SdmxManager manager = getSdmxManager();
+        if (manager instanceof SdmxWebManager && lang != null) {
+            SdmxPropertiesSupport.tryParseLangs(lang)
+                    .ifPresent(newLang -> setSdmxManager(((SdmxWebManager) manager).toBuilder().languages(newLang).build()));
         }
     }
 
@@ -161,8 +162,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
         return getSdmxManager().getConnection(name);
     }
 
-    @Nullable
-    private static Map.Entry<String, String> getNodeDimension(DataSet dataSet) {
+    private static Map.@Nullable Entry<String, String> getNodeDimension(DataSet dataSet) {
         String[] dimColumns = DbBean.getDimArray(dataSet.getDataSource());
         int length = dimColumns.length;
         while (length > 0 && dataSet.get(dimColumns[length - 1]) == null) {

@@ -16,15 +16,15 @@
  */
 package internal.sdmx;
 
-import be.nbb.sdmx.facade.Dataflow;
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.parser.spi.SdmxDialect;
-import be.nbb.sdmx.facade.web.SdmxWebManager;
-import be.nbb.sdmx.facade.web.SdmxWebSource;
-import be.nbb.sdmx.facade.util.UnexpectedIOException;
+import sdmxdl.Dataflow;
+import sdmxdl.DataflowRef;
+import sdmxdl.Dimension;
+import sdmxdl.LanguagePriorityList;
+import sdmxdl.SdmxConnection;
+import sdmxdl.ext.spi.SdmxDialect;
+import sdmxdl.ext.spi.SdmxDialectLoader;
+import sdmxdl.web.SdmxWebManager;
+import sdmxdl.web.SdmxWebSource;
 import com.google.common.base.Strings;
 import ec.util.completion.AutoCompletionSource;
 import static ec.util.completion.AutoCompletionSource.Behavior.ASYNC;
@@ -36,14 +36,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import javax.swing.ListCellRenderer;
-import be.nbb.sdmx.facade.SdmxManager;
+import sdmxdl.SdmxManager;
 
 /**
  *
@@ -54,7 +52,7 @@ public class SdmxAutoCompletion {
 
     public AutoCompletionSource onDialects() {
         return ExtAutoCompletionSource
-                .builder(o -> StreamSupport.stream(ServiceLoader.load(SdmxDialect.class).spliterator(), false).collect(Collectors.toList()))
+                .builder(o -> new SdmxDialectLoader().get())
                 .behavior(AutoCompletionSource.Behavior.SYNC)
                 .postProcessor(SdmxAutoCompletion::filterAndSortDialects)
                 .valueToString(SdmxDialect::getName)
@@ -75,11 +73,20 @@ public class SdmxAutoCompletion {
 
     public AutoCompletionSource onSources(SdmxWebManager manager) {
         return ExtAutoCompletionSource
-                .builder(o -> manager.getSources())
+                .builder(o -> getAllSources(manager))
                 .behavior(AutoCompletionSource.Behavior.SYNC)
                 .postProcessor(SdmxAutoCompletion::filterAndSortSources)
                 .valueToString(SdmxWebSource::getName)
                 .build();
+    }
+
+    private List<SdmxWebSource> getAllSources(SdmxWebManager manager) {
+        return manager
+                .getSources()
+                .values()
+                .stream()
+                .filter(source -> !source.isAlias())
+                .collect(Collectors.toList());
     }
 
     public ListCellRenderer getSourceRenderer() {
@@ -133,16 +140,16 @@ public class SdmxAutoCompletion {
 
     private List<SdmxWebSource> filterAndSortSources(List<SdmxWebSource> allValues, String term) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
-        // need to filter out duplicates
         return allValues
                 .stream()
-                .collect(Collectors.groupingBy(SdmxWebSource::getName))
-                .values()
-                .stream()
-                .flatMap(o -> o.stream().limit(1))
-                .filter(o -> filter.test(o.getDescription()) || filter.test(o.getName()))
-                .sorted(Comparator.comparing(SdmxWebSource::getDescription))
+                .filter(source -> filterSource(source, filter))
                 .collect(Collectors.toList());
+    }
+
+    private static boolean filterSource(SdmxWebSource source, Predicate<String> filter) {
+        return filter.test(source.getDescription())
+                || filter.test(source.getName())
+                || source.getAliases().stream().anyMatch(filter);
     }
 
     private boolean canLoadFlows(Supplier<String> source) {

@@ -17,24 +17,23 @@
 package internal.sdmx;
 
 import be.nbb.demetra.sdmx.file.SdmxFileBean;
-import be.nbb.sdmx.facade.DataStructure;
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.file.SdmxFileSet;
-import be.nbb.sdmx.facade.util.UnexpectedIOException;
+import sdmxdl.DataStructure;
+import sdmxdl.DataflowRef;
+import sdmxdl.Dimension;
+import sdmxdl.SdmxConnection;
+import sdmxdl.file.SdmxFileSource;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.HasFilePaths;
 import ec.tss.tsproviders.cube.CubeAccessor;
 import ec.tss.tsproviders.cube.CubeId;
 import ec.tss.tsproviders.utils.IParam;
-import ioutil.IO;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import nbbrd.io.function.IOSupplier;
 
 /**
  *
@@ -46,7 +45,7 @@ public class SdmxCubeItems {
     CubeAccessor accessor;
     IParam<DataSet, CubeId> idParam;
 
-    public static DataStructure loadStructure(IO.Supplier<SdmxConnection> supplier, DataflowRef flow) throws IOException {
+    public static DataStructure loadStructure(IOSupplier<SdmxConnection> supplier, DataflowRef flow) throws IOException {
         try (SdmxConnection conn = supplier.getWithIO()) {
             return conn.getStructure(flow);
         } catch (RuntimeException ex) {
@@ -54,13 +53,13 @@ public class SdmxCubeItems {
         }
     }
 
-    public static CubeId getOrLoadRoot(List<String> dimensions, IO.Supplier<DataStructure> structure) throws IOException {
+    public static CubeId getOrLoadRoot(List<String> dimensions, IOSupplier<DataStructure> structure) throws IOException {
         return dimensions.isEmpty()
                 ? CubeId.root(loadDefaultDimIds(structure))
                 : CubeId.root(dimensions);
     }
 
-    public static List<String> loadDefaultDimIds(IO.Supplier<DataStructure> structure) throws IOException {
+    public static List<String> loadDefaultDimIds(IOSupplier<DataStructure> structure) throws IOException {
         return structure.getWithIO()
                 .getDimensions()
                 .stream()
@@ -68,7 +67,7 @@ public class SdmxCubeItems {
                 .collect(Collectors.toList());
     }
 
-    public static Optional<SdmxFileSet> tryResolveFileSet(HasFilePaths paths, SdmxFileBean bean) {
+    public static Optional<SdmxFileSource> tryResolveFileSet(HasFilePaths paths, SdmxFileBean bean) {
         try {
             return Optional.of(resolveFileSet(paths, bean));
         } catch (FileNotFoundException ex) {
@@ -76,8 +75,8 @@ public class SdmxCubeItems {
         }
     }
 
-    public static SdmxFileSet resolveFileSet(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {
-        SdmxFileSet.Builder result = SdmxFileSet.builder().data(paths.resolveFilePath(bean.getFile()));
+    public static SdmxFileSource resolveFileSet(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {
+        SdmxFileSource.Builder result = SdmxFileSource.builder().data(paths.resolveFilePath(bean.getFile()));
         File structure = bean.getStructureFile();
         if (structure != null && !structure.toString().isEmpty()) {
             result.structure(paths.resolveFilePath(structure));

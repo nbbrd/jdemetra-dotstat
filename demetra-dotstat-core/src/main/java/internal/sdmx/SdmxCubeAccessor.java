@@ -16,12 +16,11 @@
  */
 package internal.sdmx;
 
-import be.nbb.sdmx.facade.DataStructure;
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.util.UnexpectedIOException;
+import sdmxdl.DataStructure;
+import sdmxdl.DataflowRef;
+import sdmxdl.Dimension;
+import sdmxdl.Key;
+import sdmxdl.SdmxConnection;
 import com.google.common.base.Converter;
 import com.google.common.collect.Maps;
 import ec.tss.tsproviders.cube.CubeAccessor;
@@ -29,12 +28,12 @@ import ec.tss.tsproviders.cube.CubeId;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tss.tsproviders.utils.IteratorWithIO;
 import ec.tstoolkit.design.VisibleForTesting;
-import ioutil.IO;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import nbbrd.io.function.IOSupplier;
 
 /**
  *
@@ -43,11 +42,12 @@ import java.util.stream.IntStream;
 @lombok.AllArgsConstructor(staticName = "of")
 public final class SdmxCubeAccessor implements CubeAccessor {
 
-    private final IO.Supplier<SdmxConnection> supplier;
+    private final IOSupplier<SdmxConnection> supplier;
     private final DataflowRef flowRef;
     private final CubeId root;
     private final String labelAttribute;
     private final String sourceLabel;
+    private final boolean displayCodes;
 
     @Override
     public IOException testConnection() {
@@ -135,8 +135,9 @@ public final class SdmxCubeAccessor implements CubeAccessor {
             return "All";
         }
         try (SdmxConnection conn = supplier.getWithIO()) {
-            Map<String, Dimension> dimensionById = dimensionById(conn.getStructure(flowRef));
-            return getDisplayNodeName(dimensionById, id);
+            return displayCodes
+                    ? getDimensionCodeId(id)
+                    : getDimensionCodeLabel(id, dimensionById(conn.getStructure(flowRef)));
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);
         }
@@ -187,13 +188,19 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         return ex;
     }
 
-    private static String getDisplayNodeName(Map<String, Dimension> dimensionById, CubeId ref) {
+    private static String getDimensionCodeId(CubeId ref) {
+        int index = ref.getLevel() - 1;
+        String codeId = ref.getDimensionValue(index);
+        return codeId;
+    }
+
+    private static String getDimensionCodeLabel(CubeId ref, Map<String, Dimension> dimensionById) {
         if (ref.isRoot()) {
             return "Invalid reference '" + dump(ref) + "'";
         }
         int index = ref.getLevel() - 1;
-        Map<String, String> codes = dimensionById.get(ref.getDimensionId(index)).getCodes();
         String codeId = ref.getDimensionValue(index);
+        Map<String, String> codes = dimensionById.get(ref.getDimensionId(index)).getCodes();
         return codes.getOrDefault(codeId, codeId);
     }
 

@@ -17,7 +17,7 @@
 package be.nbb.demetra.dotstat;
 
 import be.nbb.demetra.sdmx.web.SdmxWebProvider;
-import be.nbb.sdmx.facade.web.SdmxWebManager;
+import sdmxdl.web.SdmxWebManager;
 import ec.nbdemetra.ui.completion.JAutoCompletionService;
 import ec.tss.tsproviders.TsProviders;
 import ec.util.completion.AutoCompletionSource;

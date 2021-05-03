@@ -16,8 +16,8 @@
  */
 package internal.sdmx;
 
-import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.SdmxConnection;
+import sdmxdl.Key;
+import sdmxdl.SdmxConnection;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;

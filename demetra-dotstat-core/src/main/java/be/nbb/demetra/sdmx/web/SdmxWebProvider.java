@@ -18,9 +18,9 @@ package be.nbb.demetra.sdmx.web;
 
 import be.nbb.demetra.sdmx.HasSdmxProperties;
 import internal.sdmx.SdmxCubeAccessor;
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.SdmxConnection;
-import be.nbb.sdmx.facade.web.SdmxWebManager;
+import sdmxdl.DataflowRef;
+import sdmxdl.SdmxConnection;
+import sdmxdl.web.SdmxWebManager;
 import com.google.common.cache.Cache;
 import ec.tss.ITsProvider;
 import ec.tss.tsproviders.DataSet;
@@ -38,13 +38,14 @@ import ec.tss.tsproviders.utils.IParam;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxCubeItems;
 import internal.sdmx.SdmxPropertiesSupport;
-import ioutil.IO;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import be.nbb.sdmx.facade.SdmxManager;
+import sdmxdl.SdmxManager;
+import nbbrd.io.function.IOSupplier;
 
 /**
  *
@@ -87,7 +88,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
         this.mutableListSupport = HasDataSourceMutableList.of(NAME, logger, cache::invalidate);
         this.monikerSupport = HasDataMoniker.usingUri(NAME);
         this.beanSupport = HasDataSourceBean.of(NAME, beanParam, beanParam.getVersion());
-        this.cubeSupport = CubeSupport.of(new SdmxCubeResource(cache, properties, beanParam));
+        this.cubeSupport = CubeSupport.of(new SdmxCubeResource(cache, properties, beanParam, displayCodes::get));
         this.tsSupport = CubeSupport.asTsProvider(NAME, logger, cubeSupport, monikerSupport, cache::invalidateAll);
     }
 
@@ -113,6 +114,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
         private final Cache<DataSource, SdmxCubeItems> cache;
         private final HasSdmxProperties properties;
         private final SdmxWebParam param;
+        private final BooleanSupplier displayCodes;
 
         @Override
         public CubeAccessor getAccessor(DataSource dataSource) throws IOException {
@@ -126,19 +128,19 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
 
         private SdmxCubeItems get(DataSource dataSource) throws IOException {
             DataSourcePreconditions.checkProvider(NAME, dataSource);
-            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(properties, param, dataSource));
+            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(properties, param, dataSource, displayCodes.getAsBoolean()));
         }
 
-        private static SdmxCubeItems of(HasSdmxProperties properties, SdmxWebParam param, DataSource dataSource) throws IllegalArgumentException, IOException {
+        private static SdmxCubeItems of(HasSdmxProperties properties, SdmxWebParam param, DataSource dataSource, boolean displayCodes) throws IllegalArgumentException, IOException {
             SdmxWebBean bean = param.get(dataSource);
 
             DataflowRef flow = DataflowRef.parse(bean.getFlow());
 
-            IO.Supplier<SdmxConnection> conn = toConnection(properties, bean.getSource());
+            IOSupplier<SdmxConnection> conn = toConnection(properties, bean.getSource());
 
             CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), () -> SdmxCubeItems.loadStructure(conn, flow));
 
-            CubeAccessor accessor = SdmxCubeAccessor.of(conn, flow, root, bean.getLabelAttribute(), bean.getSource())
+            CubeAccessor accessor = SdmxCubeAccessor.of(conn, flow, root, bean.getLabelAttribute(), bean.getSource(), displayCodes)
                     .bulk(bean.getCacheDepth(), GuavaCaches.ttlCacheAsMap(bean.getCacheTtl()));
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());
@@ -146,7 +148,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
             return new SdmxCubeItems(accessor, idParam);
         }
 
-        private static IO.Supplier<SdmxConnection> toConnection(HasSdmxProperties properties, String name) {
+        private static IOSupplier<SdmxConnection> toConnection(HasSdmxProperties properties, String name) {
             SdmxManager manager = properties.getSdmxManager();
             return () -> manager.getConnection(name);
         }

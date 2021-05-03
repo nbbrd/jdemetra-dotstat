@@ -1,10 +1,2 @@
-/demetra-dotstat-core/target/
-/demetra-dotstat-desktop/target/
-/sdmx-facade/sdmx-facade-api/target/
-/sdmx-facade/sdmx-facade-connectors/target/
-/sdmx-facade/sdmx-facade-util/target/
-/sdmx-facade/sdmx-facade-file/target/
-/sdmx-facade/sdmx-facade-samples/target/
-/sdmx-facade/sdmx-facade-web-ri/target/
-/sdmx-facade/sdmx-facade-util-web/target/
-/sdmx-facade/sdmx-facade-util-xml/target/
+target/
+/binaries/

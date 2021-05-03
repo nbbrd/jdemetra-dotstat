@@ -16,11 +16,13 @@
  */
 package be.nbb.demetra.sdmx.web;
 
+import internal.sdmx.BuddyEventListener;
 import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
 import be.nbb.demetra.dotstat.DotStatProviderBuddy.BuddyConfig;
 import be.nbb.demetra.dotstat.SdmxWsAutoCompletionService;
-import be.nbb.sdmx.facade.LanguagePriorityList;
-import be.nbb.sdmx.facade.web.SdmxWebManager;
+import sdmxdl.LanguagePriorityList;
+import sdmxdl.ext.SdmxCache;
+import sdmxdl.web.SdmxWebManager;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import ec.nbdemetra.db.DbIcon;
@@ -28,6 +30,7 @@ import ec.nbdemetra.ui.BeanHandler;
 import ec.nbdemetra.ui.Config;
 import ec.nbdemetra.ui.Configurator;
 import ec.nbdemetra.ui.IConfigurable;
+import ec.nbdemetra.ui.notification.MessageUtil;
 import ec.nbdemetra.ui.properties.DhmsPropertyEditor;
 import ec.nbdemetra.ui.properties.NodePropertySetBuilder;
 import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
@@ -35,10 +38,13 @@ import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
 import ec.tss.tsproviders.DataSet;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxAutoCompletion;
+import internal.sdmx.SdmxPropertiesSupport;
 import java.awt.Image;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
+import java.io.File;
 import java.io.IOException;
+import java.net.PasswordAuthentication;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -48,16 +54,22 @@ import org.openide.nodes.Sheet;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import be.nbb.sdmx.facade.SdmxManager;
-import be.nbb.sdmx.facade.util.HasCache;
-import be.nbb.sdmx.facade.web.spi.SdmxWebDriver;
+import sdmxdl.SdmxManager;
 import java.net.ProxySelector;
-import java.util.ArrayList;
-import java.util.ServiceLoader;
+import java.util.Collections;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocketFactory;
-import nbbrd.net.SystemProxySelector;
+import nbbrd.net.proxy.SystemProxySelector;
+import nl.altindag.ssl.SSLFactory;
+import org.openide.awt.StatusDisplayer;
 import org.openide.util.Lookup;
+import sdmxdl.kryo.KryoSerialization;
+import sdmxdl.sys.SdmxSystemUtil;
+import sdmxdl.util.ext.FileCache;
+import sdmxdl.util.ext.Serializer;
+import sdmxdl.web.SdmxWebAuthenticator;
+import sdmxdl.web.SdmxWebSource;
+import sdmxdl.xml.XmlWebSource;
 
 /**
  *
@@ -69,11 +81,16 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
 
     private final Configurator<SdmxWebProviderBuddy> configurator;
     private final ConcurrentMap autoCompletionCache;
-    private final SdmxWebManager webManager;
+
+    private File customSources;
+
+    @lombok.Getter
+    private SdmxWebManager webManager;
 
     public SdmxWebProviderBuddy() {
         this.configurator = createConfigurator();
         this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
+        this.customSources = new File("");
         this.webManager = createManager();
         lookupProvider().ifPresent(o -> o.setSdmxManager(webManager));
     }
@@ -137,12 +154,12 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         return config;
     }
 
+    @Deprecated
     public void setProxySelector(@Nullable ProxySelector proxySelector) {
-        webManager.setProxySelector(proxySelector);
     }
 
+    @Deprecated
     public void setSSLSocketFactory(@Nullable SSLSocketFactory sslSocketFactory) {
-        webManager.setSSLSocketFactory(sslSocketFactory);
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
@@ -155,19 +172,46 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     }
 
     private static SdmxWebManager createManager() {
-        ConcurrentMap cache = GuavaCaches.softValuesCacheAsMap();
-        List<SdmxWebDriver> drivers = new ArrayList<>();
-        ServiceLoader
-                .load(SdmxWebDriver.class)
-                .forEach(o -> {
-                    if (o instanceof HasCache) {
-                        ((HasCache) o).setCache(cache);
-                    }
-                    drivers.add(o);
-                });
-        SdmxWebManager result = SdmxWebManager.of(drivers);
-        result.setProxySelector(SystemProxySelector.ofServiceLoader());
-        return result;
+        SSLFactory sslFactory = SSLFactory
+                .builder()
+                .withDefaultTrustMaterial()
+                .withSystemTrustMaterial()
+                .build();
+
+        return SdmxWebManager.ofServiceLoader()
+                .toBuilder()
+                .eventListener(BuddyEventListener.INSTANCE)
+                .proxySelector(SystemProxySelector.ofServiceLoader())
+                .sslSocketFactory(sslFactory.getSslSocketFactory())
+                .hostnameVerifier(sslFactory.getHostnameVerifier())
+                .cache(getCache())
+                .authenticator(getNetBeansAuthenticator())
+                .build();
+    }
+
+    private static SdmxCache getCache() {
+        return FileCache
+                .builder()
+                .serializer(Serializer.gzip(new KryoSerialization()))
+                .onIOException(MessageUtil::showException)
+                .build();
+    }
+
+    private static SdmxWebAuthenticator getNetBeansAuthenticator() {
+        PasswordAuthentication noUser = new PasswordAuthentication(null, new char[0]);
+        SdmxWebAuthenticator result = SdmxSystemUtil.getAuthenticatorOrNull(noUser, MessageUtil::showException);
+        return result != null ? result : SdmxWebAuthenticator.noOp();
+    }
+
+    private static List<SdmxWebSource> loadSources(File file) {
+        if (file.exists()) {
+            try {
+                return XmlWebSource.getParser().parseFile(file);
+            } catch (IOException ex) {
+                StatusDisplayer.getDefault().setStatusText(ex.getMessage());
+            }
+        }
+        return Collections.emptyList();
     }
 
     private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, SdmxWebProviderBuddy> {
@@ -175,21 +219,25 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         @Override
         public BuddyConfig loadBean(SdmxWebProviderBuddy resource) {
             BuddyConfig result = new BuddyConfig();
-            lookupProvider().ifPresent(o -> {
-                result.setPreferredLanguage(o.getSdmxManager().getLanguages().toString());
-                result.setDisplayCodes(o.isDisplayCodes());
+            result.setCustomSources(resource.customSources);
+            result.setPreferredLanguage(resource.webManager.getLanguages().toString());
+            lookupProvider().ifPresent(provider -> {
+                result.setDisplayCodes(provider.isDisplayCodes());
             });
             return result;
         }
 
         @Override
         public void storeBean(SdmxWebProviderBuddy resource, BuddyConfig bean) {
-            lookupProvider().ifPresent(o -> {
-                try {
-                    o.getSdmxManager().setLanguages(LanguagePriorityList.parse(bean.getPreferredLanguage()));
-                } catch (IllegalArgumentException ex) {
-                }
-                o.setDisplayCodes(bean.isDisplayCodes());
+            resource.customSources = bean.getCustomSources();
+            resource.webManager = resource.webManager
+                    .toBuilder()
+                    .customSources(loadSources(resource.customSources))
+                    .languages(SdmxPropertiesSupport.tryParseLangs(bean.getPreferredLanguage()).orElse(LanguagePriorityList.ANY))
+                    .build();
+            lookupProvider().ifPresent(provider -> {
+                provider.setDisplayCodes(bean.isDisplayCodes());
+                provider.setSdmxManager(resource.webManager);
             });
         }
     }

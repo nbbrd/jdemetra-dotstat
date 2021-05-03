@@ -17,10 +17,12 @@
 package internal.sdmx;
 
 import be.nbb.demetra.sdmx.HasSdmxProperties;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import lombok.AccessLevel;
-import be.nbb.sdmx.facade.SdmxManager;
+import sdmxdl.LanguagePriorityList;
+import sdmxdl.SdmxManager;
 
 /**
  *
@@ -50,6 +52,14 @@ public final class SdmxPropertiesSupport implements HasSdmxProperties {
         SdmxManager old = this.manager.get();
         if (this.manager.compareAndSet(old, manager != null ? manager : defaultManager.get())) {
             onManagerChange.run();
+        }
+    }
+
+    public static Optional<LanguagePriorityList> tryParseLangs(String text) {
+        try {
+            return Optional.of(LanguagePriorityList.parse(text));
+        } catch (IllegalArgumentException ex) {
+            return Optional.empty();
         }
     }
 }

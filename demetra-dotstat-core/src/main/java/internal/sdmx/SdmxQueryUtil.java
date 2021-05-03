@@ -16,12 +16,12 @@
  */
 package internal.sdmx;
 
-import be.nbb.sdmx.facade.DataStructure;
-import be.nbb.sdmx.facade.DataflowRef;
-import be.nbb.sdmx.facade.Dimension;
-import be.nbb.sdmx.facade.Key;
-import be.nbb.sdmx.facade.DataFilter;
-import be.nbb.sdmx.facade.SdmxConnection;
+import sdmxdl.DataStructure;
+import sdmxdl.DataflowRef;
+import sdmxdl.Dimension;
+import sdmxdl.Key;
+import sdmxdl.DataFilter;
+import sdmxdl.SdmxConnection;
 import com.google.common.collect.ImmutableList;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tss.tsproviders.utils.OptionalTsData;
@@ -35,8 +35,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  *
@@ -48,28 +48,28 @@ public class SdmxQueryUtil {
     public final String NO_LABEL = null;
     public final OptionalTsData MISSING_DATA = OptionalTsData.absent("No results matching the query");
 
-    @Nonnull
+    @NonNull
     public TsCursor<Key> getAllSeries(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
-        return conn.isSeriesKeysOnlySupported()
+        return conn.isDetailSupported()
                 ? request(conn, flowRef, ref, labelAttribute, true)
                 : computeKeys(conn, flowRef, ref);
     }
 
-    @Nonnull
+    @NonNull
     public TsCursor<Key> getAllSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
-        return conn.isSeriesKeysOnlySupported()
+        return conn.isDetailSupported()
                 ? request(conn, flowRef, ref, labelAttribute, false)
                 : computeKeysAndRequestData(conn, flowRef, ref);
     }
 
-    @Nonnull
+    @NonNull
     public TsCursor<Key> getSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
         return request(conn, flowRef, ref, labelAttribute, false);
     }
 
-    @Nonnull
+    @NonNull
     public List<String> getChildren(SdmxConnection conn, DataflowRef flowRef, Key ref, int dimensionPosition) throws IOException {
-        if (conn.isSeriesKeysOnlySupported()) {
+        if (conn.isDetailSupported()) {
             try (TsCursor<Key> cursor = request(conn, flowRef, ref, NO_LABEL, true)) {
                 int index = dimensionPosition - 1;
                 TreeSet<String> result = new TreeSet<>();
@@ -84,8 +84,8 @@ public class SdmxQueryUtil {
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private TsCursor<Key> request(SdmxConnection conn, DataflowRef flowRef, Key key, String labelAttribute, boolean seriesKeysOnly) throws IOException {
-        return new SdmxDataAdapter(key, conn.getDataCursor(flowRef, key, seriesKeysOnly ? DataFilter.SERIES_KEYS_ONLY : DataFilter.ALL), labelAttribute);
+    private TsCursor<Key> request(SdmxConnection conn, DataflowRef flowRef, Key key, String labelAttribute, boolean noData) throws IOException {
+        return new SdmxDataAdapter(key, conn.getDataCursor(flowRef, key, noData ? DataFilter.NO_DATA : DataFilter.FULL), labelAttribute);
     }
 
     private TsCursor<Key> computeKeys(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {

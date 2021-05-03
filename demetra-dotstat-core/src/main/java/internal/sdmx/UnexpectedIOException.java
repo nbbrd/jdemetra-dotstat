@@ -14,22 +14,17 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.sdmx;
+package internal.sdmx;
 
-import sdmxdl.SdmxManager;
-import ec.tstoolkit.design.ThreadSafe;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import java.io.IOException;
 
 /**
  *
  * @author Philippe Charles
  */
-@ThreadSafe
-public interface HasSdmxProperties {
+public final class UnexpectedIOException extends IOException {
 
-    @NonNull
-    SdmxManager getSdmxManager();
-
-    void setSdmxManager(@Nullable SdmxManager manager);
+    public UnexpectedIOException(RuntimeException cause) {
+        super(cause);
+    }
 }
