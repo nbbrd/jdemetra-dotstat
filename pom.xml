@@ -11,6 +11,7 @@
     <name>Demetra - DotStat</name>
     <description>SDMX extension for JDemetra+</description>
     <url>https://github.com/nbbrd/jdemetra-dotstat</url>
+    <inceptionYear>2015</inceptionYear>
 
     <organization>
         <name>National Bank of Belgium</name>
@@ -268,57 +269,6 @@
                                 <versionTagPrefix>v</versionTagPrefix>
                             </gitFlowConfig>
                         </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <!-- Base deploy -->
-        <profile>
-            <id>base-deploy</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>3.2.1</version>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.3.0</version>
-                        <executions>
-                            <execution>
-                                <id>attach-empty-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <excludePackageNames>*</excludePackageNames>
-                            <quiet>true</quiet>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.simplify4u.plugins</groupId>
-                        <artifactId>sign-maven-plugin</artifactId>
-                        <version>0.3.1</version>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
                     </plugin>
                 </plugins>
             </build>
