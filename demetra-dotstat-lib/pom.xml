@@ -20,26 +20,56 @@
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-api</artifactId>
             <version>${sdmx-dl.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.checkerframework</groupId>
+                    <artifactId>checker-qual</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-provider-connectors</artifactId>
             <version>${sdmx-dl.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.checkerframework</groupId>
+                    <artifactId>checker-qual</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-provider-ri</artifactId>
             <version>${sdmx-dl.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.checkerframework</groupId>
+                    <artifactId>checker-qual</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-kryo</artifactId>
             <version>${sdmx-dl.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.checkerframework</groupId>
+                    <artifactId>checker-qual</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-sys</artifactId>
             <version>${sdmx-dl.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.checkerframework</groupId>
+                    <artifactId>checker-qual</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
     
