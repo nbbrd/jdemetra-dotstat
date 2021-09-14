@@ -11,6 +11,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+## [2.2.5] - 2021-09-14
+
+This is a feature release of **jdemetra-dotstat**.
+
+### Added
+- Add default user-agent `sdmx-dl/version`
+- Add source from Bundesbank 
+- Add source from Economic and Social Commission for Asia and the Pacific 
+- Add source from National Statistical Institute of Cambodia 
+- Add source from SDMX Global Registry 
+- Add source from Pacific Data Hub 
+- Add source from UK Data Service 
+
 ## [2.2.4] - 2021-04-03
 
 This is a feature release of **jdemetra-dotstat**.
@@ -143,7 +156,8 @@ This is a feature release of **jdemetra-dotstat**.
 
 This is the initial release of **jdemetra-dotstat**.   
 
-[Unreleased]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.4...HEAD
+[Unreleased]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.5...HEAD
+[2.2.5]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.4...v2.2.5
 [2.2.4]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.3...v2.2.4
 [2.2.3]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.1...v2.2.2
