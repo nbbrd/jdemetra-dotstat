@@ -25,6 +25,10 @@
                     <groupId>org.checkerframework</groupId>
                     <artifactId>checker-qual</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>com.github.nbbrd.java-service-util</groupId>
+                    <artifactId>java-service-processor</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -35,6 +39,10 @@
                 <exclusion>
                     <groupId>org.checkerframework</groupId>
                     <artifactId>checker-qual</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.github.nbbrd.java-service-util</groupId>
+                    <artifactId>java-service-processor</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -47,6 +55,10 @@
                     <groupId>org.checkerframework</groupId>
                     <artifactId>checker-qual</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>com.github.nbbrd.java-service-util</groupId>
+                    <artifactId>java-service-processor</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -58,16 +70,9 @@
                     <groupId>org.checkerframework</groupId>
                     <artifactId>checker-qual</artifactId>
                 </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.github.nbbrd.sdmx-dl</groupId>
-            <artifactId>sdmx-dl-sys</artifactId>
-            <version>${sdmx-dl.version}</version>
-            <exclusions>
                 <exclusion>
-                    <groupId>org.checkerframework</groupId>
-                    <artifactId>checker-qual</artifactId>
+                    <groupId>com.github.nbbrd.java-service-util</groupId>
+                    <artifactId>java-service-processor</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

@@ -44,7 +44,6 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.io.File;
 import java.io.IOException;
-import java.net.PasswordAuthentication;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -64,10 +63,8 @@ import nl.altindag.ssl.SSLFactory;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Lookup;
 import sdmxdl.kryo.KryoSerialization;
-import sdmxdl.sys.SdmxSystemUtil;
 import sdmxdl.util.ext.FileCache;
 import sdmxdl.util.ext.Serializer;
-import sdmxdl.web.SdmxWebAuthenticator;
 import sdmxdl.web.SdmxWebSource;
 import sdmxdl.xml.XmlWebSource;
 
@@ -185,7 +182,6 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
                 .sslSocketFactory(sslFactory.getSslSocketFactory())
                 .hostnameVerifier(sslFactory.getHostnameVerifier())
                 .cache(getCache())
-                .authenticator(getNetBeansAuthenticator())
                 .build();
     }
 
@@ -195,12 +191,6 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
                 .serializer(Serializer.gzip(new KryoSerialization()))
                 .onIOException(MessageUtil::showException)
                 .build();
-    }
-
-    private static SdmxWebAuthenticator getNetBeansAuthenticator() {
-        PasswordAuthentication noUser = new PasswordAuthentication(null, new char[0]);
-        SdmxWebAuthenticator result = SdmxSystemUtil.getAuthenticatorOrNull(noUser, MessageUtil::showException);
-        return result != null ? result : SdmxWebAuthenticator.noOp();
     }
 
     private static List<SdmxWebSource> loadSources(File file) {
