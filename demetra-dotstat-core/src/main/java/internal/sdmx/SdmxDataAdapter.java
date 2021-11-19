@@ -144,10 +144,10 @@ final class SdmxDataAdapter implements TsCursor<Key> {
 
     private static Map<Frequency, ObsGathering> initGatherings() {
         Map<Frequency, ObsGathering> result = new EnumMap<>(Frequency.class);
-        result.put(Frequency.ANNUAL, ObsGathering.includingMissingValues(TsFrequency.Yearly, TsAggregationType.None));
-        result.put(Frequency.HALF_YEARLY, ObsGathering.includingMissingValues(TsFrequency.HalfYearly, TsAggregationType.None));
-        result.put(Frequency.QUARTERLY, ObsGathering.includingMissingValues(TsFrequency.Quarterly, TsAggregationType.None));
-        result.put(Frequency.MONTHLY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.None));
+        result.put(Frequency.ANNUAL, ObsGathering.includingMissingValues(TsFrequency.Yearly, TsAggregationType.Last));
+        result.put(Frequency.HALF_YEARLY, ObsGathering.includingMissingValues(TsFrequency.HalfYearly, TsAggregationType.Last));
+        result.put(Frequency.QUARTERLY, ObsGathering.includingMissingValues(TsFrequency.Quarterly, TsAggregationType.Last));
+        result.put(Frequency.MONTHLY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
         result.put(Frequency.WEEKLY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
         result.put(Frequency.DAILY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
         result.put(Frequency.HOURLY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));

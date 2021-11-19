@@ -36,6 +36,7 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import sdmxdl.DataRef;
 import test.samples.FacadeResource;
 import static test.samples.FacadeResource.ECB_FLOW_REF;
 import static test.samples.FacadeResource.NBB_FLOW_REF;
@@ -108,7 +109,7 @@ public class DotStatAccessorTest {
     @Test
     public void testGetKeyFromTs() throws Exception {
         assertThat(manager.getConnection("NBB")
-                .getDataStream(NBB_FLOW_REF, Key.ALL, DataFilter.NO_DATA)
+                .getDataStream(DataRef.of(NBB_FLOW_REF, Key.ALL, DataFilter.NO_DATA))
                 .map(Series::getKey)).contains(Key.parse("LOCSTL04.AUS.M"));
     }
 
@@ -149,10 +150,10 @@ public class DotStatAccessorTest {
         assertThat(o.getStart()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1966, 1));
         assertThat(o.getLastPeriod()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1970, 7));
         assertThat(o.getLength()).isEqualTo(55);
-        assertThat(o.getObsCount()).isEqualTo(54);
-        assertThat(o.isMissing(50)).isTrue(); // 1970-04
+        assertThat(o.getObsCount()).isEqualTo(55);
+        assertThat(o.isMissing(50)).isFalse(); // 1970-04
         assertThat(o.get(0)).isEqualTo(98.68823);
-        assertThat(o.get(54)).isEqualTo(101.1945);
+        assertThat(o.get(54)).isEqualTo(93.7211);
     }
 
     @Test

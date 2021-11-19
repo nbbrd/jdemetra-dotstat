@@ -115,10 +115,10 @@ public class SdmxQueryUtilTest {
             assertThat(o.getStart()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1966, 1));
             assertThat(o.getLastPeriod()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1970, 7));
             assertThat(o.getLength()).isEqualTo(55);
-            assertThat(o.getObsCount()).isEqualTo(54);
-            assertThat(o.isMissing(50)).isTrue(); // 1970-04
+            assertThat(o.getObsCount()).isEqualTo(55);
+            assertThat(o.isMissing(50)).isFalse(); // 1970-04
             assertThat(o.get(0)).isEqualTo(98.68823);
-            assertThat(o.get(54)).isEqualTo(101.1945);
+            assertThat(o.get(54)).isEqualTo(93.7211);
             assertThat(c.nextSeries()).isFalse();
         }
     }

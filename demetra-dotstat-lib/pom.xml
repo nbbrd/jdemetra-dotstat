@@ -63,7 +63,7 @@
         </dependency>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
-            <artifactId>sdmx-dl-kryo</artifactId>
+            <artifactId>sdmx-dl-format-kryo</artifactId>
             <version>${sdmx-dl.version}</version>
             <exclusions>
                 <exclusion>

@@ -139,7 +139,11 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
     }
 
     private static MapCache getCache() {
-        return MapCache.of(GuavaCaches.softValuesCacheAsMap(), Clock.systemDefaultZone());
+        return MapCache.of(
+                GuavaCaches.softValuesCacheAsMap(), 
+                GuavaCaches.softValuesCacheAsMap(),
+                Clock.systemDefaultZone()
+        );
     }
 
     private static Optional<SdmxFileProvider> lookupProvider() {

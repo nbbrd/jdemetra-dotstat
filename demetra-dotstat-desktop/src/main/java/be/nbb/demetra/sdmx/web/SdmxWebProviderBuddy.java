@@ -56,15 +56,21 @@ import org.openide.util.lookup.ServiceProvider;
 import sdmxdl.SdmxManager;
 import java.net.ProxySelector;
 import java.util.Collections;
+import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import nbbrd.net.proxy.SystemProxySelector;
 import nl.altindag.ssl.SSLFactory;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Lookup;
-import sdmxdl.kryo.KryoSerialization;
+import sdmxdl.ext.NetworkFactory;
+import sdmxdl.kryo.KryoFileFormat;
+import sdmxdl.repo.SdmxRepository;
 import sdmxdl.util.ext.FileCache;
-import sdmxdl.util.ext.Serializer;
+import sdmxdl.util.ext.FileFormat;
+import sdmxdl.util.ext.VerboseCache;
+import sdmxdl.web.SdmxWebMonitorReports;
 import sdmxdl.web.SdmxWebSource;
 import sdmxdl.xml.XmlWebSource;
 
@@ -169,28 +175,69 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     }
 
     private static SdmxWebManager createManager() {
+        return SdmxWebManager.ofServiceLoader()
+                .toBuilder()
+                .eventListener(BuddyEventListener.INSTANCE)
+                .network(getNetworkFactory())
+                .cache(getCache())
+                .build();
+    }
+
+    private static NetworkFactory getNetworkFactory() {
         SSLFactory sslFactory = SSLFactory
                 .builder()
                 .withDefaultTrustMaterial()
                 .withSystemTrustMaterial()
                 .build();
 
-        return SdmxWebManager.ofServiceLoader()
-                .toBuilder()
-                .eventListener(BuddyEventListener.INSTANCE)
-                .proxySelector(SystemProxySelector.ofServiceLoader())
-                .sslSocketFactory(sslFactory.getSslSocketFactory())
-                .hostnameVerifier(sslFactory.getHostnameVerifier())
-                .cache(getCache())
-                .build();
+        return new NetworkFactory() {
+            @Override
+            public HostnameVerifier getHostnameVerifier() {
+                return sslFactory.getHostnameVerifier();
+            }
+
+            @Override
+            public ProxySelector getProxySelector() {
+                return SystemProxySelector.ofServiceLoader();
+            }
+
+            @Override
+            public SSLSocketFactory getSslSocketFactory() {
+                return sslFactory.getSslSocketFactory();
+            }
+        };
     }
 
     private static SdmxCache getCache() {
+        FileCache fileCache = getFileCache(false);
+        return getVerboseCache(fileCache, true);
+    }
+    
+    private static FileCache getFileCache(boolean noCacheCompression) {
         return FileCache
                 .builder()
-                .serializer(Serializer.gzip(new KryoSerialization()))
+                .repositoryFormat(getRepositoryFormat(noCacheCompression))
+                .monitorFormat(getMonitorFormat(noCacheCompression))
                 .onIOException(MessageUtil::showException)
                 .build();
+    }
+
+    private static FileFormat<SdmxRepository> getRepositoryFormat(boolean noCacheCompression) {
+        FileFormat<SdmxRepository> result = FileFormat.of(KryoFileFormat.REPOSITORY, ".kryo");
+        return noCacheCompression ? result : FileFormat.gzip(result);
+    }
+
+    private static FileFormat<SdmxWebMonitorReports> getMonitorFormat(boolean noCacheCompression) {
+        FileFormat<SdmxWebMonitorReports> result = FileFormat.of(KryoFileFormat.MONITOR, ".kryo");
+        return noCacheCompression ? result : FileFormat.gzip(result);
+    }
+
+    private static SdmxCache getVerboseCache(SdmxCache delegate, boolean verbose) {
+        if (verbose) {
+            BiConsumer<String, Boolean> listener = (key, hit) -> StatusDisplayer.getDefault().setStatusText((hit ? "Hit " : "Miss ") + key);
+            return new VerboseCache(delegate, listener, listener);
+        }
+        return delegate;
     }
 
     private static List<SdmxWebSource> loadSources(File file) {

@@ -37,6 +37,7 @@ import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import sdmxdl.DataRef;
 
 /**
  *
@@ -85,7 +86,8 @@ public class SdmxQueryUtil {
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private TsCursor<Key> request(SdmxConnection conn, DataflowRef flowRef, Key key, String labelAttribute, boolean noData) throws IOException {
-        return new SdmxDataAdapter(key, conn.getDataCursor(flowRef, key, noData ? DataFilter.NO_DATA : DataFilter.FULL), labelAttribute);
+        DataRef dataRef = DataRef.of(flowRef, key, noData ? DataFilter.NO_DATA : DataFilter.FULL);
+        return new SdmxDataAdapter(key, conn.getDataCursor(dataRef), labelAttribute);
     }
 
     private TsCursor<Key> computeKeys(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {

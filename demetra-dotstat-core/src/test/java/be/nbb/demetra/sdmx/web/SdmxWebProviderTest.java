@@ -43,6 +43,8 @@ import org.junit.Test;
 import static ec.tss.tsproviders.Assertions.assertThat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import sdmxdl.Codelist;
+import sdmxdl.CodelistRef;
 import sdmxdl.SdmxManager;
 
 /**
@@ -117,8 +119,8 @@ public class SdmxWebProviderTest {
     private static SdmxRepository getCustomRepo() {
         DataStructure conjStruct = DataStructure.builder()
                 .ref(DataStructureRef.of("NBB", "RES1", "1.0"))
-                .dimension(Dimension.builder().id("REGION").position(1).label("Region").code("BE", "Belgium").code("FR", "France").build())
-                .dimension(Dimension.builder().id("SECTOR").position(2).label("Sector").code("IND", "Industry").code("XXX", "Other").build())
+                .dimension(Dimension.builder().id("REGION").position(1).label("Region").codelist(Codelist.builder().ref(CodelistRef.parse("CL_REGION")).code("BE", "Belgium").code("FR", "France").build()).build())
+                .dimension(Dimension.builder().id("SECTOR").position(2).label("Sector").codelist(Codelist.builder().ref(CodelistRef.parse("CL_SECTOR")).code("IND", "Industry").code("XXX", "Other").build()).build())
                 .label("hello")
                 .timeDimensionId("time")
                 .primaryMeasureId("value")
