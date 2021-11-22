@@ -25,7 +25,6 @@ import sdmxdl.ext.SdmxCache;
 import sdmxdl.web.SdmxWebManager;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import ec.nbdemetra.db.DbIcon;
 import ec.nbdemetra.ui.BeanHandler;
 import ec.nbdemetra.ui.Config;
 import ec.nbdemetra.ui.Configurator;
@@ -35,7 +34,9 @@ import ec.nbdemetra.ui.properties.DhmsPropertyEditor;
 import ec.nbdemetra.ui.properties.NodePropertySetBuilder;
 import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
 import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
+import ec.tss.TsMoniker;
 import ec.tss.tsproviders.DataSet;
+import ec.tss.tsproviders.DataSource;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxAutoCompletion;
 import internal.sdmx.SdmxPropertiesSupport;
@@ -60,6 +61,7 @@ import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
+import nbbrd.io.function.IORunnable;
 import nbbrd.net.proxy.SystemProxySelector;
 import nl.altindag.ssl.SSLFactory;
 import org.openide.awt.StatusDisplayer;
@@ -105,7 +107,28 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
 
     @Override
     public Image getIcon(int type, boolean opened) {
-        return DbIcon.DATABASE.getImageIcon().getImage();
+        return SdmxAutoCompletion.getDefaultIcon().getImage();
+    }
+
+    private Image getIcon(SdmxWebBean bean) {
+        SdmxWebSource source = webManager.getSources().get(bean.getSource());
+        if (source != null) {
+            return ImageUtilities.icon2Image(SdmxAutoCompletion.FAVICONS.get(source.getWebsite(), IORunnable.noOp().asUnchecked()));
+        }
+        return null;
+    }
+
+    @Override
+    public Image getIcon(DataSource dataSource, int type, boolean opened) {
+        Optional<SdmxWebProvider> lookupProvider = lookupProvider();
+        if (lookupProvider.isPresent()) {
+            SdmxWebBean bean = lookupProvider.get().decodeBean(dataSource);
+            Image result = getIcon(bean);
+            if (result != null) {
+                return result;
+            }
+        }
+        return IDataSourceProviderBuddy.super.getIcon(dataSource, type, opened);
     }
 
     @Override
@@ -124,6 +147,29 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     @Override
     public Image getIcon(IOException ex, int type, boolean opened) {
         return ImageUtilities.loadImage("ec/nbdemetra/ui/nodes/exclamation-red.png", true);
+    }
+
+    @Override
+    public Image getIcon(TsMoniker moniker, int type, boolean opened) {
+        // Fix Demetra bug -->
+        if (!SdmxWebProvider.NAME.equals(moniker.getSource())) {
+            return IDataSourceProviderBuddy.super.getIcon(moniker, type, opened);
+        }
+        // <--
+
+        Optional<SdmxWebProvider> lookupProvider = lookupProvider();
+        if (lookupProvider.isPresent()) {
+            SdmxWebProvider provider = lookupProvider.get();
+            DataSet dataSet = provider.toDataSet(moniker);
+            if (dataSet != null) {
+                SdmxWebBean bean = provider.decodeBean(dataSet.getDataSource());
+                Image result = getIcon(bean);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+        return IDataSourceProviderBuddy.super.getIcon(moniker, type, opened);
     }
 
     @Override
@@ -167,7 +213,8 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
     private static Optional<SdmxWebProvider> lookupProvider() {
-        return Optional.ofNullable(Lookup.getDefault().lookup(SdmxWebProvider.class));
+        return Optional.ofNullable(Lookup.getDefault().lookup(SdmxWebProvider.class
+        ));
     }
 
     private static Configurator<SdmxWebProviderBuddy> createConfigurator() {
@@ -212,7 +259,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         FileCache fileCache = getFileCache(false);
         return getVerboseCache(fileCache, true);
     }
-    
+
     private static FileCache getFileCache(boolean noCacheCompression) {
         return FileCache
                 .builder()
@@ -249,6 +296,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
             }
         }
         return Collections.emptyList();
+
     }
 
     private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, SdmxWebProviderBuddy> {
@@ -320,7 +368,8 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     })
     private static NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxWebBean bean, SdmxManager manager, ConcurrentMap cache) {
         b.withAutoCompletion()
-                .select(bean, "dimensions", List.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)
+                .select(bean, "dimensions", List.class,
+                        Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)
                 .source(SdmxAutoCompletion.onDimensions(manager, bean::getSource, bean::getFlow, cache))
                 .separator(",")
                 .defaultValueSupplier(() -> SdmxAutoCompletion.getDefaultDimensionsAsString(manager, bean::getSource, bean::getFlow, cache, ","))
@@ -348,9 +397,12 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
                 .description(Bundle.bean_cacheDepth_description())
                 .min(0)
                 .add();
-        b.with(long.class)
-                .select(bean, "cacheTtl", Duration.class, Duration::toMillis, Duration::ofMillis)
-                .editor(DhmsPropertyEditor.class)
+        b.with(long.class
+        )
+                .select(bean, "cacheTtl", Duration.class,
+                        Duration::toMillis, Duration::ofMillis)
+                .editor(DhmsPropertyEditor.class
+                )
                 .display(Bundle.bean_cacheTtl_display())
                 .description(Bundle.bean_cacheTtl_description())
                 .add();

@@ -26,21 +26,32 @@ import sdmxdl.ext.spi.SdmxDialectLoader;
 import sdmxdl.web.SdmxWebManager;
 import sdmxdl.web.SdmxWebSource;
 import com.google.common.base.Strings;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import ec.tstoolkit.utilities.GuavaCaches;
 import ec.util.completion.AutoCompletionSource;
 import static ec.util.completion.AutoCompletionSource.Behavior.ASYNC;
 import static ec.util.completion.AutoCompletionSource.Behavior.NONE;
 import static ec.util.completion.AutoCompletionSource.Behavior.SYNC;
 import ec.util.completion.ExtAutoCompletionSource;
 import ec.util.completion.swing.CustomListCellRenderer;
+import internal.util.http.DefaultHttpClient;
+import internal.util.http.HttpContext;
+import internal.util.http.HttpURLConnectionFactoryLoader;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JList;
 import javax.swing.ListCellRenderer;
+import org.openide.util.ImageUtilities;
 import sdmxdl.SdmxManager;
 
 /**
@@ -89,8 +100,30 @@ public class SdmxAutoCompletion {
                 .collect(Collectors.toList());
     }
 
+    public static ImageIcon getDefaultIcon() {
+        return ImageUtilities.loadImageIcon("be/nbb/demetra/dotstat/sdmx-logo.png", false);
+    }
+
+    public static final FaviconSupport FAVICONS = FaviconSupport
+            .builder()
+            .supplier(new FaviconSupplier(new DefaultHttpClient(HttpContext.builder().build(), HttpURLConnectionFactoryLoader.get()), FaviconSupplier.GOOGLE_QUERY))
+            .executor(Executors.newCachedThreadPool(new ThreadFactoryBuilder().setDaemon(true).setPriority(Thread.MIN_PRIORITY).build()))
+            .fallback(getDefaultIcon())
+            .cache(GuavaCaches.ttlCacheAsMap(Duration.ofHours(1)))
+            .build();
+
     public ListCellRenderer getSourceRenderer() {
-        return CustomListCellRenderer.of(SdmxAutoCompletion::getNameAndDescription, o -> null);
+        return new CustomListCellRenderer<SdmxWebSource>() {
+            @Override
+            protected String getValueAsString(SdmxWebSource value) {
+                return getNameAndDescription(value);
+            }
+
+            @Override
+            protected Icon toIcon(String term, JList list, SdmxWebSource value, int index, boolean isSelected, boolean cellHasFocus) {
+                return FAVICONS.get(value.getWebsite(), list::repaint);
+            }
+        };
     }
 
     private String getNameAndDescription(SdmxWebSource o) {

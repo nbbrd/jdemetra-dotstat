@@ -81,7 +81,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
 
     @Override
     public Image getIcon(int type, boolean opened) {
-        return ImageUtilities.loadImage("ec/nbdemetra/sdmx/document-code.png", true);
+        return SdmxAutoCompletion.getDefaultIcon().getImage();
     }
 
     @Override
@@ -140,7 +140,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
 
     private static MapCache getCache() {
         return MapCache.of(
-                GuavaCaches.softValuesCacheAsMap(), 
+                GuavaCaches.softValuesCacheAsMap(),
                 GuavaCaches.softValuesCacheAsMap(),
                 Clock.systemDefaultZone()
         );
