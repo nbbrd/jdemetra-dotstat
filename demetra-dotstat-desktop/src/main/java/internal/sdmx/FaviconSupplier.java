@@ -1,6 +1,7 @@
 package internal.sdmx;
 
 import com.google.common.io.ByteStreams;
+import com.google.common.net.InternetDomainName;
 import internal.util.http.HttpClient;
 import internal.util.http.HttpRequest;
 import internal.util.http.HttpResponse;
@@ -26,11 +27,16 @@ public class FaviconSupplier {
 
     @Nullable
     public Image getFaviconOrNull(@NonNull URL url) throws IOException {
-        byte[] result = exec(HttpRequest.builder().query(query.applyWithIO(url.getHost())).build());
-        return isDefaultImage(result) ? null : ImageIO.read(new ByteArrayInputStream(result));
+        byte[] result = getFaviconByDomainName(InternetDomainName.from(url.getHost()));
+        return result != null ? ImageIO.read(new ByteArrayInputStream(result)) : null;
     }
 
-    private byte[] exec(HttpRequest request) throws IOException {
+    private byte[] getFaviconByDomainName(InternetDomainName domainName) throws IOException {
+        byte[] result = requestFavicon(HttpRequest.builder().query(query.applyWithIO(domainName.toString())).build());
+        return !isDefaultImage(result) ? result : (domainName.hasParent() ? getFaviconByDomainName(domainName.parent()) : null);
+    }
+
+    private byte[] requestFavicon(HttpRequest request) throws IOException {
         try (HttpResponse response = client.requestGET(request)) {
             try (InputStream stream = response.getBody()) {
                 return ByteStreams.toByteArray(stream);
@@ -40,7 +46,7 @@ public class FaviconSupplier {
 
     private synchronized boolean isDefaultImage(byte[] found) throws IOException {
         if (defaultImage == null) {
-            defaultImage = exec(HttpRequest.builder().query(query.applyWithIO(".")).build());
+            defaultImage = requestFavicon(HttpRequest.builder().query(query.applyWithIO(".")).build());
         }
         return Arrays.equals(defaultImage, found);
     }
