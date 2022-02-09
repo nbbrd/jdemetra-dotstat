@@ -16,28 +16,20 @@
  */
 package internal.sdmx;
 
-import sdmxdl.DataStructure;
 import sdmxdl.DataflowRef;
-import sdmxdl.Dimension;
 import sdmxdl.Key;
-import sdmxdl.DataFilter;
 import sdmxdl.SdmxConnection;
-import com.google.common.collect.ImmutableList;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tss.tsproviders.utils.OptionalTsData;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.function.IntFunction;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import sdmxdl.DataRef;
+import sdmxdl.Series;
+import sdmxdl.util.SdmxCubeUtil;
 
 /**
  *
@@ -50,100 +42,26 @@ public class SdmxQueryUtil {
     public final OptionalTsData MISSING_DATA = OptionalTsData.absent("No results matching the query");
 
     @NonNull
-    public TsCursor<Key> getAllSeries(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
-        return conn.isDetailSupported()
-                ? request(conn, flowRef, ref, labelAttribute, true)
-                : computeKeys(conn, flowRef, ref);
+    public TsCursor<Key> getAllSeries(SdmxConnection conn, DataflowRef flow, Key node, @Nullable String labelAttribute) throws IOException {
+        Stream<Series> result = SdmxCubeUtil.getAllSeries(conn, flow, node);
+        return new SdmxDataAdapter(node, result, labelAttribute);
     }
 
     @NonNull
-    public TsCursor<Key> getAllSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
-        return conn.isDetailSupported()
-                ? request(conn, flowRef, ref, labelAttribute, false)
-                : computeKeysAndRequestData(conn, flowRef, ref);
+    public TsCursor<Key> getAllSeriesWithData(SdmxConnection conn, DataflowRef flow, Key node, @Nullable String labelAttribute) throws IOException {
+        Stream<Series> result = SdmxCubeUtil.getAllSeriesWithData(conn, flow, node);
+        return new SdmxDataAdapter(node, result, labelAttribute);
     }
 
     @NonNull
-    public TsCursor<Key> getSeriesWithData(SdmxConnection conn, DataflowRef flowRef, Key ref, @Nullable String labelAttribute) throws IOException {
-        return request(conn, flowRef, ref, labelAttribute, false);
+    public TsCursor<Key> getSeriesWithData(SdmxConnection conn, DataflowRef flow, Key leaf, @Nullable String labelAttribute) throws IOException {
+        Optional<Series> result = SdmxCubeUtil.getSeriesWithData(conn, flow, leaf);
+        return new SdmxDataAdapter(leaf, result.map(Stream::of).orElse(Stream.empty()), labelAttribute);
     }
 
     @NonNull
-    public List<String> getChildren(SdmxConnection conn, DataflowRef flowRef, Key ref, int dimensionPosition) throws IOException {
-        if (conn.isDetailSupported()) {
-            try (TsCursor<Key> cursor = request(conn, flowRef, ref, NO_LABEL, true)) {
-                int index = dimensionPosition - 1;
-                TreeSet<String> result = new TreeSet<>();
-                while (cursor.nextSeries()) {
-                    result.add(cursor.getSeriesId().get(index));
-                }
-                return ImmutableList.copyOf(result);
-            }
-        }
-
-        return computeAllPossibleChildren(dimensionByIndex(conn.getStructure(flowRef)), dimensionPosition);
+    public List<String> getChildren(SdmxConnection conn, DataflowRef flow, Key node, int dimensionPosition) throws IOException {
+        Stream<String> result = SdmxCubeUtil.getChildren(conn, flow, node, dimensionPosition);
+        return result.collect(Collectors.toList());
     }
-
-    //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private TsCursor<Key> request(SdmxConnection conn, DataflowRef flowRef, Key key, String labelAttribute, boolean noData) throws IOException {
-        DataRef dataRef = DataRef.of(flowRef, key, noData ? DataFilter.NO_DATA : DataFilter.FULL);
-        return new SdmxDataAdapter(key, conn.getDataCursor(dataRef), labelAttribute);
-    }
-
-    private TsCursor<Key> computeKeys(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
-        List<Key> list = computeAllPossibleSeries(dimensionByIndex(conn.getStructure(flowRef)), key);
-        return TsCursor.from(list.iterator());
-    }
-
-    private TsCursor<Key> computeKeysAndRequestData(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
-        List<Key> list = computeAllPossibleSeries(dimensionByIndex(conn.getStructure(flowRef)), key);
-        Map<Key, OptionalTsData> dataByKey = dataByKey(conn, flowRef, key);
-        return TsCursor.from(list.iterator(), o -> dataByKey.getOrDefault(o, MISSING_DATA));
-    }
-
-    private Map<Key, OptionalTsData> dataByKey(SdmxConnection conn, DataflowRef flowRef, Key key) throws IOException {
-        Map<Key, OptionalTsData> dataByKey = new HashMap<>();
-        try (TsCursor<Key> cursor = request(conn, flowRef, key, NO_LABEL, false)) {
-            while (cursor.nextSeries()) {
-                dataByKey.put(cursor.getSeriesId(), cursor.getSeriesData());
-            }
-        }
-        return dataByKey;
-    }
-
-    private Dimension[] dimensionByIndex(DataStructure ds) {
-        Dimension[] result = new Dimension[ds.getDimensions().size()];
-        ds.getDimensions().forEach(o -> result[o.getPosition() - 1] = o);
-        return result;
-    }
-
-    private List<Key> computeAllPossibleSeries(Dimension[] dimensionByIndex, Key ref) {
-        List<Key> result = new ArrayList<>();
-        String[] stack = new String[dimensionByIndex.length];
-        computeAllPossibleSeries(i -> getCodeList(dimensionByIndex, ref, i), 0, stack, result);
-        return result;
-    }
-
-    private Set<String> getCodeList(Dimension[] dimensionByIndex, Key ref, int idx) {
-        return Key.ALL.equals(ref) || ref.isWildcard(idx)
-                ? dimensionByIndex[idx].getCodes().keySet()
-                : Collections.singleton(ref.get(idx));
-    }
-
-    private void computeAllPossibleSeries(IntFunction<Set<String>> codeLists, int idx, String[] stack, List<Key> result) {
-        codeLists.apply(idx).forEach(code -> {
-            stack[idx] = code;
-            if (idx == stack.length - 1) {
-                result.add(Key.of(stack));
-            } else {
-                computeAllPossibleSeries(codeLists, idx + 1, stack, result);
-            }
-        });
-    }
-
-    private List<String> computeAllPossibleChildren(Dimension[] dimensionByPosition, int dimensionPosition) {
-        Dimension dimension = dimensionByPosition[dimensionPosition - 1];
-        return dimension.getCodes().keySet().stream().sorted().collect(Collectors.toList());
-    }
-    //</editor-fold>
 }

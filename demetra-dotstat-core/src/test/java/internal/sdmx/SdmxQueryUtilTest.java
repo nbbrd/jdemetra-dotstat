@@ -81,7 +81,7 @@ public class SdmxQueryUtilTest {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesId()).isEqualTo(single);
             assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
-            assertThat(o.getSeriesMetaData()).isEmpty();
+            assertThat(o.getSeriesMetaData()).containsKey("TIME_FORMAT");
             assertThat(o.getSeriesData().get().getLength()).isEqualTo(55);
             assertThat(o.nextSeries()).isFalse();
         }
@@ -90,7 +90,7 @@ public class SdmxQueryUtilTest {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesId()).isEqualTo(single);
             assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
-            assertThat(o.getSeriesMetaData()).isEmpty();
+            assertThat(o.getSeriesMetaData()).containsKey("TIME_FORMAT");
             assertThat(o.getSeriesData().get().getLength()).isEqualTo(55);
             assertThat(o.nextSeries()).isFalse();
         }
@@ -99,7 +99,7 @@ public class SdmxQueryUtilTest {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesId()).isEqualTo(single);
             assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
-            assertThat(o.getSeriesMetaData()).isEmpty();
+            assertThat(o.getSeriesMetaData()).containsKey("TIME_FORMAT");
             assertThat(o.getSeriesData().get().getLength()).isEqualTo(55);
             assertThat(o.nextSeries()).isFalse();
         }
@@ -127,10 +127,10 @@ public class SdmxQueryUtilTest {
     public void testGetChildren20() throws Exception {
         SdmxConnection conn = FacadeResource.nbb().asConnection();
 
-        assertThat(getChildren(conn, NBB_FLOW_REF, Key.ALL, 1)).containsExactly("LOCSTL04");
-        assertThat(getChildren(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", ""), 2)).containsExactly("AUS");
-        assertThat(getChildren(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", ""), 3)).containsExactly("M");
-        assertThat(getChildren(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", "M"), 2)).containsExactly("AUS");
+        assertThat(getChildren(conn, NBB_FLOW_REF, Key.ALL, 0)).containsExactly("LOCSTL04");
+        assertThat(getChildren(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", ""), 1)).containsExactly("AUS");
+        assertThat(getChildren(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", ""), 2)).containsExactly("M");
+        assertThat(getChildren(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", "M"), 1)).containsExactly("AUS");
     }
 
     @Test
@@ -243,9 +243,9 @@ public class SdmxQueryUtilTest {
     public void testGetChildren21() throws Exception {
         SdmxConnection conn = FacadeResource.ecb().asConnection();
 
-        assertThat(getChildren(conn, ECB_FLOW_REF, Key.ALL, 1)).containsExactly("A");
-        assertThat(getChildren(conn, ECB_FLOW_REF, Key.of("A", "", "", "", "", "", ""), 2)).hasSize(30).contains("BEL", "POL");
-        assertThat(getChildren(conn, ECB_FLOW_REF, Key.of("A", "BEL", "", "", "", "", ""), 3)).containsExactly("1");
-        assertThat(getChildren(conn, ECB_FLOW_REF, Key.of("hello", "", "", "", "", "", ""), 2)).isEmpty();
+        assertThat(getChildren(conn, ECB_FLOW_REF, Key.ALL, 0)).containsExactly("A");
+        assertThat(getChildren(conn, ECB_FLOW_REF, Key.of("A", "", "", "", "", "", ""), 1)).hasSize(30).contains("BEL", "POL");
+        assertThat(getChildren(conn, ECB_FLOW_REF, Key.of("A", "BEL", "", "", "", "", ""), 2)).containsExactly("1");
+        assertThat(getChildren(conn, ECB_FLOW_REF, Key.of("hello", "", "", "", "", "", ""), 1)).isEmpty();
     }
 }

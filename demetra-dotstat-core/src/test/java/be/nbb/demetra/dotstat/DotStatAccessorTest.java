@@ -18,7 +18,6 @@ package be.nbb.demetra.dotstat;
 
 import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
 import sdmxdl.DataStructure;
-import sdmxdl.Dimension;
 import sdmxdl.Key;
 import sdmxdl.DataFilter;
 import sdmxdl.Series;
@@ -31,7 +30,6 @@ import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import ec.tstoolkit.timeseries.simplets.TsPeriod;
 import java.io.IOException;
-import java.util.Map;
 import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.BeforeClass;
@@ -88,22 +86,21 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKey() throws Exception {
-        DataStructure dfs = manager.getConnection("NBB").getStructure(NBB_FLOW_REF);
-        Map<String, Dimension> dimById = DotStatAccessor.dimensionById(dfs);
+        DataStructure dsd = manager.getConnection("NBB").getStructure(NBB_FLOW_REF);
 
         // default ordering of dimensions
         DbSetId r1 = DbSetId.root("SUBJECT", "LOCATION", "FREQUENCY");
-        assertThat(getKey(dimById, r1.child("LOCSTL04", "AUS", "M"))).isEqualTo(Key.parse("LOCSTL04.AUS.M"));
-        assertThat(getKey(dimById, r1.child("LOCSTL04", "AUS"))).isEqualTo(Key.parse("LOCSTL04.AUS."));
-        assertThat(getKey(dimById, r1.child("LOCSTL04"))).isEqualTo(Key.parse("LOCSTL04.."));
-        assertThat(getKey(dimById, r1)).isEqualTo(Key.ALL);
+        assertThat(getKey(dsd, r1.child("LOCSTL04", "AUS", "M"))).isEqualTo(Key.parse("LOCSTL04.AUS.M"));
+        assertThat(getKey(dsd, r1.child("LOCSTL04", "AUS"))).isEqualTo(Key.parse("LOCSTL04.AUS."));
+        assertThat(getKey(dsd, r1.child("LOCSTL04"))).isEqualTo(Key.parse("LOCSTL04.."));
+        assertThat(getKey(dsd, r1)).isEqualTo(Key.ALL);
 
         // custom ordering of dimensions
         DbSetId r2 = DbSetId.root("FREQUENCY", "LOCATION", "SUBJECT");
-        assertThat(getKey(dimById, r2.child("M", "AUS", "LOCSTL04"))).isEqualTo(Key.parse("LOCSTL04.AUS.M"));
-        assertThat(getKey(dimById, r2.child("M", "AUS"))).isEqualTo(Key.parse(".AUS.M"));
-        assertThat(getKey(dimById, r2.child("M"))).isEqualTo(Key.parse("..M"));
-        assertThat(getKey(dimById, r2)).isEqualTo(Key.ALL);
+        assertThat(getKey(dsd, r2.child("M", "AUS", "LOCSTL04"))).isEqualTo(Key.parse("LOCSTL04.AUS.M"));
+        assertThat(getKey(dsd, r2.child("M", "AUS"))).isEqualTo(Key.parse(".AUS.M"));
+        assertThat(getKey(dsd, r2.child("M"))).isEqualTo(Key.parse("..M"));
+        assertThat(getKey(dsd, r2)).isEqualTo(Key.ALL);
     }
 
     @Test

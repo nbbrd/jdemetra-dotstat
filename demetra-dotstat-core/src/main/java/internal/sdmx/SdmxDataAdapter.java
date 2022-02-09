@@ -16,7 +16,6 @@
  */
 package internal.sdmx;
 
-import sdmxdl.DataCursor;
 import sdmxdl.Key;
 import sdmxdl.Frequency;
 import ec.tss.tsproviders.cursor.TsCursor;
@@ -24,6 +23,7 @@ import ec.tss.tsproviders.utils.ObsGathering;
 import ec.tss.tsproviders.utils.OptionalTsData;
 import ec.tstoolkit.timeseries.TsAggregationType;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
+import java.io.Closeable;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -34,8 +34,12 @@ import java.util.Date;
 import java.util.EnumMap;
 import java.util.GregorianCalendar;
 import java.util.Map;
+import java.util.stream.Stream;
+import nbbrd.io.IOIterator;
+import nbbrd.io.function.IORunnable;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import sdmxdl.Series;
 
 /**
  *
@@ -44,19 +48,21 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 final class SdmxDataAdapter implements TsCursor<Key> {
 
     private final Key ref;
-    private final DataCursor cursor;
+    private final IOIterator<Series> cursor;
+    private final Closeable closeable;
     private final String labelAttribute;
     private boolean closed;
-    private Key currentKey;
+    private Series currentSeries;
     private Calendar calendar;
     private ZoneId zoneId;
 
-    SdmxDataAdapter(@NonNull Key ref, @NonNull DataCursor cursor, @Nullable String labelAttribute) {
+    SdmxDataAdapter(@NonNull Key ref, @NonNull Stream<Series> cursor, @Nullable String labelAttribute) {
         this.ref = ref;
-        this.cursor = cursor;
+        this.cursor = IOIterator.checked(cursor.iterator());
+        this.closeable = IORunnable.checked(cursor::close).asCloseable();
         this.labelAttribute = labelAttribute;
         this.closed = false;
-        this.currentKey = null;
+        this.currentSeries = null;
         this.calendar = null;
         this.zoneId = null;
     }
@@ -73,71 +79,72 @@ final class SdmxDataAdapter implements TsCursor<Key> {
 
     @Override
     public boolean nextSeries() throws IOException {
-        while (cursor.nextSeries()) {
-            currentKey = cursor.getSeriesKey();
-            if (currentKey.isSeries() && ref.contains(currentKey)) {
+        while (cursor.hasNextWithIO()) {
+            currentSeries = cursor.nextWithIO();
+            if (currentSeries.getKey().isSeries() && ref.contains(currentSeries.getKey())) {
                 return true;
             }
         }
+        currentSeries = null;
         return false;
     }
 
     @Override
     public Key getSeriesId() throws IOException {
-        return currentKey;
+        return currentSeries.getKey();
     }
 
     @Override
     public String getSeriesLabel() throws IOException, IllegalStateException {
         if (labelAttribute != null && !labelAttribute.isEmpty()) {
-            String result = cursor.getSeriesAttribute(labelAttribute);
+            String result = currentSeries.getMeta().get(labelAttribute);
             if (result != null) {
                 return result;
             }
         }
-        return currentKey.toString();
+        return currentSeries.getKey().toString();
     }
 
     @Override
     public OptionalTsData getSeriesData() throws IOException {
-        return cursor.getSeriesFrequency().hasTime() ? toDataByDate(cursor) : toDataByLocalDate(cursor);
+        return currentSeries.getFreq().hasTime() ? toDataByDate() : toDataByLocalDate();
     }
 
     @Override
     public Map<String, String> getSeriesMetaData() throws IOException {
-        return cursor.getSeriesAttributes();
+        return currentSeries.getMeta();
     }
 
     @Override
     public void close() throws IOException {
         closed = true;
-        cursor.close();
+        closeable.close();
     }
 
-    private OptionalTsData toDataByDate(DataCursor cursor) throws IOException {
+    private OptionalTsData toDataByDate() throws IOException {
         if (calendar == null || zoneId == null) {
             calendar = new GregorianCalendar();
             zoneId = ZoneId.systemDefault();
         }
-        OptionalTsData.Builder2<Date> result = OptionalTsData.builderByDate(calendar, GATHERINGS.get(cursor.getSeriesFrequency()));
-        while (cursor.nextObs()) {
-            LocalDateTime period = cursor.getObsPeriod();
-            if (period != null) {
-                result.add(Date.from(period.atZone(zoneId).toInstant()), cursor.getObsValue());
-            }
-        }
-        return result.build();
+        return OptionalTsData
+                .builderByDate(calendar, GATHERINGS.get(currentSeries.getFreq()))
+                .addAll(currentSeries.getObs().stream(), obs -> toDate(obs.getPeriod()), obs -> obs.getValue())
+                .build();
     }
 
-    private OptionalTsData toDataByLocalDate(DataCursor cursor) throws IOException {
-        OptionalTsData.Builder2<LocalDate> result = OptionalTsData.builderByLocalDate(GATHERINGS.get(cursor.getSeriesFrequency()));
-        while (cursor.nextObs()) {
-            LocalDateTime period = cursor.getObsPeriod();
-            if (period != null) {
-                result.add(period.toLocalDate(), cursor.getObsValue());
-            }
-        }
-        return result.build();
+    private Date toDate(LocalDateTime dateTime) {
+        return dateTime != null ? Date.from(dateTime.atZone(zoneId).toInstant()) : null;
+    }
+
+    private OptionalTsData toDataByLocalDate() throws IOException {
+        return OptionalTsData
+                .builderByLocalDate(GATHERINGS.get(currentSeries.getFreq()))
+                .addAll(currentSeries.getObs().stream(), obs -> toLocalDate(obs.getPeriod()), obs -> obs.getValue())
+                .build();
+    }
+
+    private LocalDate toLocalDate(LocalDateTime dateTime) {
+        return dateTime != null ? dateTime.toLocalDate() : null;
     }
 
     private static final Map<Frequency, ObsGathering> GATHERINGS = initGatherings();
