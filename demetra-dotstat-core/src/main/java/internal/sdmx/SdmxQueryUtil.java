@@ -62,6 +62,6 @@ public class SdmxQueryUtil {
     @NonNull
     public List<String> getChildren(SdmxConnection conn, DataflowRef flow, Key node, int dimensionPosition) throws IOException {
         Stream<String> result = SdmxCubeUtil.getChildren(conn, flow, node, dimensionPosition);
-        return result.collect(Collectors.toList());
+        return result.sorted().collect(Collectors.toList());
     }
 }
