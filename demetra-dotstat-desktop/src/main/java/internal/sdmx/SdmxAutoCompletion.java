@@ -84,9 +84,9 @@ public class SdmxAutoCompletion {
 
     public AutoCompletionSource onSources(SdmxWebManager manager) {
         return ExtAutoCompletionSource
-                .builder(o -> getAllSources(manager))
+                .builder(term -> getAllSources(manager))
                 .behavior(AutoCompletionSource.Behavior.SYNC)
-                .postProcessor(SdmxAutoCompletion::filterAndSortSources)
+                .postProcessor((values, term) -> filterAndSortSources(values, term, manager.getLanguages()))
                 .valueToString(SdmxWebSource::getName)
                 .build();
     }
@@ -112,11 +112,11 @@ public class SdmxAutoCompletion {
             .cache(GuavaCaches.ttlCacheAsMap(Duration.ofHours(1)))
             .build();
 
-    public ListCellRenderer getSourceRenderer() {
+    public ListCellRenderer getSourceRenderer(SdmxWebManager manager) {
         return new CustomListCellRenderer<SdmxWebSource>() {
             @Override
             protected String getValueAsString(SdmxWebSource value) {
-                return getNameAndDescription(value);
+                return getNameAndDescription(value, manager.getLanguages());
             }
 
             @Override
@@ -126,8 +126,8 @@ public class SdmxAutoCompletion {
         };
     }
 
-    private String getNameAndDescription(SdmxWebSource o) {
-        return o.getName() + ": " + o.getDescription();
+    private String getNameAndDescription(SdmxWebSource o, LanguagePriorityList langs) {
+        return o.getName() + ": " + langs.select(o.getDescriptions());
     }
 
     public AutoCompletionSource onFlows(SdmxManager manager, Supplier<String> source, ConcurrentMap cache) {
@@ -171,16 +171,16 @@ public class SdmxAutoCompletion {
                 .collect(Collectors.joining(delimiter));
     }
 
-    private List<SdmxWebSource> filterAndSortSources(List<SdmxWebSource> allValues, String term) {
+    private List<SdmxWebSource> filterAndSortSources(List<SdmxWebSource> allValues, String term, LanguagePriorityList langs) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return allValues
                 .stream()
-                .filter(source -> filterSource(source, filter))
+                .filter(source -> filterSource(source, filter, langs))
                 .collect(Collectors.toList());
     }
 
-    private static boolean filterSource(SdmxWebSource source, Predicate<String> filter) {
-        return filter.test(source.getDescription())
+    private static boolean filterSource(SdmxWebSource source, Predicate<String> filter, LanguagePriorityList langs) {
+        return filter.test(langs.select(source.getDescriptions()))
                 || filter.test(source.getName())
                 || source.getAliases().stream().anyMatch(filter);
     }

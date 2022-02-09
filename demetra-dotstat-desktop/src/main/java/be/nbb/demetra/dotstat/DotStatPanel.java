@@ -55,6 +55,7 @@ import org.openide.util.lookup.AbstractLookup;
 import org.openide.util.lookup.InstanceContent;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
+import sdmxdl.LanguagePriorityList;
 
 final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
 
@@ -278,7 +279,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
     private void loadSources(SdmxWebManager webManager) {
         AbstractNodeBuilder b = new AbstractNodeBuilder();
         // webManager.getCustomSources().forEach(x -> b.add(new ConfigNode(x, true)));
-        webManager.getSources().values().stream().filter(source -> !source.isAlias()).forEach(x -> b.add(new ConfigNode(x, false)));
+        webManager.getSources().values().stream().filter(source -> !source.isAlias()).forEach(x -> b.add(new ConfigNode(x, false, webManager.getLanguages())));
         em.setRootContext(b.name("root").build());
     }
 
@@ -325,12 +326,15 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
     private static final class ConfigNode extends AbstractNode {
 
-        public ConfigNode(SdmxWebSource source, boolean customSource) {
-            this(source, customSource, new InstanceContent());
+        private final LanguagePriorityList langs;
+        
+        public ConfigNode(SdmxWebSource source, boolean customSource, LanguagePriorityList langs) {
+            this(source, customSource, new InstanceContent(), langs);
         }
 
-        private ConfigNode(SdmxWebSource source, boolean customSource, InstanceContent abilities) {
+        private ConfigNode(SdmxWebSource source, boolean customSource, InstanceContent abilities, LanguagePriorityList langs) {
             super(Children.LEAF, new ProxyLookup(Lookups.singleton(source), new AbstractLookup(abilities)));
+            this.langs = langs;
             setDisplayName(source.getName());
             setShortDescription(source.toString());
 
@@ -359,7 +363,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
                     .display("Name")
                     .add();
             b.with(String.class)
-                    .select(bean, "getDescription", null)
+                    .selectConst("description", langs.select(bean.getDescriptions()))
                     .display("Description")
                     .add();
             b.with(String.class)
