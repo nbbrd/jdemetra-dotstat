@@ -134,13 +134,12 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
         private static SdmxCubeItems of(HasSdmxProperties properties, SdmxWebParam param, DataSource dataSource, boolean displayCodes) throws IllegalArgumentException, IOException {
             SdmxWebBean bean = param.get(dataSource);
 
-            DataflowRef flow = DataflowRef.parse(bean.getFlow());
+            DataflowRef flowRef = DataflowRef.parse(bean.getFlow());
 
             IOSupplier<SdmxConnection> conn = toConnection(properties, bean.getSource());
 
-            CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), () -> SdmxCubeItems.loadStructure(conn, flow));
-
-            CubeAccessor accessor = SdmxCubeAccessor.of(conn, flow, root, bean.getLabelAttribute(), bean.getSource(), displayCodes)
+            CubeAccessor accessor = SdmxCubeAccessor
+                    .of(conn, flowRef, bean.getDimensions(), bean.getLabelAttribute(), bean.getSource(), displayCodes)
                     .bulk(bean.getCacheDepth(), GuavaCaches.ttlCacheAsMap(bean.getCacheTtl()));
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());

@@ -149,13 +149,11 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
             SdmxFileBean bean = param.get(dataSource);
             SdmxFileSource files = SdmxCubeItems.resolveFileSet(paths, bean);
 
-            DataflowRef flow = files.asDataflowRef();
+            DataflowRef flowRef = files.asDataflowRef();
 
             IOSupplier<SdmxConnection> conn = toConnection(properties, files);
 
-            CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), () -> SdmxCubeItems.loadStructure(conn, flow));
-
-            CubeAccessor accessor = SdmxCubeAccessor.of(conn, flow, root, bean.getLabelAttribute(), getSourceLabel(bean), false);
+            CubeAccessor accessor = SdmxCubeAccessor.of(conn, flowRef, bean.getDimensions(), bean.getLabelAttribute(), getSourceLabel(bean), false);
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());
 
