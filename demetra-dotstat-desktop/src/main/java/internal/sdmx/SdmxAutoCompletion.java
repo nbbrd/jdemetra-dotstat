@@ -16,6 +16,8 @@
  */
 package internal.sdmx;
 
+import internal.favicon.FaviconSupport;
+import internal.favicon.GoogleSupplier;
 import sdmxdl.Dataflow;
 import sdmxdl.DataflowRef;
 import sdmxdl.Dimension;
@@ -34,9 +36,7 @@ import static ec.util.completion.AutoCompletionSource.Behavior.NONE;
 import static ec.util.completion.AutoCompletionSource.Behavior.SYNC;
 import ec.util.completion.ExtAutoCompletionSource;
 import ec.util.completion.swing.CustomListCellRenderer;
-import internal.util.http.DefaultHttpClient;
-import internal.util.http.HttpContext;
-import internal.util.http.HttpURLConnectionFactoryLoader;
+import internal.favicon.FaviconkitSupplier;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -106,7 +106,8 @@ public class SdmxAutoCompletion {
 
     public static final FaviconSupport FAVICONS = FaviconSupport
             .builder()
-            .supplier(new FaviconSupplier(new DefaultHttpClient(HttpContext.builder().build(), HttpURLConnectionFactoryLoader.get()), FaviconSupplier.GOOGLE_QUERY))
+            .supplier(new GoogleSupplier())
+            .supplier(new FaviconkitSupplier())
             .executor(Executors.newCachedThreadPool(new ThreadFactoryBuilder().setDaemon(true).setPriority(Thread.MIN_PRIORITY).build()))
             .fallback(getDefaultIcon())
             .cache(GuavaCaches.ttlCacheAsMap(Duration.ofHours(1)))

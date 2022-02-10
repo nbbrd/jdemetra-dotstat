@@ -1,10 +1,11 @@
-package internal.sdmx;
+package internal.favicon;
 
 import ec.util.various.swing.OnAnyThread;
 import ec.util.various.swing.OnEDT;
 import java.awt.Image;
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import javax.swing.Icon;
@@ -15,10 +16,16 @@ import org.openide.awt.StatusDisplayer;
 @lombok.Builder
 public class FaviconSupport {
 
-    private final FaviconSupplier supplier;
+    @lombok.Singular
+    private final List<FaviconSupplier> suppliers;
+
+    @lombok.NonNull
     private final ExecutorService executor;
+
     private final Icon fallback;
+
     // do not put URL as key because of very-slow first lookup
+    @lombok.NonNull
     private final Map<String, Icon> cache;
 
     @OnEDT
@@ -52,12 +59,16 @@ public class FaviconSupport {
     private Icon load(URL url) {
         report("Loading favicon for " + url.getHost());
         try {
-            Image result = supplier.getFaviconOrNull(url);
-            return result != null ? new ImageIcon(result) : null;
+            for (FaviconSupplier supplier : suppliers) {
+                Image result = supplier.getFaviconOrNull(url);
+                if (result != null) {
+                    return new ImageIcon(result);
+                }
+            }
         } catch (IOException ex) {
             report("Cannot retrieve favicon for " + url.getHost());
-            return null;
         }
+        return null;
     }
 
     @OnAnyThread
