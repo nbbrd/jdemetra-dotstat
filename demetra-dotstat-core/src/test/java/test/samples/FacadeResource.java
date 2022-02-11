@@ -16,7 +16,6 @@
  */
 package test.samples;
 
-import sdmxdl.DataCursor;
 import sdmxdl.DataStructure;
 import sdmxdl.DataStructureRef;
 import sdmxdl.Dataflow;
@@ -33,6 +32,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import sdmxdl.xml.DataCursor;
 
 /**
  *

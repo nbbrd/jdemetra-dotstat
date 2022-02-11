@@ -32,6 +32,7 @@ import java.util.stream.IntStream;
 import nbbrd.io.function.IOSupplier;
 import sdmxdl.Dataflow;
 import sdmxdl.DataflowRef;
+import sdmxdl.Dimension;
 import sdmxdl.util.SdmxCubeUtil;
 
 /**
@@ -45,7 +46,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         try (SdmxConnection conn = supplier.getWithIO()) {
             Dataflow flow = conn.getFlow(ref);
             DataStructure dsd = conn.getStructure(ref);
-            CubeId root = SdmxCubeItems.getOrLoadRoot(dimensions, () -> dsd);
+            CubeId root = getOrLoadRoot(dimensions, dsd);
             return new SdmxCubeAccessor(supplier, flow, dsd, root, labelAttribute, sourceLabel, displayCodes);
         }
     }
@@ -255,6 +256,20 @@ public final class SdmxCubeAccessor implements CubeAccessor {
             }
             return ref.child(dimValues);
         }
+    }
+    
+    private static CubeId getOrLoadRoot(List<String> dimensions, DataStructure dsd)  {
+        return dimensions.isEmpty()
+                ? CubeId.root(loadDefaultDimIds(dsd))
+                : CubeId.root(dimensions);
+    }
+
+    private static List<String> loadDefaultDimIds(DataStructure dsd)  { 
+        return dsd
+                .getDimensions()
+                .stream()
+                .map(Dimension::getId)
+                .collect(Collectors.toList());
     }
     //</editor-fold>
 }

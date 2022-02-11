@@ -32,14 +32,16 @@ import ec.nbdemetra.ui.properties.NodePropertySetBuilder;
 import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
 import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
 import ec.tss.tsproviders.DataSet;
+import ec.tss.tsproviders.HasFilePaths;
 import ec.tss.tsproviders.IFileLoader;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.BuddyEventListener;
 import internal.sdmx.SdmxAutoCompletion;
-import internal.sdmx.SdmxCubeItems;
+import static internal.sdmx.SdmxCubeItems.resolveFileSet;
 import java.awt.Image;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
@@ -243,8 +245,8 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
                 .description(Bundle.bean_dialect_description())
                 .add();
 
-        Supplier<String> toSource = () -> SdmxCubeItems.tryResolveFileSet(loader, bean).map(IOFunction.unchecked(XmlFileSource.getFormatter()::formatToString)).orElse("");
-        Supplier<String> toFlow = () -> SdmxCubeItems.tryResolveFileSet(loader, bean).map(SdmxFileSource::asDataflowRef).map(Object::toString).orElse("");
+        Supplier<String> toSource = () -> tryResolveFileSet(loader, bean).map(IOFunction.unchecked(XmlFileSource.getFormatter()::formatToString)).orElse("");
+        Supplier<String> toFlow = () -> tryResolveFileSet(loader, bean).map(SdmxFileSource::asDataflowRef).map(Object::toString).orElse("");
 
         b.withAutoCompletion()
                 .select(bean, "dimensions", List.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)
@@ -262,6 +264,14 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
                 .description(Bundle.bean_labelAttribute_description())
                 .add();
         return b;
+    }
+    
+    public static Optional<SdmxFileSource> tryResolveFileSet(HasFilePaths paths, SdmxFileBean bean) {
+        try {
+            return Optional.of(resolveFileSet(paths, bean));
+        } catch (FileNotFoundException ex) {
+            return Optional.empty();
+        }
     }
     //</editor-fold>
 }
