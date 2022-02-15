@@ -23,11 +23,15 @@
             <exclusions>
                 <exclusion>
                     <groupId>org.checkerframework</groupId>
-                    <artifactId>checker-qual</artifactId>
+                    <artifactId>*</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>com.github.nbbrd.java-service-util</groupId>
-                    <artifactId>java-service-processor</artifactId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.github.nbbrd.java-design-util</groupId>
+                    <artifactId>*</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -38,11 +42,15 @@
             <exclusions>
                 <exclusion>
                     <groupId>org.checkerframework</groupId>
-                    <artifactId>checker-qual</artifactId>
+                    <artifactId>*</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>com.github.nbbrd.java-service-util</groupId>
-                    <artifactId>java-service-processor</artifactId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.github.nbbrd.java-design-util</groupId>
+                    <artifactId>*</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -53,11 +61,15 @@
             <exclusions>
                 <exclusion>
                     <groupId>org.checkerframework</groupId>
-                    <artifactId>checker-qual</artifactId>
+                    <artifactId>*</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>com.github.nbbrd.java-service-util</groupId>
-                    <artifactId>java-service-processor</artifactId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.github.nbbrd.java-design-util</groupId>
+                    <artifactId>*</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -68,11 +80,15 @@
             <exclusions>
                 <exclusion>
                     <groupId>org.checkerframework</groupId>
-                    <artifactId>checker-qual</artifactId>
+                    <artifactId>*</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>com.github.nbbrd.java-service-util</groupId>
-                    <artifactId>java-service-processor</artifactId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.github.nbbrd.java-design-util</groupId>
+                    <artifactId>*</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
