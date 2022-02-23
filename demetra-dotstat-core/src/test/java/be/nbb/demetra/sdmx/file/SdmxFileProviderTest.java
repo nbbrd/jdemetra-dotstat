@@ -16,8 +16,6 @@
  */
 package be.nbb.demetra.sdmx.file;
 
-import sdmxdl.samples.ByteSource;
-import sdmxdl.samples.SdmxSource;
 import ec.tss.TsCollectionInformation;
 import ec.tss.TsInformation;
 import ec.tss.TsInformationType;
@@ -35,6 +33,8 @@ import static sdmxdl.util.parser.FreqFactory.TIME_FORMAT_CONCEPT;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import tests.sdmxdl.api.ByteSource;
+import tests.sdmxdl.xml.SdmxXmlSources;
 
 /**
  *
@@ -59,8 +59,8 @@ public class SdmxFileProviderTest {
         NO_XML = File.createTempFile("sdmx_empty", ".xml");
         NO_XML.deleteOnExit();
         BLANK = new File("");
-        GENERIC20 = createTemp(SdmxSource.NBB_DATA, "sdmx_generic20", ".xml");
-        STRUCT20 = createTemp(SdmxSource.NBB_DATA_STRUCTURE, "sdmx_struct20", ".xml");
+        GENERIC20 = createTemp(SdmxXmlSources.NBB_DATA, "sdmx_generic20", ".xml");
+        STRUCT20 = createTemp(SdmxXmlSources.NBB_DATA_STRUCTURE, "sdmx_struct20", ".xml");
     }
 
     @Test

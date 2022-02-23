@@ -27,6 +27,7 @@ import static internal.sdmx.SdmxQueryUtil.getAllSeriesWithData;
 import static internal.sdmx.SdmxQueryUtil.getChildren;
 import static internal.sdmx.SdmxQueryUtil.getSeriesWithData;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import org.junit.Test;
 import test.samples.FacadeResource;
 import static test.samples.FacadeResource.ECB_FLOW_REF;
@@ -246,6 +247,6 @@ public class SdmxQueryUtilTest {
         assertThat(getChildren(conn, ECB_FLOW_REF, Key.ALL, 0)).containsExactly("A");
         assertThat(getChildren(conn, ECB_FLOW_REF, Key.of("A", "", "", "", "", "", ""), 1)).hasSize(30).contains("BEL", "POL");
         assertThat(getChildren(conn, ECB_FLOW_REF, Key.of("A", "BEL", "", "", "", "", ""), 2)).containsExactly("1");
-        assertThat(getChildren(conn, ECB_FLOW_REF, Key.of("hello", "", "", "", "", "", ""), 1)).isEmpty();
+        assertThatIllegalArgumentException().isThrownBy(() -> getChildren(conn, ECB_FLOW_REF, Key.of("hello", "", "", "", "", "", ""), 1));
     }
 }

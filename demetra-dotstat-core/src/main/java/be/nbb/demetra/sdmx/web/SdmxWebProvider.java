@@ -44,7 +44,6 @@ import java.util.function.BooleanSupplier;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sdmxdl.SdmxManager;
 import nbbrd.io.function.IOSupplier;
 
 /**
@@ -53,14 +52,14 @@ import nbbrd.io.function.IOSupplier;
  * @since 2.2.0
  */
 @ServiceProvider(service = ITsProvider.class, supersedes = "be.nbb.demetra.dotstat.DotStatProvider")
-public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperties {
+public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperties<SdmxWebManager> {
 
     public static final String NAME = "DOTSTAT";
 
     private final AtomicBoolean displayCodes;
 
     @lombok.experimental.Delegate
-    private final HasSdmxProperties properties;
+    private final HasSdmxProperties<SdmxWebManager> properties;
 
     @lombok.experimental.Delegate
     private final HasDataSourceMutableList mutableListSupport;
@@ -131,7 +130,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
             return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(properties, param, dataSource, displayCodes.getAsBoolean()));
         }
 
-        private static SdmxCubeItems of(HasSdmxProperties properties, SdmxWebParam param, DataSource dataSource, boolean displayCodes) throws IllegalArgumentException, IOException {
+        private static SdmxCubeItems of(HasSdmxProperties<SdmxWebManager> properties, SdmxWebParam param, DataSource dataSource, boolean displayCodes) throws IllegalArgumentException, IOException {
             SdmxWebBean bean = param.get(dataSource);
 
             DataflowRef flowRef = DataflowRef.parse(bean.getFlow());
@@ -147,8 +146,8 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
             return new SdmxCubeItems(accessor, idParam);
         }
 
-        private static IOSupplier<SdmxConnection> toConnection(HasSdmxProperties properties, String name) {
-            SdmxManager manager = properties.getSdmxManager();
+        private static IOSupplier<SdmxConnection> toConnection(HasSdmxProperties<SdmxWebManager> properties, String name) {
+            SdmxWebManager manager = properties.getSdmxManager();
             return () -> manager.getConnection(name);
         }
     }

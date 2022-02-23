@@ -45,12 +45,12 @@ import org.slf4j.LoggerFactory;
  */
 @Deprecated
 @ServiceProvider(service = ITsProvider.class)
-public final class DotStatProvider extends DbProvider<DotStatBean> implements HasSdmxProperties {
+public final class DotStatProvider extends DbProvider<DotStatBean> implements HasSdmxProperties<SdmxWebManager> {
 
     public static final String NAME = "DOTSTAT", VERSION = "20150203";
 
     @lombok.experimental.Delegate
-    private final HasSdmxProperties properties;
+    private final HasSdmxProperties<SdmxWebManager> properties;
 
     private boolean displayCodes;
 
@@ -143,10 +143,10 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     }
 
     public void setPreferredLanguage(@Nullable String lang) {
-        SdmxManager manager = getSdmxManager();
-        if (manager instanceof SdmxWebManager && lang != null) {
+        SdmxWebManager manager = getSdmxManager();
+        if (lang != null) {
             SdmxPropertiesSupport.tryParseLangs(lang)
-                    .ifPresent(newLang -> setSdmxManager(((SdmxWebManager) manager).toBuilder().languages(newLang).build()));
+                    .ifPresent(newLang -> setSdmxManager(manager.toBuilder().languages(newLang).build()));
         }
     }
 

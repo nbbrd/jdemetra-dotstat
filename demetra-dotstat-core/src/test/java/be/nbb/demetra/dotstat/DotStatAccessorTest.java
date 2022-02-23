@@ -19,9 +19,7 @@ package be.nbb.demetra.dotstat;
 import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
 import sdmxdl.DataStructure;
 import sdmxdl.Key;
-import sdmxdl.DataFilter;
 import sdmxdl.Series;
-import sdmxdl.repo.SdmxRepositoryManager;
 import com.google.common.base.Joiner;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbSeries;
@@ -32,13 +30,16 @@ import ec.tstoolkit.timeseries.simplets.TsPeriod;
 import java.io.IOException;
 import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import sdmxdl.DataRef;
+import sdmxdl.DataDetail;
+import sdmxdl.DataQuery;
 import test.samples.FacadeResource;
 import static test.samples.FacadeResource.ECB_FLOW_REF;
 import static test.samples.FacadeResource.NBB_FLOW_REF;
-import sdmxdl.SdmxManager;
+import sdmxdl.util.web.SdmxRepoDriverSupport;
+import sdmxdl.web.SdmxWebManager;
 
 /**
  *
@@ -46,13 +47,18 @@ import sdmxdl.SdmxManager;
  */
 public class DotStatAccessorTest {
 
-    private static SdmxManager manager;
+    private static SdmxWebManager manager;
 
     @BeforeClass
     public static void beforeClass() throws IOException {
-        manager = SdmxRepositoryManager.builder()
-                .repository(FacadeResource.nbb())
-                .repository(FacadeResource.ecb())
+        manager = SdmxWebManager
+                .builder()
+                .driver(SdmxRepoDriverSupport
+                        .builder()
+                        .name("test")
+                        .repo(FacadeResource.nbb())
+                        .repo(FacadeResource.ecb())
+                        .build())
                 .build();
     }
 
@@ -105,9 +111,11 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKeyFromTs() throws Exception {
-        assertThat(manager.getConnection("NBB")
-                .getDataStream(DataRef.of(NBB_FLOW_REF, Key.ALL, DataFilter.NO_DATA))
-                .map(Series::getKey)).contains(Key.parse("LOCSTL04.AUS.M"));
+        assertThat(manager
+                .getConnection("NBB")
+                .getDataStream(NBB_FLOW_REF, DataQuery.of(Key.ALL, DataDetail.NO_DATA))
+                .map(Series::getKey)
+        ).contains(Key.parse("LOCSTL04.AUS.M"));
     }
 
     @Test
@@ -236,7 +244,6 @@ public class DotStatAccessorTest {
                 .hasSize(1)
                 .contains("1");
 
-        assertThat(accessor.getChildren("hello"))
-                .isEmpty();
+        assertThatIllegalArgumentException().isThrownBy(() -> accessor.getChildren("hello"));
     }
 }

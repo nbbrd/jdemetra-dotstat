@@ -21,18 +21,20 @@ import sdmxdl.DataStructureRef;
 import sdmxdl.Dataflow;
 import sdmxdl.DataflowRef;
 import sdmxdl.LanguagePriorityList;
-import sdmxdl.repo.DataSet;
-import sdmxdl.samples.ByteSource;
-import sdmxdl.samples.SdmxSource;
 import sdmxdl.repo.SdmxRepository;
 import sdmxdl.Series;
 import sdmxdl.util.parser.ObsFactories;
 import sdmxdl.xml.stream.SdmxXmlStreams;
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import sdmxdl.DataSet;
+import sdmxdl.Feature;
 import sdmxdl.xml.DataCursor;
+import tests.sdmxdl.api.ByteSource;
+import tests.sdmxdl.xml.SdmxXmlSources;
 
 /**
  *
@@ -51,16 +53,15 @@ public class FacadeResource {
         if (result == null) {
             LanguagePriorityList l = LanguagePriorityList.parse("fr");
 
-            List<DataStructure> structs = struct20(SdmxSource.NBB_DATA_STRUCTURE, l);
-            List<Dataflow> flows = flow20(SdmxSource.NBB_DATA_STRUCTURE, l);
-            List<Series> data = data20(SdmxSource.NBB_DATA, structs.get(0));
+            List<DataStructure> structs = struct20(SdmxXmlSources.NBB_DATA_STRUCTURE, l);
+            List<Dataflow> flows = flow20(SdmxXmlSources.NBB_DATA_STRUCTURE, l);
+            List<Series> data = data20(SdmxXmlSources.NBB_DATA, structs.get(0));
 
             result = SdmxRepository.builder()
                     .structures(structs)
                     .flows(flows)
                     .dataSet(DataSet.builder().ref(NBB_FLOW_REF).data(data).build())
                     .name("NBB")
-                    .detailSupported(false)
                     .build();
 
             NBB.set(result);
@@ -73,16 +74,16 @@ public class FacadeResource {
         if (result == null) {
             LanguagePriorityList l = LanguagePriorityList.parse("fr");
 
-            List<DataStructure> structs = struct21(SdmxSource.ECB_DATA_STRUCTURE, l);
-            List<Dataflow> flows = flow21(SdmxSource.ECB_DATAFLOWS, l);
-            List<Series> data = data21(SdmxSource.ECB_DATA, structs.get(0));
+            List<DataStructure> structs = struct21(SdmxXmlSources.ECB_DATA_STRUCTURE, l);
+            List<Dataflow> flows = flow21(SdmxXmlSources.ECB_DATAFLOWS, l);
+            List<Series> data = data21(SdmxXmlSources.ECB_DATA, structs.get(0));
 
             result = SdmxRepository.builder()
                     .structures(structs)
                     .flows(flows)
                     .dataSet(DataSet.builder().ref(ECB_FLOW_REF).data(data).build())
                     .name("ECB")
-                    .detailSupported(true)
+                    .supportedFeatures(EnumSet.allOf(Feature.class))
                     .build();
 
             ECB.set(result);

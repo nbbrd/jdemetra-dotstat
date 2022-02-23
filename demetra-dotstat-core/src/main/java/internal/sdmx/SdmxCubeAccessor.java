@@ -61,7 +61,12 @@ public final class SdmxCubeAccessor implements CubeAccessor {
 
     @Override
     public IOException testConnection() {
-        return null;
+        try (SdmxConnection conn = supplier.getWithIO()) {
+            conn.testConnection();
+            return null;
+        } catch (IOException ex) {
+            return ex;
+        }
     }
 
     @Override
@@ -257,14 +262,14 @@ public final class SdmxCubeAccessor implements CubeAccessor {
             return ref.child(dimValues);
         }
     }
-    
-    private static CubeId getOrLoadRoot(List<String> dimensions, DataStructure dsd)  {
+
+    private static CubeId getOrLoadRoot(List<String> dimensions, DataStructure dsd) {
         return dimensions.isEmpty()
                 ? CubeId.root(loadDefaultDimIds(dsd))
                 : CubeId.root(dimensions);
     }
 
-    private static List<String> loadDefaultDimIds(DataStructure dsd)  { 
+    private static List<String> loadDefaultDimIds(DataStructure dsd) {
         return dsd
                 .getDimensions()
                 .stream()

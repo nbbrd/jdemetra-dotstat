@@ -54,7 +54,6 @@ import org.openide.nodes.Sheet;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import sdmxdl.SdmxManager;
 import java.net.ProxySelector;
 import java.util.Collections;
 import java.util.function.BiConsumer;
@@ -329,7 +328,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
 
     @NbBundle.Messages({
         "bean.cache.description=Mechanism used to improve performance."})
-    private static Sheet createSheet(SdmxWebBean bean, SdmxManager manager, ConcurrentMap cache) {
+    private static Sheet createSheet(SdmxWebBean bean, SdmxWebManager manager, ConcurrentMap cache) {
         Sheet result = new Sheet();
         NodePropertySetBuilder b = new NodePropertySetBuilder();
         result.put(withSource(b.reset("Source"), bean, manager, cache).build());
@@ -343,7 +342,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         "bean.source.description=The identifier of the service that provides data.",
         "bean.flow.display=Dataflow",
         "bean.flow.description=The identifier of a specific dataflow.",})
-    private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxWebBean bean, SdmxManager manager, ConcurrentMap cache) {
+    private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxWebBean bean, SdmxWebManager manager, ConcurrentMap cache) {
         b.withAutoCompletion()
                 .select(bean, "source")
                 .servicePath(SdmxWsAutoCompletionService.PATH)
@@ -366,7 +365,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         "bean.labelAttribute.display=Series label attribute",
         "bean.labelAttribute.description=An optional attribute that carries the label of time series."
     })
-    private static NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxWebBean bean, SdmxManager manager, ConcurrentMap cache) {
+    private static NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxWebBean bean, SdmxWebManager manager, ConcurrentMap cache) {
         b.withAutoCompletion()
                 .select(bean, "dimensions", List.class,
                         Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)

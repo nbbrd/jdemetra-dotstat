@@ -17,35 +17,21 @@
 package be.nbb.demetra.sdmx.web;
 
 import be.nbb.demetra.dotstat.DotStatProvider;
-import sdmxdl.DataStructure;
-import sdmxdl.DataStructureRef;
-import sdmxdl.Dataflow;
-import sdmxdl.DataflowRef;
-import sdmxdl.Dimension;
-import sdmxdl.Key;
-import sdmxdl.Frequency;
-import sdmxdl.repo.SdmxRepository;
-import sdmxdl.Obs;
-import sdmxdl.repo.SdmxRepositoryManager;
-import sdmxdl.Series;
 import ec.tss.TsMoniker;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.IDataSourceLoaderAssert;
-import ec.tstoolkit.timeseries.simplets.TsData;
-import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.junit.Test;
 import static ec.tss.tsproviders.Assertions.assertThat;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import sdmxdl.Codelist;
-import sdmxdl.CodelistRef;
-import sdmxdl.SdmxManager;
+import java.net.URI;
+import sdmxdl.web.SdmxWebManager;
+import sdmxdl.web.SdmxWebSource;
+import sdmxdl.web.spi.SdmxWebDriver;
+import tests.sdmxdl.api.RepoSamples;
+import tests.sdmxdl.web.MockedWebDriver;
 
 /**
  *
@@ -106,41 +92,29 @@ public class SdmxWebProviderTest {
 
     private static DataSource getSampleDataSource(DotStatProvider o) {
         be.nbb.demetra.dotstat.DotStatBean result = o.newBean();
-        result.setDbName("world");
-        result.setTableName("CONJ");
-        result.setDimColumns("REGION, SECTOR");
+        result.setDbName(RepoSamples.REPO.getName());
+        result.setTableName(RepoSamples.FLOW_REF.toString());
+        result.setDimColumns("FREQ, REGION, SECTOR");
         return o.encodeBean(result);
     }
 
-    private static SdmxManager getCustomManager() {
-        return SdmxRepositoryManager.builder().repository(getCustomRepo()).build();
-    }
-
-    private static SdmxRepository getCustomRepo() {
-        DataStructure conjStruct = DataStructure.builder()
-                .ref(DataStructureRef.of("NBB", "RES1", "1.0"))
-                .dimension(Dimension.builder().id("REGION").position(1).label("Region").codelist(Codelist.builder().ref(CodelistRef.parse("CL_REGION")).code("BE", "Belgium").code("FR", "France").build()).build())
-                .dimension(Dimension.builder().id("SECTOR").position(2).label("Sector").codelist(Codelist.builder().ref(CodelistRef.parse("CL_SECTOR")).code("IND", "Industry").code("XXX", "Other").build()).build())
-                .label("hello")
-                .timeDimensionId("time")
-                .primaryMeasureId("value")
+    private static SdmxWebManager getCustomManager() {
+        SdmxWebSource source = SdmxWebSource
+                .builder()
+                .name(RepoSamples.REPO.getName())
+                .driver("demo")
+                .endpoint(URI.create("MockedWebDriver:/" + RepoSamples.REPO.getName()))
                 .build();
-        Dataflow conj = Dataflow.of(DataflowRef.parse("CONJ"), conjStruct.getRef(), "Conjoncture");
-
-        return SdmxRepository.builder()
-                .name("world")
-                .structure(conjStruct)
-                .flow(conj)
-                .dataSet(sdmxdl.repo.DataSet.builder().ref(conj.getRef()).series(Series.builder().key(Key.of("BE", "IND")).freq(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 1)).build()).build())
-                .dataSet(sdmxdl.repo.DataSet.builder().ref(conj.getRef()).series(Series.builder().key(Key.of("BE", "XXX")).freq(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 2)).build()).build())
-                .dataSet(sdmxdl.repo.DataSet.builder().ref(conj.getRef()).series(Series.builder().key(Key.of("FR", "IND")).freq(Frequency.MONTHLY).obs(toSeries(TsFrequency.Monthly, 3)).build()).build())
+        return SdmxWebManager
+                .builder()
+                .driver(MockedWebDriver
+                        .builder()
+                        .name("demo")
+                        .rank(SdmxWebDriver.UNKNOWN)
+                        .available(true)
+                        .repo(source.getEndpoint(), RepoSamples.REPO)
+                        .source(source)
+                        .build())
                 .build();
-    }
-
-    private static List<Obs> toSeries(TsFrequency freq, int seed) {
-        Obs.Builder builder = Obs.builder();
-        return TsData.random(freq, seed).stream()
-                .map(o -> builder.period(LocalDateTime.ofInstant(o.getPeriod().middle().toInstant(), ZoneId.systemDefault())).value(o.getValue()).build())
-                .collect(Collectors.toList());
     }
 }

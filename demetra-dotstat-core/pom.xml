@@ -89,8 +89,24 @@
         </dependency>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
-            <artifactId>sdmx-dl-tck</artifactId>
+            <artifactId>sdmx-dl-api</artifactId>
             <version>${sdmx-dl.version}</version>
+            <classifier>tests</classifier>
+            <type>test-jar</type>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.github.nbbrd.sdmx-dl</groupId>
+            <artifactId>sdmx-dl-format-xml</artifactId>
+            <version>${sdmx-dl.version}</version>
+            <classifier>tests</classifier>
+            <type>test-jar</type>
             <scope>test</scope>
             <exclusions>
                 <exclusion>

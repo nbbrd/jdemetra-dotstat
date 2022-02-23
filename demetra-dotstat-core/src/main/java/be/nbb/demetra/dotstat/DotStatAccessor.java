@@ -29,8 +29,8 @@ import ec.tstoolkit.design.VisibleForTesting;
 import internal.sdmx.SdmxQueryUtil;
 import java.io.IOException;
 import java.util.List;
-import sdmxdl.SdmxManager;
 import sdmxdl.util.SdmxCubeUtil;
+import sdmxdl.web.SdmxWebManager;
 
 /**
  *
@@ -39,9 +39,9 @@ import sdmxdl.util.SdmxCubeUtil;
 @Deprecated
 final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
 
-    private final SdmxManager manager;
+    private final SdmxWebManager manager;
 
-    DotStatAccessor(DotStatBean dbBean, SdmxManager manager) {
+    DotStatAccessor(DotStatBean dbBean, SdmxWebManager manager) {
         super(dbBean);
         this.manager = manager;
     }

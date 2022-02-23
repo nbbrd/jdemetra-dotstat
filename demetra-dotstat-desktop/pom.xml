@@ -179,7 +179,6 @@
                 <configuration>
                     <useOSGiDependencies>false</useOSGiDependencies>
                     <publicPackages>
-                        <publicPackage>be.nbb.demetra.sdmx.web</publicPackage>
                     </publicPackages>
                 </configuration>
             </plugin>

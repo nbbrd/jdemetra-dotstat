@@ -194,7 +194,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
 
     @NbBundle.Messages({
         "bean.cache.description=Mechanism used to improve performance."})
-    private Sheet createSheet(SdmxFileBean bean, IFileLoader loader, SdmxManager manager) {
+    private Sheet createSheet(SdmxFileBean bean, IFileLoader loader, SdmxFileManager manager) {
         Sheet result = new Sheet();
         NodePropertySetBuilder b = new NodePropertySetBuilder();
         result.put(withSource(b.reset("Source"), bean, loader).build());
@@ -227,7 +227,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
         "bean.labelAttribute.display=Series label attribute",
         "bean.labelAttribute.description=An optional attribute that carries the label of time series."
     })
-    private NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxFileBean bean, IFileLoader loader, SdmxManager manager) {
+    private NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxFileBean bean, IFileLoader loader, SdmxFileManager manager) {
         b.withFile()
                 .select(bean, "structureFile")
                 .display(Bundle.bean_structureFile_display())
@@ -248,15 +248,15 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
         Supplier<String> toSource = () -> tryResolveFileSet(loader, bean).map(IOFunction.unchecked(XmlFileSource.getFormatter()::formatToString)).orElse("");
         Supplier<String> toFlow = () -> tryResolveFileSet(loader, bean).map(SdmxFileSource::asDataflowRef).map(Object::toString).orElse("");
 
-        b.withAutoCompletion()
-                .select(bean, "dimensions", List.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)
-                .source(SdmxAutoCompletion.onDimensions(manager, toSource, toFlow, autoCompletionCache))
-                .separator(",")
-                .defaultValueSupplier(() -> SdmxAutoCompletion.getDefaultDimensionsAsString(manager, toSource, toFlow, autoCompletionCache, ","))
-                .cellRenderer(SdmxAutoCompletion.getDimensionsRenderer())
-                .display(Bundle.bean_dimensions_display())
-                .description(Bundle.bean_dimensions_description())
-                .add();
+//        b.withAutoCompletion()
+//                .select(bean, "dimensions", List.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)
+//                .source(SdmxAutoCompletion.onDimensions(manager, toSource, toFlow, autoCompletionCache))
+//                .separator(",")
+//                .defaultValueSupplier(() -> SdmxAutoCompletion.getDefaultDimensionsAsString(manager, toSource, toFlow, autoCompletionCache, ","))
+//                .cellRenderer(SdmxAutoCompletion.getDimensionsRenderer())
+//                .display(Bundle.bean_dimensions_display())
+//                .description(Bundle.bean_dimensions_description())
+//                .add();
 
         b.withAutoCompletion()
                 .select(bean, "labelAttribute")
