@@ -19,7 +19,6 @@ package be.nbb.demetra.sdmx.file;
 import be.nbb.demetra.sdmx.HasSdmxProperties;
 import internal.sdmx.SdmxCubeAccessor;
 import sdmxdl.DataflowRef;
-import sdmxdl.SdmxConnection;
 import sdmxdl.file.SdmxFileManager;
 import sdmxdl.file.SdmxFileSource;
 import com.google.common.cache.Cache;
@@ -51,6 +50,7 @@ import ec.tss.tsproviders.cursor.TsCursorAsFiller;
 import ec.tss.tsproviders.utils.TsFillerAsProvider;
 import java.io.EOFException;
 import nbbrd.io.function.IOSupplier;
+import sdmxdl.Connection;
 
 /**
  *
@@ -149,7 +149,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties<Sd
 
             DataflowRef flowRef = files.asDataflowRef();
 
-            IOSupplier<SdmxConnection> conn = toConnection(properties, files);
+            IOSupplier<Connection> conn = toConnection(properties, files);
 
             CubeAccessor accessor = SdmxCubeAccessor.of(conn, flowRef, bean.getDimensions(), bean.getLabelAttribute(), getSourceLabel(bean), false);
 
@@ -158,7 +158,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties<Sd
             return new SdmxCubeItems(accessor, idParam);
         }
 
-        private static IOSupplier<SdmxConnection> toConnection(HasSdmxProperties<SdmxFileManager> properties, SdmxFileSource files) throws IOException {
+        private static IOSupplier<Connection> toConnection(HasSdmxProperties<SdmxFileManager> properties, SdmxFileSource files) throws IOException {
             SdmxFileManager manager = properties.getSdmxManager();
             return () -> manager.getConnection(files);
         }

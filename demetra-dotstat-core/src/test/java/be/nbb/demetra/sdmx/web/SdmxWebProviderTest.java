@@ -26,12 +26,11 @@ import java.time.Duration;
 import java.util.Arrays;
 import org.junit.Test;
 import static ec.tss.tsproviders.Assertions.assertThat;
-import java.net.URI;
+import java.util.EnumSet;
+import sdmxdl.Feature;
 import sdmxdl.web.SdmxWebManager;
-import sdmxdl.web.SdmxWebSource;
-import sdmxdl.web.spi.SdmxWebDriver;
 import tests.sdmxdl.api.RepoSamples;
-import tests.sdmxdl.web.MockedWebDriver;
+import tests.sdmxdl.web.MockedDriver;
 
 /**
  *
@@ -99,21 +98,12 @@ public class SdmxWebProviderTest {
     }
 
     private static SdmxWebManager getCustomManager() {
-        SdmxWebSource source = SdmxWebSource
-                .builder()
-                .name(RepoSamples.REPO.getName())
-                .driver("demo")
-                .endpoint(URI.create("MockedWebDriver:/" + RepoSamples.REPO.getName()))
-                .build();
         return SdmxWebManager
                 .builder()
-                .driver(MockedWebDriver
+                .driver(MockedDriver
                         .builder()
                         .name("demo")
-                        .rank(SdmxWebDriver.UNKNOWN)
-                        .available(true)
-                        .repo(source.getEndpoint(), RepoSamples.REPO)
-                        .source(source)
+                        .repo(RepoSamples.REPO, EnumSet.allOf(Feature.class))
                         .build())
                 .build();
     }

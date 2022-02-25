@@ -28,6 +28,7 @@ import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import ec.tstoolkit.timeseries.simplets.TsPeriod;
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -35,11 +36,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import sdmxdl.DataDetail;
 import sdmxdl.DataQuery;
+import sdmxdl.Feature;
 import test.samples.FacadeResource;
 import static test.samples.FacadeResource.ECB_FLOW_REF;
 import static test.samples.FacadeResource.NBB_FLOW_REF;
-import sdmxdl.util.web.SdmxRepoDriverSupport;
 import sdmxdl.web.SdmxWebManager;
+import tests.sdmxdl.web.MockedDriver;
 
 /**
  *
@@ -53,11 +55,11 @@ public class DotStatAccessorTest {
     public static void beforeClass() throws IOException {
         manager = SdmxWebManager
                 .builder()
-                .driver(SdmxRepoDriverSupport
+                .driver(MockedDriver
                         .builder()
                         .name("test")
-                        .repo(FacadeResource.nbb())
-                        .repo(FacadeResource.ecb())
+                        .repo(FacadeResource.nbb(), EnumSet.noneOf(Feature.class))
+                        .repo(FacadeResource.ecb(), EnumSet.allOf(Feature.class))
                         .build())
                 .build();
     }

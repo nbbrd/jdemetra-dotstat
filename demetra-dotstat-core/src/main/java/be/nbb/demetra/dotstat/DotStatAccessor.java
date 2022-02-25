@@ -19,7 +19,6 @@ package be.nbb.demetra.dotstat;
 import sdmxdl.DataStructure;
 import sdmxdl.DataflowRef;
 import sdmxdl.Key;
-import sdmxdl.SdmxConnection;
 import com.google.common.collect.ImmutableList;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tss.tsproviders.db.DbAccessor;
@@ -29,6 +28,7 @@ import ec.tstoolkit.design.VisibleForTesting;
 import internal.sdmx.SdmxQueryUtil;
 import java.io.IOException;
 import java.util.List;
+import sdmxdl.Connection;
 import sdmxdl.util.SdmxCubeUtil;
 import sdmxdl.web.SdmxWebManager;
 
@@ -62,28 +62,28 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
 
     @Override
     protected List<DbSetId> getAllSeries(DbSetId ref) throws Exception {
-        try (SdmxConnection conn = manager.getConnection(dbBean.getDbName())) {
+        try (Connection conn = manager.getConnection(dbBean.getDbName())) {
             return getAllSeries(conn, dbBean.getFlowRef(), ref);
         }
     }
 
     @Override
     protected List<DbSeries> getAllSeriesWithData(DbSetId ref) throws Exception {
-        try (SdmxConnection conn = manager.getConnection(dbBean.getDbName())) {
+        try (Connection conn = manager.getConnection(dbBean.getDbName())) {
             return getAllSeriesWithData(conn, dbBean.getFlowRef(), ref);
         }
     }
 
     @Override
     protected DbSeries getSeriesWithData(DbSetId ref) throws Exception {
-        try (SdmxConnection conn = manager.getConnection(dbBean.getDbName())) {
+        try (Connection conn = manager.getConnection(dbBean.getDbName())) {
             return getSeriesWithData(conn, dbBean.getFlowRef(), ref);
         }
     }
 
     @Override
     protected List<String> getChildren(DbSetId ref) throws Exception {
-        try (SdmxConnection conn = manager.getConnection(dbBean.getDbName())) {
+        try (Connection conn = manager.getConnection(dbBean.getDbName())) {
             return getChildren(conn, dbBean.getFlowRef(), ref);
         }
     }
@@ -93,7 +93,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         return DbAccessor.BulkAccessor.from(this, dbBean.getCacheDepth(), DbAccessor.BulkAccessor.newTtlCache(dbBean.getCacheTtl()));
     }
 
-    private static List<DbSetId> getAllSeries(SdmxConnection conn, DataflowRef flow, DbSetId node) throws IOException {
+    private static List<DbSetId> getAllSeries(Connection conn, DataflowRef flow, DbSetId node) throws IOException {
         KeyConverter converter = KeyConverter.of(conn.getStructure(flow), node);
 
         try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeries(conn, flow, converter.toKey(node), SdmxQueryUtil.NO_LABEL)) {
@@ -105,7 +105,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         }
     }
 
-    private static List<DbSeries> getAllSeriesWithData(SdmxConnection conn, DataflowRef flow, DbSetId node) throws IOException {
+    private static List<DbSeries> getAllSeriesWithData(Connection conn, DataflowRef flow, DbSetId node) throws IOException {
         KeyConverter converter = KeyConverter.of(conn.getStructure(flow), node);
 
         try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeriesWithData(conn, flow, converter.toKey(node), SdmxQueryUtil.NO_LABEL)) {
@@ -117,7 +117,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         }
     }
 
-    private static DbSeries getSeriesWithData(SdmxConnection conn, DataflowRef flow, DbSetId leaf) throws IOException {
+    private static DbSeries getSeriesWithData(Connection conn, DataflowRef flow, DbSetId leaf) throws IOException {
         KeyConverter converter = KeyConverter.of(conn.getStructure(flow), leaf);
 
         try (TsCursor<Key> cursor = SdmxQueryUtil.getSeriesWithData(conn, flow, converter.toKey(leaf), SdmxQueryUtil.NO_LABEL)) {
@@ -125,7 +125,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         }
     }
 
-    private static List<String> getChildren(SdmxConnection conn, DataflowRef flow, DbSetId node) throws IOException {
+    private static List<String> getChildren(Connection conn, DataflowRef flow, DbSetId node) throws IOException {
         DataStructure dsd = conn.getStructure(flow);
         KeyConverter converter = KeyConverter.of(dsd, node);
         String dimensionId = node.getColumn(node.getLevel());

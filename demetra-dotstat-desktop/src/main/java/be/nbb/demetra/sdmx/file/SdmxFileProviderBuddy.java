@@ -21,8 +21,6 @@ import nbbrd.io.function.IOFunction;
 import sdmxdl.file.SdmxFileManager;
 import sdmxdl.file.SdmxFileSource;
 import com.google.common.base.Converter;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import ec.nbdemetra.ui.BeanHandler;
 import ec.nbdemetra.ui.Config;
 import ec.nbdemetra.ui.Configurator;
@@ -45,7 +43,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
@@ -54,7 +51,6 @@ import org.openide.nodes.Sheet;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import sdmxdl.SdmxManager;
 import org.openide.util.Lookup;
 import sdmxdl.util.ext.MapCache;
 import sdmxdl.xml.XmlFileSource;
@@ -135,7 +131,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
     private static SdmxFileManager createManager() {
         return SdmxFileManager.ofServiceLoader()
                 .toBuilder()
-                .eventListener(BuddyEventListener.INSTANCE)
+                .eventListener(BuddyEventListener::onSourceEvent)
                 .cache(getCache())
                 .build();
     }

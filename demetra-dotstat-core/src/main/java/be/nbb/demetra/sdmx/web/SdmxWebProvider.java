@@ -19,7 +19,6 @@ package be.nbb.demetra.sdmx.web;
 import be.nbb.demetra.sdmx.HasSdmxProperties;
 import internal.sdmx.SdmxCubeAccessor;
 import sdmxdl.DataflowRef;
-import sdmxdl.SdmxConnection;
 import sdmxdl.web.SdmxWebManager;
 import com.google.common.cache.Cache;
 import ec.tss.ITsProvider;
@@ -45,6 +44,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import nbbrd.io.function.IOSupplier;
+import sdmxdl.Connection;
 
 /**
  *
@@ -135,7 +135,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
 
             DataflowRef flowRef = DataflowRef.parse(bean.getFlow());
 
-            IOSupplier<SdmxConnection> conn = toConnection(properties, bean.getSource());
+            IOSupplier<Connection> conn = toConnection(properties, bean.getSource());
 
             CubeAccessor accessor = SdmxCubeAccessor
                     .of(conn, flowRef, bean.getDimensions(), bean.getLabelAttribute(), bean.getSource(), displayCodes)
@@ -146,7 +146,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
             return new SdmxCubeItems(accessor, idParam);
         }
 
-        private static IOSupplier<SdmxConnection> toConnection(HasSdmxProperties<SdmxWebManager> properties, String name) {
+        private static IOSupplier<Connection> toConnection(HasSdmxProperties<SdmxWebManager> properties, String name) {
             SdmxWebManager manager = properties.getSdmxManager();
             return () -> manager.getConnection(name);
         }

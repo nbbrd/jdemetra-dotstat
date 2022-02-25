@@ -22,9 +22,6 @@ import sdmxdl.Dataflow;
 import sdmxdl.DataflowRef;
 import sdmxdl.Dimension;
 import sdmxdl.LanguagePriorityList;
-import sdmxdl.SdmxConnection;
-import sdmxdl.ext.spi.SdmxDialect;
-import sdmxdl.ext.spi.SdmxDialectLoader;
 import sdmxdl.web.SdmxWebManager;
 import sdmxdl.web.SdmxWebSource;
 import com.google.common.base.Strings;
@@ -37,6 +34,7 @@ import static ec.util.completion.AutoCompletionSource.Behavior.SYNC;
 import ec.util.completion.ExtAutoCompletionSource;
 import ec.util.completion.swing.CustomListCellRenderer;
 import internal.favicon.FaviconkitSupplier;
+import internal.util.DialectLoader;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -52,6 +50,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.ImageUtilities;
+import sdmxdl.Connection;
+import sdmxdl.ext.spi.Dialect;
 
 /**
  *
@@ -62,23 +62,23 @@ public class SdmxAutoCompletion {
 
     public AutoCompletionSource onDialects() {
         return ExtAutoCompletionSource
-                .builder(o -> new SdmxDialectLoader().get())
+                .builder(o -> new DialectLoader().get())
                 .behavior(AutoCompletionSource.Behavior.SYNC)
                 .postProcessor(SdmxAutoCompletion::filterAndSortDialects)
-                .valueToString(SdmxDialect::getName)
+                .valueToString(Dialect::getName)
                 .build();
     }
 
-    private List<SdmxDialect> filterAndSortDialects(List<SdmxDialect> allValues, String term) {
+    private List<Dialect> filterAndSortDialects(List<Dialect> allValues, String term) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return allValues.stream()
                 .filter(o -> filter.test(o.getDescription()) || filter.test(o.getName()))
-                .sorted(Comparator.comparing(SdmxDialect::getDescription))
+                .sorted(Comparator.comparing(Dialect::getDescription))
                 .collect(Collectors.toList());
     }
 
     public ListCellRenderer getDialectRenderer() {
-        return CustomListCellRenderer.of(SdmxDialect::getName, SdmxDialect::getDescription);
+        return CustomListCellRenderer.of(Dialect::getName, Dialect::getDescription);
     }
 
     public AutoCompletionSource onSources(SdmxWebManager manager) {
@@ -190,7 +190,7 @@ public class SdmxAutoCompletion {
     }
 
     private List<Dataflow> loadFlows(SdmxWebManager manager, Supplier<String> source) throws IOException {
-        try (SdmxConnection c = manager.getConnection(source.get())) {
+        try (Connection c = manager.getConnection(source.get())) {
             return new ArrayList<>(c.getFlows());
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);
@@ -214,7 +214,7 @@ public class SdmxAutoCompletion {
     }
 
     private List<Dimension> loadDimensions(SdmxWebManager manager, Supplier<String> source, Supplier<String> flow) throws IOException {
-        try (SdmxConnection c = manager.getConnection(source.get())) {
+        try (Connection c = manager.getConnection(source.get())) {
             return new ArrayList<>(c.getStructure(DataflowRef.parse(flow.get())).getDimensions());
         } catch (RuntimeException ex) {
             throw new UnexpectedIOException(ex);

@@ -17,7 +17,6 @@
 package internal.sdmx;
 
 import sdmxdl.Key;
-import sdmxdl.SdmxConnection;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
@@ -26,12 +25,21 @@ import static internal.sdmx.SdmxQueryUtil.getAllSeries;
 import static internal.sdmx.SdmxQueryUtil.getAllSeriesWithData;
 import static internal.sdmx.SdmxQueryUtil.getChildren;
 import static internal.sdmx.SdmxQueryUtil.getSeriesWithData;
+import java.io.IOException;
+import java.util.EnumSet;
+import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import org.junit.Test;
+import sdmxdl.Connection;
+import sdmxdl.DataRepository;
+import sdmxdl.Feature;
+import sdmxdl.web.SdmxWebSource;
+import sdmxdl.web.spi.WebContext;
 import test.samples.FacadeResource;
 import static test.samples.FacadeResource.ECB_FLOW_REF;
 import static test.samples.FacadeResource.NBB_FLOW_REF;
+import tests.sdmxdl.web.MockedDriver;
 
 /**
  *
@@ -41,9 +49,15 @@ public class SdmxQueryUtilTest {
 
     private final String title = "FR. Germany - Net lending (+) or net borrowing (-): general government :- Excessive deficit procedure (Including one-off proceeds relative to the allocation of mobile phone licences (UMTS))";
 
+    private Connection asConnection(DataRepository repo, Set<Feature> features) throws IOException {
+        MockedDriver driver = MockedDriver.builder().repo(repo, features).build();
+        SdmxWebSource source = driver.getDefaultSources().iterator().next();
+        return driver.connect(source, WebContext.builder().build());
+    }
+
     @Test
     public void testGetAllSeries20() throws Exception {
-        SdmxConnection conn = FacadeResource.nbb().asConnection();
+        Connection conn = asConnection(FacadeResource.nbb(), EnumSet.noneOf(Feature.class));
 
         Key single = Key.of("LOCSTL04", "AUS", "M");
 
@@ -74,7 +88,7 @@ public class SdmxQueryUtilTest {
 
     @Test
     public void testGetAllSeriesWithData20() throws Exception {
-        SdmxConnection conn = FacadeResource.nbb().asConnection();
+        Connection conn = asConnection(FacadeResource.nbb(), EnumSet.noneOf(Feature.class));
 
         Key single = Key.of("LOCSTL04", "AUS", "M");
 
@@ -108,7 +122,7 @@ public class SdmxQueryUtilTest {
 
     @Test
     public void testGetSeriesWithData20() throws Exception {
-        SdmxConnection conn = FacadeResource.nbb().asConnection();
+        Connection conn = asConnection(FacadeResource.nbb(), EnumSet.noneOf(Feature.class));
 
         try (TsCursor<Key> c = getSeriesWithData(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", "M"), SdmxQueryUtil.NO_LABEL)) {
             assertThat(c.nextSeries()).isTrue();
@@ -126,7 +140,7 @@ public class SdmxQueryUtilTest {
 
     @Test
     public void testGetChildren20() throws Exception {
-        SdmxConnection conn = FacadeResource.nbb().asConnection();
+        Connection conn = asConnection(FacadeResource.nbb(), EnumSet.noneOf(Feature.class));
 
         assertThat(getChildren(conn, NBB_FLOW_REF, Key.ALL, 0)).containsExactly("LOCSTL04");
         assertThat(getChildren(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", ""), 1)).containsExactly("AUS");
@@ -136,7 +150,7 @@ public class SdmxQueryUtilTest {
 
     @Test
     public void testGetAllSeries21() throws Exception {
-        SdmxConnection conn = FacadeResource.ecb().asConnection();
+        Connection conn = asConnection(FacadeResource.ecb(), EnumSet.allOf(Feature.class));
         Key key;
 
         key = Key.ALL;
@@ -183,7 +197,7 @@ public class SdmxQueryUtilTest {
 
     @Test
     public void testGetAllSeriesWithData21() throws Exception {
-        SdmxConnection conn = FacadeResource.ecb().asConnection();
+        Connection conn = asConnection(FacadeResource.ecb(), EnumSet.allOf(Feature.class));
         Key key;
 
         key = Key.ALL;
@@ -223,7 +237,7 @@ public class SdmxQueryUtilTest {
 
     @Test
     public void testGetSeriesWithData21() throws Exception {
-        SdmxConnection conn = FacadeResource.ecb().asConnection();
+        Connection conn = asConnection(FacadeResource.ecb(), EnumSet.allOf(Feature.class));
 
         Key key = Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE");
 
@@ -242,7 +256,7 @@ public class SdmxQueryUtilTest {
 
     @Test
     public void testGetChildren21() throws Exception {
-        SdmxConnection conn = FacadeResource.ecb().asConnection();
+        Connection conn = asConnection(FacadeResource.ecb(), EnumSet.allOf(Feature.class));
 
         assertThat(getChildren(conn, ECB_FLOW_REF, Key.ALL, 0)).containsExactly("A");
         assertThat(getChildren(conn, ECB_FLOW_REF, Key.of("A", "", "", "", "", "", ""), 1)).hasSize(30).contains("BEL", "POL");

@@ -20,8 +20,7 @@ import be.nbb.demetra.sdmx.HasSdmxProperties;
 import sdmxdl.DataStructure;
 import sdmxdl.Dimension;
 import sdmxdl.Key;
-import sdmxdl.SdmxConnection;
-import sdmxdl.SdmxManager;
+import sdmxdl.Connection;
 import sdmxdl.web.SdmxWebManager;
 import com.google.common.collect.Maps;
 import ec.tss.ITsProvider;
@@ -84,7 +83,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     public String getDisplayName(DataSource dataSource) {
         DotStatBean bean = decodeBean(dataSource);
         if (!displayCodes) {
-            try (SdmxConnection conn = connect(bean.getDbName())) {
+            try (Connection conn = connect(bean.getDbName())) {
                 return String.format("%s ~ %s", bean.getDbName(), conn.getFlow(bean.getFlowRef()).getLabel());
             } catch (IOException | RuntimeException ex) {
             }
@@ -95,7 +94,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     @Override
     public String getDisplayName(DataSet dataSet) {
         DotStatBean bean = decodeBean(dataSet.getDataSource());
-        try (SdmxConnection conn = connect(bean.getDbName())) {
+        try (Connection conn = connect(bean.getDbName())) {
             DataStructure dfs = conn.getStructure(bean.getFlowRef());
             Key.Builder b = Key.builder(dfs);
             for (Dimension o : dfs.getDimensions()) {
@@ -116,7 +115,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
         if (nodeDim != null) {
             if (!displayCodes) {
                 DotStatBean bean = decodeBean(dataSet.getDataSource());
-                try (SdmxConnection conn = connect(bean.getDbName())) {
+                try (Connection conn = connect(bean.getDbName())) {
                     DataStructure dfs = conn.getStructure(bean.getFlowRef());
                     for (Dimension o : dfs.getDimensions()) {
                         if (o.getId().equals(nodeDim.getKey())) {
@@ -158,7 +157,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
         this.displayCodes = displayCodes;
     }
 
-    private SdmxConnection connect(String name) throws IOException {
+    private Connection connect(String name) throws IOException {
         return getSdmxManager().getConnection(name);
     }
 

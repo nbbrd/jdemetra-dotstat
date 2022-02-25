@@ -21,7 +21,6 @@ import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
 import be.nbb.demetra.dotstat.DotStatProviderBuddy.BuddyConfig;
 import be.nbb.demetra.dotstat.SdmxWsAutoCompletionService;
 import sdmxdl.LanguagePriorityList;
-import sdmxdl.ext.SdmxCache;
 import sdmxdl.web.SdmxWebManager;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -65,13 +64,14 @@ import nbbrd.net.proxy.SystemProxySelector;
 import nl.altindag.ssl.SSLFactory;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Lookup;
-import sdmxdl.ext.NetworkFactory;
+import sdmxdl.DataRepository;
+import sdmxdl.ext.Cache;
 import sdmxdl.kryo.KryoFileFormat;
-import sdmxdl.repo.SdmxRepository;
 import sdmxdl.util.ext.FileCache;
 import sdmxdl.util.ext.FileFormat;
 import sdmxdl.util.ext.VerboseCache;
-import sdmxdl.web.SdmxWebMonitorReports;
+import sdmxdl.web.MonitorReports;
+import sdmxdl.web.Network;
 import sdmxdl.web.SdmxWebSource;
 import sdmxdl.xml.XmlWebSource;
 
@@ -223,20 +223,20 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     private static SdmxWebManager createManager() {
         return SdmxWebManager.ofServiceLoader()
                 .toBuilder()
-                .eventListener(BuddyEventListener.INSTANCE)
+                .eventListener(BuddyEventListener::onSourceEvent)
                 .network(getNetworkFactory())
                 .cache(getCache())
                 .build();
     }
 
-    private static NetworkFactory getNetworkFactory() {
+    private static Network getNetworkFactory() {
         SSLFactory sslFactory = SSLFactory
                 .builder()
                 .withDefaultTrustMaterial()
                 .withSystemTrustMaterial()
                 .build();
 
-        return new NetworkFactory() {
+        return new Network() {
             @Override
             public HostnameVerifier getHostnameVerifier() {
                 return sslFactory.getHostnameVerifier();
@@ -254,7 +254,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         };
     }
 
-    private static SdmxCache getCache() {
+    private static Cache getCache() {
         FileCache fileCache = getFileCache(false);
         return getVerboseCache(fileCache, true);
     }
@@ -268,17 +268,17 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
                 .build();
     }
 
-    private static FileFormat<SdmxRepository> getRepositoryFormat(boolean noCacheCompression) {
-        FileFormat<SdmxRepository> result = FileFormat.of(KryoFileFormat.REPOSITORY, ".kryo");
+    private static FileFormat<DataRepository> getRepositoryFormat(boolean noCacheCompression) {
+        FileFormat<DataRepository> result = FileFormat.of(KryoFileFormat.REPOSITORY, ".kryo");
         return noCacheCompression ? result : FileFormat.gzip(result);
     }
 
-    private static FileFormat<SdmxWebMonitorReports> getMonitorFormat(boolean noCacheCompression) {
-        FileFormat<SdmxWebMonitorReports> result = FileFormat.of(KryoFileFormat.MONITOR, ".kryo");
+    private static FileFormat<MonitorReports> getMonitorFormat(boolean noCacheCompression) {
+        FileFormat<MonitorReports> result = FileFormat.of(KryoFileFormat.MONITOR, ".kryo");
         return noCacheCompression ? result : FileFormat.gzip(result);
     }
 
-    private static SdmxCache getVerboseCache(SdmxCache delegate, boolean verbose) {
+    private static Cache getVerboseCache(Cache delegate, boolean verbose) {
         if (verbose) {
             BiConsumer<String, Boolean> listener = (key, hit) -> StatusDisplayer.getDefault().setStatusText((hit ? "Hit " : "Miss ") + key);
             return new VerboseCache(delegate, listener, listener);
