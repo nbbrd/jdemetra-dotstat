@@ -17,7 +17,6 @@
 package internal.sdmx;
 
 import sdmxdl.Key;
-import sdmxdl.Frequency;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tss.tsproviders.utils.ObsGathering;
 import ec.tss.tsproviders.utils.OptionalTsData;
@@ -27,12 +26,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
-import java.util.EnumMap;
-import java.util.GregorianCalendar;
 import java.util.Map;
 import java.util.stream.Stream;
 import nbbrd.io.IOIterator;
@@ -53,8 +47,6 @@ final class SdmxDataAdapter implements TsCursor<Key> {
     private final String labelAttribute;
     private boolean closed;
     private Series currentSeries;
-    private Calendar calendar;
-    private ZoneId zoneId;
 
     SdmxDataAdapter(@NonNull Key ref, @NonNull Stream<Series> cursor, @Nullable String labelAttribute) {
         this.ref = ref;
@@ -63,8 +55,6 @@ final class SdmxDataAdapter implements TsCursor<Key> {
         this.labelAttribute = labelAttribute;
         this.closed = false;
         this.currentSeries = null;
-        this.calendar = null;
-        this.zoneId = null;
     }
 
     @Override
@@ -107,7 +97,7 @@ final class SdmxDataAdapter implements TsCursor<Key> {
 
     @Override
     public OptionalTsData getSeriesData() throws IOException {
-        return currentSeries.getFreq().hasTime() ? toDataByDate() : toDataByLocalDate();
+        return toDataByLocalDate();
     }
 
     @Override
@@ -121,46 +111,28 @@ final class SdmxDataAdapter implements TsCursor<Key> {
         closeable.close();
     }
 
-    private OptionalTsData toDataByDate() throws IOException {
-        if (calendar == null || zoneId == null) {
-            calendar = new GregorianCalendar();
-            zoneId = ZoneId.systemDefault();
-        }
-        return OptionalTsData
-                .builderByDate(calendar, GATHERINGS.get(currentSeries.getFreq()))
-                .addAll(currentSeries.getObs().stream(), obs -> toDate(obs.getPeriod()), obs -> obs.getValue())
-                .build();
-    }
-
-    private Date toDate(LocalDateTime dateTime) {
-        return dateTime != null ? Date.from(dateTime.atZone(zoneId).toInstant()) : null;
-    }
-
     private OptionalTsData toDataByLocalDate() throws IOException {
-        return OptionalTsData
-                .builderByLocalDate(GATHERINGS.get(currentSeries.getFreq()))
-                .addAll(currentSeries.getObs().stream(), obs -> toLocalDate(obs.getPeriod()), obs -> obs.getValue())
-                .build();
+        switch (currentSeries.getObs().size()) {
+            case 0:
+                return OptionalTsData.absent("No data");
+            case 1:
+                return OptionalTsData
+                        .builderByLocalDate(SINGLE_GATHERING)
+                        .addAll(currentSeries.getObs().stream(), obs -> toLocalDate(obs.getPeriod()), obs -> obs.getValue())
+                        .build();
+            default:
+                return OptionalTsData
+                        .builderByLocalDate(DEFAULT_GATHERING)
+                        .addAll(currentSeries.getObs().stream(), obs -> toLocalDate(obs.getPeriod()), obs -> obs.getValue())
+                        .build();
+        }
     }
 
     private LocalDate toLocalDate(LocalDateTime dateTime) {
         return dateTime != null ? dateTime.toLocalDate() : null;
     }
 
-    private static final Map<Frequency, ObsGathering> GATHERINGS = initGatherings();
+    private static final ObsGathering DEFAULT_GATHERING = ObsGathering.includingMissingValues(TsFrequency.Undefined, TsAggregationType.None);
 
-    private static Map<Frequency, ObsGathering> initGatherings() {
-        Map<Frequency, ObsGathering> result = new EnumMap<>(Frequency.class);
-        result.put(Frequency.ANNUAL, ObsGathering.includingMissingValues(TsFrequency.Yearly, TsAggregationType.Last));
-        result.put(Frequency.HALF_YEARLY, ObsGathering.includingMissingValues(TsFrequency.HalfYearly, TsAggregationType.Last));
-        result.put(Frequency.QUARTERLY, ObsGathering.includingMissingValues(TsFrequency.Quarterly, TsAggregationType.Last));
-        result.put(Frequency.MONTHLY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
-        result.put(Frequency.WEEKLY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
-        result.put(Frequency.DAILY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
-        result.put(Frequency.HOURLY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
-        result.put(Frequency.DAILY_BUSINESS, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
-        result.put(Frequency.MINUTELY, ObsGathering.includingMissingValues(TsFrequency.Monthly, TsAggregationType.Last));
-        result.put(Frequency.UNDEFINED, ObsGathering.includingMissingValues(TsFrequency.Undefined, TsAggregationType.None));
-        return result;
-    }
+    private static final ObsGathering SINGLE_GATHERING = ObsGathering.includingMissingValues(TsFrequency.Yearly, TsAggregationType.None);
 }

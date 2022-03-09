@@ -138,7 +138,8 @@ public class DotStatAccessorTest {
         DbSetId single = nbbRoot().child("LOCSTL04", "AUS", "M");
         Consumer<DbSeries> singleCheck = o -> {
             assertThat(o.getId()).isEqualTo(single);
-            assertThat(o.getData().get().getLength()).isEqualTo(55);
+            assertThat(o.getData().isPresent()).isFalse();
+            assertThat(o.getData().getCause()).startsWith("Cannot guess").contains("duplicated");
         };
 
         assertThat(accessor.getAllSeriesWithData()).hasSize(1).first().satisfies(singleCheck);
@@ -153,14 +154,8 @@ public class DotStatAccessorTest {
         DbSeries series = accessor.getSeriesWithData("LOCSTL04", "AUS", "M");
         assertThat(series.getId()).isEqualTo(nbbRoot().child("LOCSTL04", "AUS", "M"));
 
-        TsData o = series.getData().get();
-        assertThat(o.getStart()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1966, 1));
-        assertThat(o.getLastPeriod()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1970, 7));
-        assertThat(o.getLength()).isEqualTo(55);
-        assertThat(o.getObsCount()).isEqualTo(55);
-        assertThat(o.isMissing(50)).isFalse(); // 1970-04
-        assertThat(o.get(0)).isEqualTo(98.68823);
-        assertThat(o.get(54)).isEqualTo(93.7211);
+        assertThat(series.getData().isPresent()).isFalse();
+        assertThat(series.getData().getCause()).startsWith("Cannot guess").contains("duplicated");
     }
 
     @Test

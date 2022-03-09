@@ -61,7 +61,7 @@ public class SdmxQueryUtilTest {
 
         Key single = Key.of("LOCSTL04", "AUS", "M");
 
-        try (TsCursor<Key> o = getAllSeries(conn, NBB_FLOW_REF, Key.ALL, SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> o = getAllSeries(conn, NBB_FLOW_REF, Key.ALL, SdmxQueryUtil.NO_LABEL)) {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesId()).isEqualTo(single);
             assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
@@ -69,7 +69,7 @@ public class SdmxQueryUtilTest {
             assertThat(o.nextSeries()).isFalse();
         }
 
-        try (TsCursor<Key> o = getAllSeries(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", ""), SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> o = getAllSeries(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", ""), SdmxQueryUtil.NO_LABEL)) {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesId()).isEqualTo(single);
             assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
@@ -77,7 +77,7 @@ public class SdmxQueryUtilTest {
             assertThat(o.nextSeries()).isFalse();
         }
 
-        try (TsCursor<Key> o = getAllSeries(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", ""), SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> o = getAllSeries(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", ""), SdmxQueryUtil.NO_LABEL)) {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesId()).isEqualTo(single);
             assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
@@ -92,30 +92,33 @@ public class SdmxQueryUtilTest {
 
         Key single = Key.of("LOCSTL04", "AUS", "M");
 
-        try (TsCursor<Key> o = getAllSeriesWithData(conn, NBB_FLOW_REF, Key.ALL, SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> o = getAllSeriesWithData(conn, NBB_FLOW_REF, Key.ALL, SdmxQueryUtil.NO_LABEL)) {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesId()).isEqualTo(single);
             assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
             assertThat(o.getSeriesMetaData()).containsKey("TIME_FORMAT");
-            assertThat(o.getSeriesData().get().getLength()).isEqualTo(55);
+            assertThat(o.getSeriesData().isPresent()).isFalse();
+            assertThat(o.getSeriesData().getCause()).startsWith("Cannot guess").contains("duplicated");
             assertThat(o.nextSeries()).isFalse();
         }
 
-        try (TsCursor<Key> o = getAllSeriesWithData(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", ""), SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> o = getAllSeriesWithData(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", ""), SdmxQueryUtil.NO_LABEL)) {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesId()).isEqualTo(single);
             assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
             assertThat(o.getSeriesMetaData()).containsKey("TIME_FORMAT");
-            assertThat(o.getSeriesData().get().getLength()).isEqualTo(55);
+            assertThat(o.getSeriesData().isPresent()).isFalse();
+            assertThat(o.getSeriesData().getCause()).startsWith("Cannot guess").contains("duplicated");
             assertThat(o.nextSeries()).isFalse();
         }
 
-        try (TsCursor<Key> o = getAllSeriesWithData(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", ""), SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> o = getAllSeriesWithData(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", ""), SdmxQueryUtil.NO_LABEL)) {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesId()).isEqualTo(single);
             assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
             assertThat(o.getSeriesMetaData()).containsKey("TIME_FORMAT");
-            assertThat(o.getSeriesData().get().getLength()).isEqualTo(55);
+            assertThat(o.getSeriesData().isPresent()).isFalse();
+            assertThat(o.getSeriesData().getCause()).startsWith("Cannot guess").contains("duplicated");
             assertThat(o.nextSeries()).isFalse();
         }
     }
@@ -124,16 +127,10 @@ public class SdmxQueryUtilTest {
     public void testGetSeriesWithData20() throws Exception {
         Connection conn = asConnection(FacadeResource.nbb(), EnumSet.noneOf(Feature.class));
 
-        try (TsCursor<Key> c = getSeriesWithData(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", "M"), SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> c = getSeriesWithData(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", "M"), SdmxQueryUtil.NO_LABEL)) {
             assertThat(c.nextSeries()).isTrue();
-            TsData o = c.getSeriesData().get();
-            assertThat(o.getStart()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1966, 1));
-            assertThat(o.getLastPeriod()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1970, 7));
-            assertThat(o.getLength()).isEqualTo(55);
-            assertThat(o.getObsCount()).isEqualTo(55);
-            assertThat(o.isMissing(50)).isFalse(); // 1970-04
-            assertThat(o.get(0)).isEqualTo(98.68823);
-            assertThat(o.get(54)).isEqualTo(93.7211);
+            assertThat(c.getSeriesData().isPresent()).isFalse();
+            assertThat(c.getSeriesData().getCause()).startsWith("Cannot guess").contains("duplicated");
             assertThat(c.nextSeries()).isFalse();
         }
     }
@@ -154,7 +151,7 @@ public class SdmxQueryUtilTest {
         Key key;
 
         key = Key.ALL;
-        try (TsCursor<Key> o = getAllSeries(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
+        try ( TsCursor<Key> o = getAllSeries(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
             int index = 0;
             while (o.nextSeries()) {
                 switch (index++) {
@@ -175,7 +172,7 @@ public class SdmxQueryUtilTest {
         }
 
         key = Key.of("A", "", "", "", "", "", "");
-        try (TsCursor<Key> o = getAllSeries(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
+        try ( TsCursor<Key> o = getAllSeries(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
             int index = 0;
             while (o.nextSeries()) {
                 index++;
@@ -185,7 +182,7 @@ public class SdmxQueryUtilTest {
         }
 
         key = Key.of("A", "DEU", "", "", "", "", "");
-        try (TsCursor<Key> o = getAllSeries(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
+        try ( TsCursor<Key> o = getAllSeries(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
             int index = 0;
             while (o.nextSeries()) {
                 index++;
@@ -201,7 +198,7 @@ public class SdmxQueryUtilTest {
         Key key;
 
         key = Key.ALL;
-        try (TsCursor<Key> o = getAllSeriesWithData(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
+        try ( TsCursor<Key> o = getAllSeriesWithData(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
             int index = 0;
             while (o.nextSeries()) {
                 switch (index++) {
@@ -218,7 +215,7 @@ public class SdmxQueryUtilTest {
         }
 
         key = Key.of("A", "DEU", "", "", "", "", "");
-        try (TsCursor<Key> o = getAllSeriesWithData(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
+        try ( TsCursor<Key> o = getAllSeriesWithData(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
             int index = 0;
             while (o.nextSeries()) {
                 switch (index++) {
@@ -241,7 +238,7 @@ public class SdmxQueryUtilTest {
 
         Key key = Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE");
 
-        try (TsCursor<Key> c = getSeriesWithData(conn, ECB_FLOW_REF, key, SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> c = getSeriesWithData(conn, ECB_FLOW_REF, key, SdmxQueryUtil.NO_LABEL)) {
             assertThat(c.nextSeries()).isTrue();
             TsData o = c.getSeriesData().get();
             assertThat(o.getStart()).isEqualTo(new TsPeriod(TsFrequency.Yearly, 1991, 0));
