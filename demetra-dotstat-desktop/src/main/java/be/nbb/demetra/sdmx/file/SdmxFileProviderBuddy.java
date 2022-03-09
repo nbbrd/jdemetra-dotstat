@@ -33,7 +33,6 @@ import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.HasFilePaths;
 import ec.tss.tsproviders.IFileLoader;
 import ec.tstoolkit.utilities.GuavaCaches;
-import internal.sdmx.BuddyEventListener;
 import internal.sdmx.SdmxAutoCompletion;
 import static internal.sdmx.SdmxCubeItems.resolveFileSet;
 import java.awt.Image;
@@ -47,6 +46,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 import org.netbeans.api.options.OptionsDisplayer;
+import org.openide.awt.StatusDisplayer;
 import org.openide.nodes.Sheet;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
@@ -131,7 +131,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
     private static SdmxFileManager createManager() {
         return SdmxFileManager.ofServiceLoader()
                 .toBuilder()
-                .eventListener(BuddyEventListener::onSourceEvent)
+                .eventListener((src, msg) -> StatusDisplayer.getDefault().setStatusText(msg))
                 .cache(getCache())
                 .build();
     }
@@ -253,7 +253,6 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
 //                .display(Bundle.bean_dimensions_display())
 //                .description(Bundle.bean_dimensions_description())
 //                .add();
-
         b.withAutoCompletion()
                 .select(bean, "labelAttribute")
                 .display(Bundle.bean_labelAttribute_display())
@@ -261,7 +260,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
                 .add();
         return b;
     }
-    
+
     public static Optional<SdmxFileSource> tryResolveFileSet(HasFilePaths paths, SdmxFileBean bean) {
         try {
             return Optional.of(resolveFileSet(paths, bean));

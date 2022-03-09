@@ -52,6 +52,7 @@ import javax.swing.ListCellRenderer;
 import org.openide.util.ImageUtilities;
 import sdmxdl.Connection;
 import sdmxdl.ext.spi.Dialect;
+import shaded.dotstat.nbbrd.io.WrappedIOException;
 
 /**
  *
@@ -190,10 +191,10 @@ public class SdmxAutoCompletion {
     }
 
     private List<Dataflow> loadFlows(SdmxWebManager manager, Supplier<String> source) throws IOException {
-        try (Connection c = manager.getConnection(source.get())) {
+        try ( Connection c = manager.getConnection(source.get())) {
             return new ArrayList<>(c.getFlows());
         } catch (RuntimeException ex) {
-            throw new UnexpectedIOException(ex);
+            throw WrappedIOException.wrap(ex);
         }
     }
 
@@ -214,10 +215,10 @@ public class SdmxAutoCompletion {
     }
 
     private List<Dimension> loadDimensions(SdmxWebManager manager, Supplier<String> source, Supplier<String> flow) throws IOException {
-        try (Connection c = manager.getConnection(source.get())) {
+        try ( Connection c = manager.getConnection(source.get())) {
             return new ArrayList<>(c.getStructure(DataflowRef.parse(flow.get())).getDimensions());
         } catch (RuntimeException ex) {
-            throw new UnexpectedIOException(ex);
+            throw WrappedIOException.wrap(ex);
         }
     }
 

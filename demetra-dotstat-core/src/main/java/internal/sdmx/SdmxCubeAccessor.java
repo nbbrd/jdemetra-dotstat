@@ -34,6 +34,7 @@ import sdmxdl.Dataflow;
 import sdmxdl.DataflowRef;
 import sdmxdl.Dimension;
 import sdmxdl.util.SdmxCubeUtil;
+import shaded.dotstat.nbbrd.io.WrappedIOException;
 
 /**
  *
@@ -82,7 +83,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         } catch (IOException ex) {
             throw close(conn, ex);
         } catch (RuntimeException ex) {
-            throw new UnexpectedIOException(close(conn, ex));
+            throw WrappedIOException.wrap(close(conn, ex));
         }
     }
 
@@ -94,7 +95,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         } catch (IOException ex) {
             throw close(conn, ex);
         } catch (RuntimeException ex) {
-            throw new UnexpectedIOException(close(conn, ex));
+            throw WrappedIOException.wrap(close(conn, ex));
         }
     }
 
@@ -106,7 +107,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         } catch (IOException ex) {
             throw close(conn, ex);
         } catch (RuntimeException ex) {
-            throw new UnexpectedIOException(close(conn, ex));
+            throw WrappedIOException.wrap(close(conn, ex));
         }
     }
 
@@ -118,7 +119,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         } catch (IOException ex) {
             throw close(conn, ex);
         } catch (RuntimeException ex) {
-            throw new UnexpectedIOException(close(conn, ex));
+            throw WrappedIOException.wrap(close(conn, ex));
         }
     }
 
