@@ -29,7 +29,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import sdmxdl.Connection;
 import sdmxdl.Series;
-import sdmxdl.util.SdmxCubeUtil;
+import sdmxdl.provider.SdmxCubeUtil;
 
 /**
  *

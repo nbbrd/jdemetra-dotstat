@@ -32,9 +32,8 @@ import static org.assertj.core.api.Assertions.*;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import sdmxdl.util.ext.SeriesMetaFactory;
 import tests.sdmxdl.api.ByteSource;
-import tests.sdmxdl.xml.SdmxXmlSources;
+import tests.sdmxdl.format.xml.SdmxXmlSources;
 
 /**
  *
@@ -108,7 +107,7 @@ public class SdmxFileProviderTest {
                         .element(0)
                         .satisfies(o -> {
                             assertThat(o.name).isEqualTo("LOCSTL04.AUS.M");
-                            assertThat(new HashMap(o.metaData)).hasSize(1).containsEntry(SeriesMetaFactory.TIME_FORMAT_CONCEPT, "P1M");
+                            assertThat(new HashMap(o.metaData)).hasSize(1).containsEntry("TIME_FORMAT", "P1M");
                             assertThat(o.data).isNull();
                             assertThat(o.invalidDataCause).startsWith("Cannot guess").contains("duplicated");
                             assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("Monthly");
@@ -120,7 +119,7 @@ public class SdmxFileProviderTest {
             assertThat(new TsInformation("", single.get(), TsInformationType.All)).satisfies(o -> {
                 assertThat(p.get(o)).isTrue();
                 assertThat(o.name).isEqualTo("LOCSTL04.AUS.M");
-                assertThat(new HashMap(o.metaData)).hasSize(1).containsEntry(SeriesMetaFactory.TIME_FORMAT_CONCEPT, "P1M");
+                assertThat(new HashMap(o.metaData)).hasSize(1).containsEntry("TIME_FORMAT", "P1M");
                 assertThat(o.data).isNull();
                 assertThat(o.invalidDataCause).startsWith("Cannot guess").contains("duplicated");
                 assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("Monthly");

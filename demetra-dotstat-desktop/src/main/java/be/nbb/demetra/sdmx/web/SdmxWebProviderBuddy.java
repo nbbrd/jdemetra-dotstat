@@ -56,8 +56,8 @@ import java.util.Collections;
 import nbbrd.io.function.IORunnable;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Lookup;
+import sdmxdl.format.xml.XmlWebSource;
 import sdmxdl.web.SdmxWebSource;
-import sdmxdl.xml.XmlWebSource;
 
 /**
  *

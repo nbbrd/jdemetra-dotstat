@@ -8,7 +8,6 @@ import internal.util.http.HttpContext;
 import internal.util.http.HttpEventListener;
 import internal.util.http.HttpRequest;
 import internal.util.http.HttpURLConnectionFactoryLoader;
-import internal.util.http.MediaType;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Image;
@@ -23,6 +22,7 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import sdmxdl.format.MediaType;
 import sdmxdl.web.SdmxWebManager;
 
 public class FaviconSupplierDemo {

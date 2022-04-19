@@ -52,8 +52,8 @@ import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.Lookup;
-import sdmxdl.util.ext.MapCache;
-import sdmxdl.xml.XmlFileSource;
+import sdmxdl.format.xml.XmlFileSource;
+import sdmxdl.provider.ext.MapCache;
 
 /**
  *

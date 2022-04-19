@@ -33,7 +33,7 @@ import sdmxdl.Connection;
 import sdmxdl.Dataflow;
 import sdmxdl.DataflowRef;
 import sdmxdl.Dimension;
-import sdmxdl.util.SdmxCubeUtil;
+import sdmxdl.provider.SdmxCubeUtil;
 import shaded.dotstat.nbbrd.io.WrappedIOException;
 
 /**

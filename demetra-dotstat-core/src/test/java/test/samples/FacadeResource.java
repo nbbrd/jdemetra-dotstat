@@ -22,17 +22,17 @@ import sdmxdl.Dataflow;
 import sdmxdl.DataflowRef;
 import sdmxdl.LanguagePriorityList;
 import sdmxdl.Series;
-import sdmxdl.xml.stream.SdmxXmlStreams;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import sdmxdl.DataRepository;
 import sdmxdl.DataSet;
-import sdmxdl.util.parser.DefaultObsParser;
-import sdmxdl.xml.DataCursor;
+import sdmxdl.format.DataCursor;
+import sdmxdl.format.ObsParser;
+import sdmxdl.format.xml.SdmxXmlStreams;
 import tests.sdmxdl.api.ByteSource;
-import tests.sdmxdl.xml.SdmxXmlSources;
+import tests.sdmxdl.format.xml.SdmxXmlSources;
 
 /**
  *
@@ -103,7 +103,7 @@ public class FacadeResource {
     }
 
     List<Series> data20(ByteSource xml, DataStructure dsd) throws IOException {
-        try (DataCursor c = SdmxXmlStreams.genericData20(dsd, DefaultObsParser::newDefault).parseReader(xml::openReader)) {
+        try (DataCursor c = SdmxXmlStreams.genericData20(dsd, ObsParser::newDefault).parseReader(xml::openReader)) {
             return c.toStream().collect(Collectors.toList());
         }
     }
@@ -117,7 +117,7 @@ public class FacadeResource {
     }
 
     List<Series> data21(ByteSource xml, DataStructure dsd) throws IOException {
-        try (DataCursor c = SdmxXmlStreams.genericData21(dsd, DefaultObsParser::newDefault).parseReader(xml::openReader)) {
+        try (DataCursor c = SdmxXmlStreams.genericData21(dsd, ObsParser::newDefault).parseReader(xml::openReader)) {
             return c.toStream().collect(Collectors.toList());
         }
     }
