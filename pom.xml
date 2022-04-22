@@ -41,7 +41,7 @@
 
     <properties>
         <demetra.version>2.2.3</demetra.version>
-        <sdmx-dl.version>3.0.0-beta.6-SNAPSHOT</sdmx-dl.version>
+        <sdmx-dl.version>3.0.0-beta.6</sdmx-dl.version>
     </properties>
 
     <modules>
