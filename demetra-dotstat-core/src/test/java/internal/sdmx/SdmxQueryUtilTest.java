@@ -30,7 +30,7 @@ import java.util.EnumSet;
 import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import sdmxdl.Connection;
 import sdmxdl.DataRepository;
 import sdmxdl.Feature;

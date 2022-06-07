@@ -30,8 +30,8 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import tests.sdmxdl.api.ByteSource;
 import tests.sdmxdl.format.xml.SdmxXmlSources;
 
@@ -53,7 +53,7 @@ public class SdmxFileProviderTest {
         return result;
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         NO_XML = File.createTempFile("sdmx_empty", ".xml");
         NO_XML.deleteOnExit();

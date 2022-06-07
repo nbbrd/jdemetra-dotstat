@@ -17,6 +17,8 @@
 package be.nbb.demetra.dotstat;
 
 import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
+
+import org.junit.jupiter.api.BeforeAll;
 import sdmxdl.DataStructure;
 import sdmxdl.Key;
 import sdmxdl.Series;
@@ -32,8 +34,7 @@ import java.util.EnumSet;
 import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import sdmxdl.DataDetail;
 import sdmxdl.DataQuery;
 import sdmxdl.Feature;
@@ -51,7 +52,7 @@ public class DotStatAccessorTest {
 
     private static SdmxWebManager manager;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         manager = SdmxWebManager
                 .builder()

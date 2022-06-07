@@ -24,7 +24,7 @@ import ec.tss.tsproviders.IDataSourceLoaderAssert;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import static ec.tss.tsproviders.Assertions.assertThat;
 import java.util.EnumSet;
 import sdmxdl.Feature;
