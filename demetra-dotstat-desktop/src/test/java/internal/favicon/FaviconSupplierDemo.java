@@ -2,28 +2,17 @@ package internal.favicon;
 
 import ec.nbdemetra.ui.awt.SimpleHtmlListCellRenderer;
 import ec.util.various.swing.BasicSwingLauncher;
-import internal.util.http.DefaultHttpClient;
-import internal.util.http.HttpAuthScheme;
-import internal.util.http.HttpContext;
-import internal.util.http.HttpEventListener;
-import internal.util.http.HttpRequest;
-import internal.util.http.HttpURLConnectionFactoryLoader;
-import java.awt.Color;
-import java.awt.FlowLayout;
-import java.awt.Image;
+import internal.util.http.*;
+import sdmxdl.web.SdmxWebManager;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import sdmxdl.format.MediaType;
-import sdmxdl.web.SdmxWebManager;
+import java.util.function.Supplier;
 
 public class FaviconSupplierDemo {
 
@@ -40,7 +29,7 @@ public class FaviconSupplierDemo {
                 .listener(new ConsoleHttpEventListener())
                 .build();
 
-        DefaultHttpClient client = new DefaultHttpClient(context, HttpURLConnectionFactoryLoader.get());
+        DefaultHttpClient client = new DefaultHttpClient(context);
 
         FaviconSupplier[] suppliers = {
             NoOpSupplier.INSTANCE,
@@ -106,7 +95,7 @@ public class FaviconSupplierDemo {
         }
 
         @Override
-        public void onSuccess(MediaType mt) {
+        public void onSuccess(Supplier<String> mt) {
             System.out.println("onSuccess");
         }
 

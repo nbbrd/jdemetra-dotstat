@@ -2,27 +2,23 @@ package internal.favicon;
 
 import com.google.common.net.InternetDomainName;
 import ec.tstoolkit.design.VisibleForTesting;
-import internal.util.http.DefaultHttpClient;
-import internal.util.http.HttpClient;
-import internal.util.http.HttpContext;
-import internal.util.http.HttpRequest;
-import internal.util.http.HttpResponse;
-import internal.util.http.HttpURLConnectionFactoryLoader;
-import java.awt.Image;
+import internal.util.http.*;
+import sdmxdl.format.MediaType;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import javax.imageio.ImageIO;
-import sdmxdl.format.MediaType;
 
 public final class FaviconkitSupplier implements FaviconSupplier {
 
     private final HttpClient client;
 
     public FaviconkitSupplier() {
-        this(new DefaultHttpClient(HttpContext.builder().build(), HttpURLConnectionFactoryLoader.get()));
+        this(new DefaultHttpClient(HttpContext.builder().build()));
     }
 
     @VisibleForTesting
@@ -37,7 +33,7 @@ public final class FaviconkitSupplier implements FaviconSupplier {
 
     @Override
     public Image getFaviconOrNull(URL url) throws IOException {
-        try (HttpResponse response = client.requestGET(getFaviconRequest(url))) {
+        try (HttpResponse response = client.send(getFaviconRequest(url))) {
             if (isDefaultFavicon(response)) {
                 return null;
             }
