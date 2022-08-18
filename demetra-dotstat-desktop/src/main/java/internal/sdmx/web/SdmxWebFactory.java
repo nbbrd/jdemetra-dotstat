@@ -5,6 +5,8 @@ import java.net.ProxySelector;
 import java.util.function.BiConsumer;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
+
+import lombok.NonNull;
 import nbbrd.net.proxy.SystemProxySelector;
 import nl.altindag.ssl.SSLFactory;
 import org.openide.awt.StatusDisplayer;
@@ -17,6 +19,7 @@ import sdmxdl.provider.ext.VerboseCache;
 import sdmxdl.web.MonitorReports;
 import sdmxdl.web.Network;
 import sdmxdl.web.SdmxWebManager;
+import sdmxdl.web.URLConnectionFactory;
 
 @lombok.experimental.UtilityClass
 public class SdmxWebFactory {
@@ -44,12 +47,17 @@ public class SdmxWebFactory {
             }
 
             @Override
+            public @NonNull URLConnectionFactory getURLConnectionFactory() {
+                return URLConnectionFactory.getDefault();
+            }
+
+            @Override
             public ProxySelector getProxySelector() {
                 return SystemProxySelector.ofServiceLoader();
             }
 
             @Override
-            public SSLSocketFactory getSslSocketFactory() {
+            public SSLSocketFactory getSSLSocketFactory() {
                 return sslFactory.getSslSocketFactory();
             }
         };
