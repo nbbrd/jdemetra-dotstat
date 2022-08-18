@@ -6,9 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Added
-
 [JDemetra+ 2.2.3 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
+
+### Added
 
 - Add source from Statistics Canada
 - Add source from El Salvador Labour Market Information System
