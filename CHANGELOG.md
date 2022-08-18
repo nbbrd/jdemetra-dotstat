@@ -7,9 +7,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add source from Statistics Canada
+- Add source from El Salvador Labour Market Information System
+- Add source from Statistics Luxembourg
+- Add source from National Statistical Office of Thailand
+- Add source favicon and default SDMX icon
+- Add support of multi-language descriptions in sources
+
 ### Fixed
 
+- Migrate ABS source to the new server
+- Fix obs gathering on single obs
+
 ### Changed
+
+- Improve browsing by preloading resources
 
 ## [2.2.5] - 2021-09-14
 
