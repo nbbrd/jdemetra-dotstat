@@ -41,6 +41,7 @@
 
     <properties>
         <demetra.version>2.2.3</demetra.version>
+        <sdmx-dl.version>3.0.0-beta.7</sdmx-dl.version>
     </properties>
 
     <modules>
@@ -63,13 +64,13 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <dependency>
+<!--            <dependency>
                 <groupId>com.github.nbbrd.sdmx-dl</groupId>
                 <artifactId>sdmx-dl-bom</artifactId>
                 <version>3.0.0-beta.7</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
+            </dependency>-->
         </dependencies>
     </dependencyManagement>
 

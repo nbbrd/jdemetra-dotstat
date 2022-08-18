@@ -90,6 +90,7 @@
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-api</artifactId>
+            <version>${sdmx-dl.version}</version>
             <classifier>tests</classifier>
             <type>test-jar</type>
             <scope>test</scope>
@@ -103,6 +104,7 @@
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-format-xml</artifactId>
+            <version>${sdmx-dl.version}</version>
             <classifier>tests</classifier>
             <type>test-jar</type>
             <scope>test</scope>
