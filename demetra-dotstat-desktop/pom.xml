@@ -144,6 +144,13 @@
             <groupId>com.github.nbbrd.java-net-proxy</groupId>
             <artifactId>java-net-proxy</artifactId>
             <version>1.0.1</version>
+            <exclusions>
+                <exclusion>
+                    <!-- already provided by demetra-dotstat-lib -->
+                    <artifactId>powershell-lib-java</artifactId>
+                    <groupId>com.github.tuupertunut</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.github.hakky54</groupId>
