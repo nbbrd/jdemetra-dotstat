@@ -25,6 +25,7 @@ import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.IDataSourceLoaderAssert;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,7 +48,7 @@ public class SdmxFileProviderTest {
     private static File STRUCT20;
 
     private static File createTemp(ByteSource bytes, String prefix, String suffix) throws IOException {
-        File result = File.createTempFile(prefix, suffix);
+        File result = Files.createTempFile(prefix, suffix).toFile();
         result.deleteOnExit();
         bytes.copyTo(result);
         return result;
@@ -55,7 +56,7 @@ public class SdmxFileProviderTest {
 
     @BeforeAll
     public static void beforeClass() throws IOException {
-        NO_XML = File.createTempFile("sdmx_empty", ".xml");
+        NO_XML = Files.createTempFile("sdmx_empty", ".xml").toFile();
         NO_XML.deleteOnExit();
         BLANK = new File("");
         GENERIC20 = createTemp(SdmxXmlSources.NBB_DATA, "sdmx_generic20", ".xml");
