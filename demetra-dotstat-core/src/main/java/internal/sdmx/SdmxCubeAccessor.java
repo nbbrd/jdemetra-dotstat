@@ -33,7 +33,7 @@ import sdmxdl.Connection;
 import sdmxdl.Dataflow;
 import sdmxdl.DataflowRef;
 import sdmxdl.Dimension;
-import sdmxdl.provider.SdmxCubeUtil;
+import sdmxdl.ext.SdmxCubeUtil;
 import shaded.dotstat.nbbrd.io.WrappedIOException;
 
 /**
@@ -125,7 +125,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
 
     @Override
     public String getDisplayName() {
-        return String.format("%s ~ %s", sourceLabel, flowRef.getLabel());
+        return String.format("%s ~ %s", sourceLabel, flowRef.getName());
     }
 
     @Override

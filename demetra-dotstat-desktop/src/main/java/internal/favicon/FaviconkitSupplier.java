@@ -3,7 +3,7 @@ package internal.favicon;
 import com.google.common.net.InternetDomainName;
 import ec.tstoolkit.design.VisibleForTesting;
 import internal.util.http.*;
-import sdmxdl.format.MediaType;
+import shaded.dotstat.nbbrd.io.net.MediaType;
 
 import javax.imageio.ImageIO;
 import java.awt.*;

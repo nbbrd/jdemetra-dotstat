@@ -84,7 +84,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
         DotStatBean bean = decodeBean(dataSource);
         if (!displayCodes) {
             try (Connection conn = connect(bean.getDbName())) {
-                return String.format("%s ~ %s", bean.getDbName(), conn.getFlow(bean.getFlowRef()).getLabel());
+                return String.format("%s ~ %s", bean.getDbName(), conn.getFlow(bean.getFlowRef()).getName());
             } catch (IOException | RuntimeException ex) {
             }
         }
