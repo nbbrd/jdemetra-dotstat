@@ -29,7 +29,7 @@ import internal.sdmx.SdmxQueryUtil;
 import java.io.IOException;
 import java.util.List;
 import sdmxdl.Connection;
-import sdmxdl.provider.SdmxCubeUtil;
+import sdmxdl.ext.SdmxCubeUtil;
 import sdmxdl.web.SdmxWebManager;
 
 /**

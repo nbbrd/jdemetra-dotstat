@@ -1,27 +1,21 @@
 /*
  * Copyright 2015 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package be.nbb.demetra.dotstat;
 
-import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
-
-import org.junit.jupiter.api.BeforeAll;
-import sdmxdl.DataStructure;
-import sdmxdl.Key;
-import sdmxdl.Series;
 import com.google.common.base.Joiner;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbSeries;
@@ -29,23 +23,24 @@ import ec.tss.tsproviders.db.DbSetId;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import ec.tstoolkit.timeseries.simplets.TsPeriod;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import sdmxdl.*;
+import sdmxdl.web.SdmxWebManager;
+import test.samples.FacadeResource;
+import tests.sdmxdl.web.MockedDriver;
+
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.function.Consumer;
+
+import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import org.junit.jupiter.api.Test;
-import sdmxdl.DataDetail;
-import sdmxdl.DataQuery;
-import sdmxdl.Feature;
-import test.samples.FacadeResource;
 import static test.samples.FacadeResource.ECB_FLOW_REF;
 import static test.samples.FacadeResource.NBB_FLOW_REF;
-import sdmxdl.web.SdmxWebManager;
-import tests.sdmxdl.web.MockedDriver;
 
 /**
- *
  * @author Philippe Charles
  */
 public class DotStatAccessorTest {
@@ -79,7 +74,7 @@ public class DotStatAccessorTest {
 
     private static DotStatBean ecbBean() {
         String[] dimensions = {"FREQ", "AME_REF_AREA", "AME_TRANSFORMATION",
-            "AME_AGG_METHOD", "AME_UNIT", "AME_REFERENCE", "AME_ITEM"};
+                "AME_AGG_METHOD", "AME_UNIT", "AME_REFERENCE", "AME_ITEM"};
 
         DotStatBean result = new DotStatBean();
         result.setDbName("ECB");
@@ -116,7 +111,7 @@ public class DotStatAccessorTest {
     public void testGetKeyFromTs() throws Exception {
         assertThat(manager
                 .getConnection("NBB")
-                .getDataStream(NBB_FLOW_REF, DataQuery.of(Key.ALL, DataDetail.NO_DATA))
+                .getDataStream(NBB_FLOW_REF, DataQuery.builder().key(Key.ALL).detail(DataDetail.NO_DATA).build())
                 .map(Series::getKey)
         ).contains(Key.parse("LOCSTL04.AUS.M"));
     }
