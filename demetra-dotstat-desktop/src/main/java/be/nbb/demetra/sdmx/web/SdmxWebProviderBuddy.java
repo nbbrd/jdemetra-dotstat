@@ -1,17 +1,17 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package be.nbb.demetra.sdmx.web;
@@ -19,8 +19,6 @@ package be.nbb.demetra.sdmx.web;
 import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
 import be.nbb.demetra.dotstat.DotStatProviderBuddy.BuddyConfig;
 import be.nbb.demetra.dotstat.SdmxWsAutoCompletionService;
-import sdmxdl.LanguagePriorityList;
-import sdmxdl.web.SdmxWebManager;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import ec.nbdemetra.ui.BeanHandler;
@@ -38,29 +36,30 @@ import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxAutoCompletion;
 import internal.sdmx.SdmxPropertiesSupport;
 import internal.sdmx.web.SdmxWebFactory;
-import java.awt.Image;
+import org.netbeans.api.options.OptionsDisplayer;
+import org.openide.awt.StatusDisplayer;
+import org.openide.nodes.Sheet;
+import org.openide.util.ImageUtilities;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
+import org.openide.util.lookup.ServiceProvider;
+import sdmxdl.LanguagePriorityList;
+import sdmxdl.format.xml.XmlWebSource;
+import sdmxdl.web.SdmxWebManager;
+import sdmxdl.web.SdmxWebSource;
+
+import java.awt.*;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
-import org.netbeans.api.options.OptionsDisplayer;
-import org.openide.nodes.Sheet;
-import org.openide.util.ImageUtilities;
-import org.openide.util.NbBundle;
-import org.openide.util.lookup.ServiceProvider;
-import java.util.Collections;
-import nbbrd.io.function.IORunnable;
-import org.openide.awt.StatusDisplayer;
-import org.openide.util.Lookup;
-import sdmxdl.format.xml.XmlWebSource;
-import sdmxdl.web.SdmxWebSource;
 
 /**
- *
  * @author Philippe Charles
  * @since 2.2.0
  */
@@ -95,9 +94,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
 
     private Image getIcon(SdmxWebBean bean) {
         SdmxWebSource source = webManager.getSources().get(bean.getSource());
-        return source != null
-                ? ImageUtilities.icon2Image(SdmxAutoCompletion.FAVICONS.get(source.getWebsite(), IORunnable.noOp().asUnchecked()))
-                : null;
+        return source != null ? ImageUtilities.icon2Image(SdmxAutoCompletion.getFavicon(source.getWebsite())) : null;
     }
 
     @Override
@@ -234,7 +231,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     }
 
     @NbBundle.Messages({
-        "bean.cache.description=Mechanism used to improve performance."})
+            "bean.cache.description=Mechanism used to improve performance."})
     private static Sheet createSheet(SdmxWebBean bean, SdmxWebManager manager, ConcurrentMap cache) {
         Sheet result = new Sheet();
         NodePropertySetBuilder b = new NodePropertySetBuilder();
@@ -245,10 +242,10 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     }
 
     @NbBundle.Messages({
-        "bean.source.display=Provider",
-        "bean.source.description=The identifier of the service that provides data.",
-        "bean.flow.display=Dataflow",
-        "bean.flow.description=The identifier of a specific dataflow.",})
+            "bean.source.display=Provider",
+            "bean.source.description=The identifier of the service that provides data.",
+            "bean.flow.display=Dataflow",
+            "bean.flow.description=The identifier of a specific dataflow.",})
     private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxWebBean bean, SdmxWebManager manager, ConcurrentMap cache) {
         b.withAutoCompletion()
                 .select(bean, "source")
@@ -267,10 +264,10 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     }
 
     @NbBundle.Messages({
-        "bean.dimensions.display=Dataflow dimensions",
-        "bean.dimensions.description=An optional comma-separated list of dimensions that defines the order used to hierarchise time series.",
-        "bean.labelAttribute.display=Series label attribute",
-        "bean.labelAttribute.description=An optional attribute that carries the label of time series."
+            "bean.dimensions.display=Dataflow dimensions",
+            "bean.dimensions.description=An optional comma-separated list of dimensions that defines the order used to hierarchise time series.",
+            "bean.labelAttribute.display=Series label attribute",
+            "bean.labelAttribute.description=An optional attribute that carries the label of time series."
     })
     private static NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxWebBean bean, SdmxWebManager manager, ConcurrentMap cache) {
         b.withAutoCompletion()
@@ -292,10 +289,10 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     }
 
     @NbBundle.Messages({
-        "bean.cacheDepth.display=Depth",
-        "bean.cacheDepth.description=The data retrieval depth. It is always more performant to get one big chunk of data instead of several smaller parts. The downside of it is the increase of memory usage. Setting this value to zero disables the cache.",
-        "bean.cacheTtl.display=Time to live",
-        "bean.cacheTtl.description=The lifetime of the data stored in the cache. Setting this value to zero disables the cache."})
+            "bean.cacheDepth.display=Depth",
+            "bean.cacheDepth.description=The data retrieval depth. It is always more performant to get one big chunk of data instead of several smaller parts. The downside of it is the increase of memory usage. Setting this value to zero disables the cache.",
+            "bean.cacheTtl.display=Time to live",
+            "bean.cacheTtl.description=The lifetime of the data stored in the cache. Setting this value to zero disables the cache."})
     private static NodePropertySetBuilder withCache(NodePropertySetBuilder b, SdmxWebBean bean) {
         b.withInt()
                 .select(bean, "cacheDepth")

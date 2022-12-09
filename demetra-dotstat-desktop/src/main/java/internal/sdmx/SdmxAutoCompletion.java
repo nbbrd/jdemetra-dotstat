@@ -16,31 +16,39 @@
  */
 package internal.sdmx;
 
+import be.nbb.demetra.sdmx.web.SdmxWebProvider;
 import com.google.common.base.Strings;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import ec.tstoolkit.utilities.GuavaCaches;
 import ec.util.completion.AutoCompletionSource;
 import ec.util.completion.ExtAutoCompletionSource;
 import ec.util.completion.swing.CustomListCellRenderer;
-import internal.favicon.FaviconSupport;
-import internal.favicon.FaviconkitSupplier;
-import internal.favicon.GoogleSupplier;
 import internal.util.DialectLoader;
+import nbbrd.desktop.favicon.DomainName;
+import nbbrd.desktop.favicon.FaviconRef;
+import nbbrd.desktop.favicon.FaviconSupport;
+import nbbrd.desktop.favicon.URLConnectionFactory;
 import org.openide.util.ImageUtilities;
+import org.openide.util.Lookup;
 import sdmxdl.*;
 import sdmxdl.ext.spi.Dialect;
+import sdmxdl.web.Network;
 import sdmxdl.web.SdmxWebManager;
 import sdmxdl.web.SdmxWebSource;
 import shaded.dotstat.nbbrd.io.WrappedIOException;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.swing.*;
 import java.io.IOException;
+import java.net.Proxy;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -96,14 +104,58 @@ public class SdmxAutoCompletion {
         return ImageUtilities.loadImageIcon("be/nbb/demetra/dotstat/sdmx-logo.png", false);
     }
 
+    public static Icon getFavicon(URL website) {
+        return website != null
+                ? FAVICONS.getOrDefault(FaviconRef.of(DomainName.of(website), 16), getDefaultIcon())
+                : getDefaultIcon();
+    }
+
+    public static Icon getFavicon(URL website, Runnable callback) {
+        return website != null
+                ? FAVICONS.getOrDefault(FaviconRef.of(DomainName.of(website), 16), callback, getDefaultIcon())
+                : getDefaultIcon();
+    }
+
     public static final FaviconSupport FAVICONS = FaviconSupport
-            .builder()
-            .supplier(new GoogleSupplier())
-            .supplier(new FaviconkitSupplier())
-            .executor(Executors.newCachedThreadPool(new ThreadFactoryBuilder().setDaemon(true).setPriority(Thread.MIN_PRIORITY).build()))
-            .fallback(getDefaultIcon())
+            .ofServiceLoader()
+            .toBuilder()
             .cache(GuavaCaches.ttlCacheAsMap(Duration.ofHours(1)))
+            .client(new ClientOverCustomNetwork())
             .build();
+
+    private static final class ClientOverCustomNetwork implements URLConnectionFactory {
+
+        @Override
+        public URLConnection openConnection(URL url) throws IOException {
+            Network network = getNetwork();
+            Proxy proxy = selectProxy(network, url);
+            URLConnection result = network.getURLConnectionFactory().openConnection(url, proxy);
+            applyHttps(result, network);
+            return result;
+        }
+
+        private static void applyHttps(URLConnection result, Network network) {
+            if (result instanceof HttpsURLConnection) {
+                HttpsURLConnection https = (HttpsURLConnection) result;
+                https.setHostnameVerifier(network.getHostnameVerifier());
+                https.setSSLSocketFactory(network.getSSLSocketFactory());
+            }
+        }
+
+        private static Proxy selectProxy(Network network, URL url) throws IOException {
+            try {
+                return network.getProxySelector().select(url.toURI()).stream().findFirst().orElse(Proxy.NO_PROXY);
+            } catch (URISyntaxException ex) {
+                throw new IOException(ex);
+            }
+        }
+
+        private static Network getNetwork() {
+            return Optional.ofNullable(Lookup.getDefault().lookup(SdmxWebProvider.class))
+                    .map(provider -> provider.getSdmxManager().getNetwork())
+                    .orElseGet(Network::getDefault);
+        }
+    }
 
     public ListCellRenderer getSourceRenderer(SdmxWebManager manager) {
         return new CustomListCellRenderer<SdmxWebSource>() {
@@ -114,7 +166,7 @@ public class SdmxAutoCompletion {
 
             @Override
             protected Icon toIcon(String term, JList list, SdmxWebSource value, int index, boolean isSelected, boolean cellHasFocus) {
-                return FAVICONS.get(value.getWebsite(), list::repaint);
+                return getFavicon(value.getWebsite(), list::repaint);
             }
         };
     }

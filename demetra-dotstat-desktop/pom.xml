@@ -163,6 +163,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>com.github.nbbrd.java-desktop-util</groupId>
+            <artifactId>java-desktop-util-favicon</artifactId>
+            <version>2.3.0</version>
+        </dependency>
     </dependencies>
 
     <build>
