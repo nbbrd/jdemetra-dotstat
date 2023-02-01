@@ -239,13 +239,6 @@
                                         </requireMavenVersion>
                                         <requireNoRepositories>
                                             <allowSnapshotRepositories>true</allowSnapshotRepositories>
-                                            <allowedRepositories>
-                                                <allowedRepository>central</allowedRepository>
-                                                <!-- required by JD+ artifacts <= v2.2.3 -->
-                                                <allowedRepository>jfrog-maven-mirror</allowedRepository>
-                                                <!-- required by sdmx-dl SNAPSHOT artifacts -->
-                                                <allowedRepository>ossrh-snapshots</allowedRepository>
-                                            </allowedRepositories>
                                         </requireNoRepositories>
                                         <requirePluginVersions/>
                                         <requireReleaseDeps>
@@ -402,27 +395,13 @@
 
     <!-- Custom repositories: order matters! -->
     <repositories>
-        <!-- 1. Main -->
-        <repository>
-            <id>central</id>
-            <name>Central Repository</name>
-            <url>https://repo.maven.apache.org/maven2</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <!-- 2. JD+ artifacts <= v2.2.3 -->
-        <repository>
-            <id>jfrog-maven-mirror</id>
-            <url>https://raw.githubusercontent.com/nbbrd/jfrog-maven-mirror/main</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
         <!-- 3. sdmx-dl SNAPSHOT artifacts -->
         <repository>
             <id>ossrh-snapshots</id>
             <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
