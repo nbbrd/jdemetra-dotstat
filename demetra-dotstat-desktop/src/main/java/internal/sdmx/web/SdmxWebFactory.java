@@ -1,6 +1,7 @@
 package internal.sdmx.web;
 
 import ec.nbdemetra.ui.notification.MessageUtil;
+import internal.http.curl.CurlHttpURLConnection;
 import java.net.ProxySelector;
 import java.util.function.BiConsumer;
 import javax.net.ssl.HostnameVerifier;
@@ -24,16 +25,16 @@ import sdmxdl.web.URLConnectionFactory;
 @lombok.experimental.UtilityClass
 public class SdmxWebFactory {
 
-    public static SdmxWebManager createManager() {
+    public static SdmxWebManager createManager(boolean curlBackend) {
         return SdmxWebManager.ofServiceLoader()
                 .toBuilder()
                 .eventListener((src, msg) -> StatusDisplayer.getDefault().setStatusText(msg))
-                .network(getNetworkFactory())
+                .network(getNetworkFactory(curlBackend))
                 .cache(getCache())
                 .build();
     }
 
-    private static Network getNetworkFactory() {
+    private static Network getNetworkFactory(boolean curlBackend) {
         SSLFactory sslFactory = SSLFactory
                 .builder()
                 .withDefaultTrustMaterial()
@@ -48,7 +49,7 @@ public class SdmxWebFactory {
 
             @Override
             public @NonNull URLConnectionFactory getURLConnectionFactory() {
-                return URLConnectionFactory.getDefault();
+                return curlBackend ? CurlHttpURLConnection::of : URLConnectionFactory.getDefault();
             }
 
             @Override

@@ -70,6 +70,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
     private final ConcurrentMap autoCompletionCache;
 
     private File customSources;
+    private boolean curlBackend;
 
     @lombok.Getter
     private SdmxWebManager webManager;
@@ -78,7 +79,8 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         this.configurator = createConfigurator();
         this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
         this.customSources = new File("");
-        this.webManager = SdmxWebFactory.createManager();
+        this.curlBackend = false;
+        this.webManager = SdmxWebFactory.createManager(curlBackend);
         lookupProvider().ifPresent(o -> o.setSdmxManager(webManager));
     }
 
@@ -208,6 +210,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         public BuddyConfig loadBean(SdmxWebProviderBuddy resource) {
             BuddyConfig result = new BuddyConfig();
             result.setCustomSources(resource.customSources);
+            result.setCurlBackend(resource.curlBackend);
             result.setPreferredLanguage(resource.webManager.getLanguages().toString());
             lookupProvider().ifPresent(provider -> {
                 result.setDisplayCodes(provider.isDisplayCodes());
@@ -218,7 +221,8 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         @Override
         public void storeBean(SdmxWebProviderBuddy resource, BuddyConfig bean) {
             resource.customSources = bean.getCustomSources();
-            resource.webManager = resource.webManager
+            resource.curlBackend = bean.isCurlBackend();
+            resource.webManager = SdmxWebFactory.createManager(resource.curlBackend)
                     .toBuilder()
                     .customSources(loadSources(resource.customSources))
                     .languages(SdmxPropertiesSupport.tryParseLangs(bean.getPreferredLanguage()).orElse(LanguagePriorityList.ANY))
