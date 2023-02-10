@@ -335,7 +335,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         private ConfigNode(SdmxWebSource source, boolean customSource, InstanceContent abilities, LanguagePriorityList langs) {
             super(Children.LEAF, new ProxyLookup(Lookups.singleton(source), new AbstractLookup(abilities)));
             this.langs = langs;
-            setDisplayName(source.getName());
+            setDisplayName(source.getId());
             setShortDescription(source.toString());
 
             if (customSource) {
@@ -363,11 +363,11 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
                     .display("Name")
                     .add();
             b.with(String.class)
-                    .selectConst("description", langs.select(bean.getDescriptions()))
+                    .selectConst("description", langs.select(bean.getNames()))
                     .display("Description")
                     .add();
             b.with(String.class)
-                    .selectConst("aliases", bean.getAliases().stream().collect(Collectors.joining(", ")))
+                    .selectConst("aliases", String.join(", ", bean.getAliases()))
                     .display("Aliases")
                     .add();
             b.with(String.class)
@@ -397,7 +397,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
             @Override
             public void edit() {
                 if (new PropertySheetDialogBuilder().title("Edit web source").icon(getIcon(BeanInfo.ICON_MONO_16x16)).editNode(ConfigNode.this)) {
-                    setDisplayName(getLookup().lookup(SdmxWebSource.class).getName());
+                    setDisplayName(getLookup().lookup(SdmxWebSource.class).getId());
                 }
             }
         }

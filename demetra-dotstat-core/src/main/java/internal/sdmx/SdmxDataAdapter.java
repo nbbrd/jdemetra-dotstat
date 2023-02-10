@@ -1,42 +1,43 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package internal.sdmx;
 
-import sdmxdl.Key;
 import ec.tss.tsproviders.cursor.TsCursor;
+import ec.tss.tsproviders.utils.ObsCharacteristics;
 import ec.tss.tsproviders.utils.ObsGathering;
 import ec.tss.tsproviders.utils.OptionalTsData;
 import ec.tstoolkit.timeseries.TsAggregationType;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
-import java.io.Closeable;
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.Map;
-import java.util.stream.Stream;
 import nbbrd.io.IOIterator;
 import nbbrd.io.function.IORunnable;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import sdmxdl.Key;
+import sdmxdl.Obs;
 import sdmxdl.Series;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.Map;
+import java.util.stream.Stream;
+
 /**
- *
  * @author Philippe Charles
  */
 final class SdmxDataAdapter implements TsCursor<Key> {
@@ -116,23 +117,43 @@ final class SdmxDataAdapter implements TsCursor<Key> {
             case 0:
                 return OptionalTsData.absent("No data");
             case 1:
+                Obs singleObs = currentSeries.getObs().first();
                 return OptionalTsData
-                        .builderByLocalDate(SINGLE_GATHERING)
-                        .addAll(currentSeries.getObs().stream(), obs -> toLocalDate(obs.getPeriod()), obs -> obs.getValue())
+                        .builderByLocalDate(getSingleGathering(singleObs), ObsCharacteristics.ORDERED)
+                        .addAll(currentSeries.getObs().stream(), SdmxDataAdapter::toLocalDate, Obs::getValue)
                         .build();
             default:
                 return OptionalTsData
-                        .builderByLocalDate(DEFAULT_GATHERING)
-                        .addAll(currentSeries.getObs().stream(), obs -> toLocalDate(obs.getPeriod()), obs -> obs.getValue())
+                        .builderByLocalDate(DEFAULT_GATHERING, ObsCharacteristics.ORDERED)
+                        .addAll(currentSeries.getObs().stream(), SdmxDataAdapter::toLocalDate, Obs::getValue)
                         .build();
         }
     }
 
-    private LocalDate toLocalDate(LocalDateTime dateTime) {
-        return dateTime != null ? dateTime.toLocalDate() : null;
+    private static LocalDate toLocalDate(Obs obs) {
+        return obs.getPeriod().getStart().toLocalDate();
+    }
+
+    private static ObsGathering getSingleGathering(Obs singleObs) {
+        return ObsGathering.includingMissingValues(getTsFrequency(singleObs), TsAggregationType.None);
     }
 
     private static final ObsGathering DEFAULT_GATHERING = ObsGathering.includingMissingValues(TsFrequency.Undefined, TsAggregationType.None);
 
-    private static final ObsGathering SINGLE_GATHERING = ObsGathering.includingMissingValues(TsFrequency.Yearly, TsAggregationType.None);
+    private static TsFrequency getTsFrequency(Obs obs) {
+        switch (obs.getPeriod().getDuration().toString()) {
+            case "P6M":
+                return TsFrequency.HalfYearly;
+            case "P4M":
+                return TsFrequency.QuadriMonthly;
+            case "P3M":
+                return TsFrequency.Quarterly;
+            case "P2M":
+                return TsFrequency.BiMonthly;
+            case "P1M":
+                return TsFrequency.Monthly;
+            default:
+                return TsFrequency.Yearly;
+        }
+    }
 }

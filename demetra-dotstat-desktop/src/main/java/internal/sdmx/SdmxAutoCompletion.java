@@ -87,7 +87,7 @@ public class SdmxAutoCompletion {
                 .builder(term -> getAllSources(manager))
                 .behavior(AutoCompletionSource.Behavior.SYNC)
                 .postProcessor((values, term) -> filterAndSortSources(values, term, manager.getLanguages()))
-                .valueToString(SdmxWebSource::getName)
+                .valueToString(SdmxWebSource::getId)
                 .build();
     }
 
@@ -172,7 +172,7 @@ public class SdmxAutoCompletion {
     }
 
     private String getNameAndDescription(SdmxWebSource o, LanguagePriorityList langs) {
-        return o.getName() + ": " + langs.select(o.getDescriptions());
+        return o.getId() + ": " + langs.select(o.getNames());
     }
 
     public AutoCompletionSource onFlows(SdmxWebManager manager, Supplier<String> source, ConcurrentMap cache) {
@@ -200,7 +200,7 @@ public class SdmxAutoCompletion {
     }
 
     public ListCellRenderer getDimensionsRenderer() {
-        return CustomListCellRenderer.of(Dimension::getId, Dimension::getLabel);
+        return CustomListCellRenderer.of(Dimension::getId, Dimension::getName);
     }
 
     public String getDefaultDimensionsAsString(SdmxWebManager manager, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache, CharSequence delimiter) throws Exception {
@@ -225,8 +225,8 @@ public class SdmxAutoCompletion {
     }
 
     private static boolean filterSource(SdmxWebSource source, Predicate<String> filter, LanguagePriorityList langs) {
-        return filter.test(langs.select(source.getDescriptions()))
-                || filter.test(source.getName())
+        return filter.test(langs.select(source.getNames()))
+                || filter.test(source.getId())
                 || source.getAliases().stream().anyMatch(filter);
     }
 
@@ -269,7 +269,7 @@ public class SdmxAutoCompletion {
     private List<Dimension> filterAndSortDimensions(List<Dimension> values, String term) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return values.stream()
-                .filter(o -> filter.test(o.getId()) || filter.test(o.getLabel()) || filter.test(String.valueOf(o.getPosition())))
+                .filter(o -> filter.test(o.getId()) || filter.test(o.getName()) || filter.test(String.valueOf(o.getPosition())))
                 .sorted(Comparator.comparing(Dimension::getId))
                 .collect(Collectors.toList());
     }
