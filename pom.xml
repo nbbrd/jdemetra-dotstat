@@ -41,7 +41,7 @@
 
     <properties>
         <demetra.version>2.2.4</demetra.version>
-        <sdmx-dl.version>3.0.0-beta.9-SNAPSHOT</sdmx-dl.version>
+        <sdmx-dl.version>3.0.0-beta.10</sdmx-dl.version>
     </properties>
 
     <modules>
@@ -124,6 +124,11 @@
                     <artifactId>heylogs-maven-plugin</artifactId>
                     <version>0.5.0</version>
                 </plugin>
+                <plugin>
+                    <groupId>de.thetaphi</groupId>
+                    <artifactId>forbiddenapis</artifactId>
+                    <version>3.5.1</version>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -154,6 +159,32 @@
                         </configurationParameters>
                     </properties>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>de.thetaphi</groupId>
+                <artifactId>forbiddenapis</artifactId>
+                <configuration>
+                    <failOnUnsupportedJava>false</failOnUnsupportedJava>
+                    <bundledSignatures>
+                        <bundledSignature>jdk-unsafe</bundledSignature>
+                        <bundledSignature>jdk-deprecated</bundledSignature>
+                        <bundledSignature>jdk-internal</bundledSignature>
+                        <bundledSignature>jdk-non-portable</bundledSignature>
+                        <bundledSignature>jdk-reflection</bundledSignature>
+                    </bundledSignatures>
+                    <suppressAnnotations>
+                        <suppressAnnotation>javax.annotation.processing.Generated</suppressAnnotation>
+                        <suppressAnnotation>lombok.Generated</suppressAnnotation>
+                    </suppressAnnotations>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                            <goal>testCheck</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

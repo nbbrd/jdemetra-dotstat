@@ -25,6 +25,7 @@ import ec.tss.tsproviders.utils.IteratorWithIO;
 import ec.tstoolkit.design.VisibleForTesting;
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -125,7 +126,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
 
     @Override
     public String getDisplayName() {
-        return String.format("%s ~ %s", sourceLabel, flowRef.getName());
+        return String.format(Locale.ROOT, "%s ~ %s", sourceLabel, flowRef.getName());
     }
 
     @Override

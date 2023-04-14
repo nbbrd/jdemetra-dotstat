@@ -49,6 +49,8 @@ import ec.tss.TsAsyncMode;
 import ec.tss.tsproviders.cursor.TsCursorAsFiller;
 import ec.tss.tsproviders.utils.TsFillerAsProvider;
 import java.io.EOFException;
+import java.util.Locale;
+
 import nbbrd.io.function.IOSupplier;
 import sdmxdl.Connection;
 
@@ -113,7 +115,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties<Sd
 
     @Override
     public boolean accept(File pathname) {
-        return pathname.getName().toLowerCase().endsWith(".xml");
+        return pathname.getName().toLowerCase(Locale.ROOT).endsWith(".xml");
     }
 
     private static String getSourceLabel(SdmxFileBean bean) {
