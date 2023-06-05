@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.2.6] - 2023-06-05
+
 This is a feature release of **jdemetra-dotstat**.  
 [JDemetra+ 2.2.4 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
 
@@ -209,7 +211,8 @@ This is a feature release of **jdemetra-dotstat**.
 This is the initial release of **jdemetra-dotstat**.  
 [JDemetra+ 2.0.0 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
 
-[Unreleased]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.5...HEAD
+[Unreleased]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.6...HEAD
+[2.2.6]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.5...v2.2.6
 [2.2.5]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.4...v2.2.5
 [2.2.4]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.3...v2.2.4
 [2.2.3]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.2...v2.2.3
