@@ -175,6 +175,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
         String preferredLanguage;
         boolean displayCodes;
+        boolean curlBackend;
         File customSources;
 
         public static Converter<BuddyConfig, Config> converter() {
@@ -185,6 +186,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
             private final IParam<Config, String> preferredLanguageParam = Params.onString("en", "preferredLanguage");
             private final IParam<Config, Boolean> displayCodesParam = Params.onBoolean(false, "displayCodes");
+            private final IParam<Config, Boolean> curlBackendParam = Params.onBoolean(false, "curlBackend");
             private final IParam<Config, File> customSourcesParam = Params.onFile(new File(""), "customSources");
 
             @Override
@@ -192,6 +194,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
                 Config.Builder result = Config.builder(BuddyConfig.class.getName(), "INSTANCE", "20150225");
                 preferredLanguageParam.set(result, a.getPreferredLanguage());
                 displayCodesParam.set(result, a.isDisplayCodes());
+                curlBackendParam.set(result, a.isCurlBackend());
                 customSourcesParam.set(result, a.getCustomSources());
                 return result.build();
             }
@@ -201,6 +204,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
                 BuddyConfig result = new BuddyConfig();
                 result.setPreferredLanguage(preferredLanguageParam.get(b));
                 result.setDisplayCodes(displayCodesParam.get(b));
+                result.setCurlBackend(curlBackendParam.get(b));
                 result.setCustomSources(customSourcesParam.get(b));
                 return result;
             }

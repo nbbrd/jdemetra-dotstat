@@ -19,7 +19,6 @@ package be.nbb.demetra.sdmx.web;
 import be.nbb.demetra.sdmx.HasSdmxProperties;
 import internal.sdmx.SdmxCubeAccessor;
 import sdmxdl.DataflowRef;
-import sdmxdl.SdmxConnection;
 import sdmxdl.web.SdmxWebManager;
 import com.google.common.cache.Cache;
 import ec.tss.ITsProvider;
@@ -44,8 +43,8 @@ import java.util.function.BooleanSupplier;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sdmxdl.SdmxManager;
 import nbbrd.io.function.IOSupplier;
+import sdmxdl.Connection;
 
 /**
  *
@@ -53,14 +52,14 @@ import nbbrd.io.function.IOSupplier;
  * @since 2.2.0
  */
 @ServiceProvider(service = ITsProvider.class, supersedes = "be.nbb.demetra.dotstat.DotStatProvider")
-public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperties {
+public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperties<SdmxWebManager> {
 
     public static final String NAME = "DOTSTAT";
 
     private final AtomicBoolean displayCodes;
 
     @lombok.experimental.Delegate
-    private final HasSdmxProperties properties;
+    private final HasSdmxProperties<SdmxWebManager> properties;
 
     @lombok.experimental.Delegate
     private final HasDataSourceMutableList mutableListSupport;
@@ -131,16 +130,15 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
             return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(properties, param, dataSource, displayCodes.getAsBoolean()));
         }
 
-        private static SdmxCubeItems of(HasSdmxProperties properties, SdmxWebParam param, DataSource dataSource, boolean displayCodes) throws IllegalArgumentException, IOException {
+        private static SdmxCubeItems of(HasSdmxProperties<SdmxWebManager> properties, SdmxWebParam param, DataSource dataSource, boolean displayCodes) throws IllegalArgumentException, IOException {
             SdmxWebBean bean = param.get(dataSource);
 
-            DataflowRef flow = DataflowRef.parse(bean.getFlow());
+            DataflowRef flowRef = DataflowRef.parse(bean.getFlow());
 
-            IOSupplier<SdmxConnection> conn = toConnection(properties, bean.getSource());
+            IOSupplier<Connection> conn = toConnection(properties, bean.getSource());
 
-            CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), () -> SdmxCubeItems.loadStructure(conn, flow));
-
-            CubeAccessor accessor = SdmxCubeAccessor.of(conn, flow, root, bean.getLabelAttribute(), bean.getSource(), displayCodes)
+            CubeAccessor accessor = SdmxCubeAccessor
+                    .of(conn, flowRef, bean.getDimensions(), bean.getLabelAttribute(), bean.getSource(), displayCodes)
                     .bulk(bean.getCacheDepth(), GuavaCaches.ttlCacheAsMap(bean.getCacheTtl()));
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());
@@ -148,8 +146,8 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
             return new SdmxCubeItems(accessor, idParam);
         }
 
-        private static IOSupplier<SdmxConnection> toConnection(HasSdmxProperties properties, String name) {
-            SdmxManager manager = properties.getSdmxManager();
+        private static IOSupplier<Connection> toConnection(HasSdmxProperties<SdmxWebManager> properties, String name) {
+            SdmxWebManager manager = properties.getSdmxManager();
             return () -> manager.getConnection(name);
         }
     }

@@ -1,28 +1,21 @@
 /*
  * Copyright 2015 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package be.nbb.demetra.dotstat;
 
-import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
-import sdmxdl.DataStructure;
-import sdmxdl.Dimension;
-import sdmxdl.Key;
-import sdmxdl.DataFilter;
-import sdmxdl.Series;
-import sdmxdl.repo.SdmxRepositoryManager;
 import com.google.common.base.Joiner;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbSeries;
@@ -30,30 +23,40 @@ import ec.tss.tsproviders.db.DbSetId;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import ec.tstoolkit.timeseries.simplets.TsPeriod;
-import java.io.IOException;
-import java.util.Map;
-import java.util.function.Consumer;
-import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import sdmxdl.*;
+import sdmxdl.web.SdmxWebManager;
 import test.samples.FacadeResource;
+import tests.sdmxdl.web.MockedDriver;
+
+import java.io.IOException;
+import java.util.EnumSet;
+import java.util.function.Consumer;
+
+import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static test.samples.FacadeResource.ECB_FLOW_REF;
 import static test.samples.FacadeResource.NBB_FLOW_REF;
-import sdmxdl.SdmxManager;
 
 /**
- *
  * @author Philippe Charles
  */
 public class DotStatAccessorTest {
 
-    private static SdmxManager manager;
+    private static SdmxWebManager manager;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
-        manager = SdmxRepositoryManager.builder()
-                .repository(FacadeResource.nbb())
-                .repository(FacadeResource.ecb())
+        manager = SdmxWebManager
+                .builder()
+                .driver(MockedDriver
+                        .builder()
+                        .id("test")
+                        .repo(FacadeResource.nbb(), EnumSet.noneOf(Feature.class))
+                        .repo(FacadeResource.ecb(), EnumSet.allOf(Feature.class))
+                        .build())
                 .build();
     }
 
@@ -71,7 +74,7 @@ public class DotStatAccessorTest {
 
     private static DotStatBean ecbBean() {
         String[] dimensions = {"FREQ", "AME_REF_AREA", "AME_TRANSFORMATION",
-            "AME_AGG_METHOD", "AME_UNIT", "AME_REFERENCE", "AME_ITEM"};
+                "AME_AGG_METHOD", "AME_UNIT", "AME_REFERENCE", "AME_ITEM"};
 
         DotStatBean result = new DotStatBean();
         result.setDbName("ECB");
@@ -87,29 +90,30 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKey() throws Exception {
-        DataStructure dfs = manager.getConnection("NBB").getStructure(NBB_FLOW_REF);
-        Map<String, Dimension> dimById = DotStatAccessor.dimensionById(dfs);
+        DataStructure dsd = manager.getConnection("NBB").getStructure(NBB_FLOW_REF);
 
         // default ordering of dimensions
         DbSetId r1 = DbSetId.root("SUBJECT", "LOCATION", "FREQUENCY");
-        assertThat(getKey(dimById, r1.child("LOCSTL04", "AUS", "M"))).isEqualTo(Key.parse("LOCSTL04.AUS.M"));
-        assertThat(getKey(dimById, r1.child("LOCSTL04", "AUS"))).isEqualTo(Key.parse("LOCSTL04.AUS."));
-        assertThat(getKey(dimById, r1.child("LOCSTL04"))).isEqualTo(Key.parse("LOCSTL04.."));
-        assertThat(getKey(dimById, r1)).isEqualTo(Key.ALL);
+        assertThat(getKey(dsd, r1.child("LOCSTL04", "AUS", "M"))).isEqualTo(Key.parse("LOCSTL04.AUS.M"));
+        assertThat(getKey(dsd, r1.child("LOCSTL04", "AUS"))).isEqualTo(Key.parse("LOCSTL04.AUS."));
+        assertThat(getKey(dsd, r1.child("LOCSTL04"))).isEqualTo(Key.parse("LOCSTL04.."));
+        assertThat(getKey(dsd, r1)).isEqualTo(Key.ALL);
 
         // custom ordering of dimensions
         DbSetId r2 = DbSetId.root("FREQUENCY", "LOCATION", "SUBJECT");
-        assertThat(getKey(dimById, r2.child("M", "AUS", "LOCSTL04"))).isEqualTo(Key.parse("LOCSTL04.AUS.M"));
-        assertThat(getKey(dimById, r2.child("M", "AUS"))).isEqualTo(Key.parse(".AUS.M"));
-        assertThat(getKey(dimById, r2.child("M"))).isEqualTo(Key.parse("..M"));
-        assertThat(getKey(dimById, r2)).isEqualTo(Key.ALL);
+        assertThat(getKey(dsd, r2.child("M", "AUS", "LOCSTL04"))).isEqualTo(Key.parse("LOCSTL04.AUS.M"));
+        assertThat(getKey(dsd, r2.child("M", "AUS"))).isEqualTo(Key.parse(".AUS.M"));
+        assertThat(getKey(dsd, r2.child("M"))).isEqualTo(Key.parse("..M"));
+        assertThat(getKey(dsd, r2)).isEqualTo(Key.ALL);
     }
 
     @Test
     public void testGetKeyFromTs() throws Exception {
-        assertThat(manager.getConnection("NBB")
-                .getDataStream(NBB_FLOW_REF, Key.ALL, DataFilter.NO_DATA)
-                .map(Series::getKey)).contains(Key.parse("LOCSTL04.AUS.M"));
+        assertThat(manager
+                .getConnection("NBB")
+                .getDataStream(NBB_FLOW_REF, DataQuery.builder().key(Key.ALL).detail(DataDetail.NO_DATA).build())
+                .map(Series::getKey)
+        ).contains(Key.parse("LOCSTL04.AUS.M"));
     }
 
     @Test
@@ -130,7 +134,8 @@ public class DotStatAccessorTest {
         DbSetId single = nbbRoot().child("LOCSTL04", "AUS", "M");
         Consumer<DbSeries> singleCheck = o -> {
             assertThat(o.getId()).isEqualTo(single);
-            assertThat(o.getData().get().getLength()).isEqualTo(55);
+            assertThat(o.getData().isPresent()).isFalse();
+            assertThat(o.getData().getCause()).startsWith("Cannot guess").contains("duplicated");
         };
 
         assertThat(accessor.getAllSeriesWithData()).hasSize(1).first().satisfies(singleCheck);
@@ -145,14 +150,8 @@ public class DotStatAccessorTest {
         DbSeries series = accessor.getSeriesWithData("LOCSTL04", "AUS", "M");
         assertThat(series.getId()).isEqualTo(nbbRoot().child("LOCSTL04", "AUS", "M"));
 
-        TsData o = series.getData().get();
-        assertThat(o.getStart()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1966, 1));
-        assertThat(o.getLastPeriod()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1970, 7));
-        assertThat(o.getLength()).isEqualTo(55);
-        assertThat(o.getObsCount()).isEqualTo(54);
-        assertThat(o.isMissing(50)).isTrue(); // 1970-04
-        assertThat(o.get(0)).isEqualTo(98.68823);
-        assertThat(o.get(54)).isEqualTo(101.1945);
+        assertThat(series.getData().isPresent()).isFalse();
+        assertThat(series.getData().getCause()).startsWith("Cannot guess").contains("duplicated");
     }
 
     @Test
@@ -238,7 +237,6 @@ public class DotStatAccessorTest {
                 .hasSize(1)
                 .contains("1");
 
-        assertThat(accessor.getChildren("hello"))
-                .isEmpty();
+        assertThatIllegalArgumentException().isThrownBy(() -> accessor.getChildren("hello"));
     }
 }

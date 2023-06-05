@@ -24,12 +24,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  *
  * @author Philippe Charles
+ * @param <M>
  */
 @ThreadSafe
-public interface HasSdmxProperties {
+public interface HasSdmxProperties<M extends SdmxManager> {
 
     @NonNull
-    SdmxManager getSdmxManager();
+    M getSdmxManager();
 
-    void setSdmxManager(@Nullable SdmxManager manager);
+    void setSdmxManager(@Nullable M manager);
 }

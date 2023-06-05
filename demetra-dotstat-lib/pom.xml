@@ -5,7 +5,7 @@
     <parent>
         <groupId>be.nbb.demetra</groupId>
         <artifactId>demetra-dotstat-parent</artifactId>
-        <version>2.2.5</version>
+        <version>2.2.6</version>
     </parent>
 
     <artifactId>demetra-dotstat-lib</artifactId>
@@ -20,61 +20,16 @@
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-api</artifactId>
             <version>${sdmx-dl.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.checkerframework</groupId>
-                    <artifactId>checker-qual</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.github.nbbrd.java-service-util</groupId>
-                    <artifactId>java-service-processor</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.github.nbbrd.sdmx-dl</groupId>
-            <artifactId>sdmx-dl-provider-connectors</artifactId>
-            <version>${sdmx-dl.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.checkerframework</groupId>
-                    <artifactId>checker-qual</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.github.nbbrd.java-service-util</groupId>
-                    <artifactId>java-service-processor</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-provider-ri</artifactId>
             <version>${sdmx-dl.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.checkerframework</groupId>
-                    <artifactId>checker-qual</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.github.nbbrd.java-service-util</groupId>
-                    <artifactId>java-service-processor</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
-            <artifactId>sdmx-dl-kryo</artifactId>
+            <artifactId>sdmx-dl-format-kryo</artifactId>
             <version>${sdmx-dl.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.checkerframework</groupId>
-                    <artifactId>checker-qual</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.github.nbbrd.java-service-util</groupId>
-                    <artifactId>java-service-processor</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
     
@@ -83,7 +38,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.4</version>
+                <version>3.4.1</version>
                 <executions>
                     <execution>
                         <phase>package</phase>

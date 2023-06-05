@@ -16,8 +16,6 @@
  */
 package be.nbb.demetra.sdmx.file;
 
-import sdmxdl.samples.ByteSource;
-import sdmxdl.samples.SdmxSource;
 import ec.tss.TsCollectionInformation;
 import ec.tss.TsInformation;
 import ec.tss.TsInformationType;
@@ -31,10 +29,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.*;
-import static sdmxdl.util.parser.FreqFactory.TIME_FORMAT_CONCEPT;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import tests.sdmxdl.api.ByteSource;
+import tests.sdmxdl.format.xml.SdmxXmlSources;
 
 /**
  *
@@ -54,13 +53,13 @@ public class SdmxFileProviderTest {
         return result;
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         NO_XML = File.createTempFile("sdmx_empty", ".xml");
         NO_XML.deleteOnExit();
         BLANK = new File("");
-        GENERIC20 = createTemp(SdmxSource.NBB_DATA, "sdmx_generic20", ".xml");
-        STRUCT20 = createTemp(SdmxSource.NBB_DATA_STRUCTURE, "sdmx_struct20", ".xml");
+        GENERIC20 = createTemp(SdmxXmlSources.NBB_DATA, "sdmx_generic20", ".xml");
+        STRUCT20 = createTemp(SdmxXmlSources.NBB_DATA_STRUCTURE, "sdmx_struct20", ".xml");
     }
 
     @Test
@@ -86,7 +85,7 @@ public class SdmxFileProviderTest {
                 .put("k", "Q.AT.ALL.BC.E.LE.B3.ST.S.DINX")
                 .build();
 
-        try (SdmxFileProvider p = new SdmxFileProvider()) {
+        try ( SdmxFileProvider p = new SdmxFileProvider()) {
             assertThat(p.toDataSet(new TsMoniker("sdmx-file", uri))).isEqualTo(expected);
         }
     }
@@ -98,7 +97,7 @@ public class SdmxFileProviderTest {
 
     @Test
     public void testContent() throws IOException {
-        try (SdmxFileProvider p = new SdmxFileProvider()) {
+        try ( SdmxFileProvider p = new SdmxFileProvider()) {
 
             AtomicReference<TsMoniker> single = new AtomicReference<>();
             assertThat(newColInfo(p, GENERIC20, STRUCT20)).satisfies(info -> {
@@ -108,8 +107,9 @@ public class SdmxFileProviderTest {
                         .element(0)
                         .satisfies(o -> {
                             assertThat(o.name).isEqualTo("LOCSTL04.AUS.M");
-                            assertThat(new HashMap(o.metaData)).hasSize(1).containsEntry(TIME_FORMAT_CONCEPT, "P1M");
-                            assertThat(o.data).isNotNull();
+                            assertThat(new HashMap(o.metaData)).hasSize(1).containsEntry("TIME_FORMAT", "P1M");
+                            assertThat(o.data).isNull();
+                            assertThat(o.invalidDataCause).startsWith("Cannot guess").contains("duplicated");
                             assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("Monthly");
                             single.set(o.moniker);
                         });
@@ -119,8 +119,9 @@ public class SdmxFileProviderTest {
             assertThat(new TsInformation("", single.get(), TsInformationType.All)).satisfies(o -> {
                 assertThat(p.get(o)).isTrue();
                 assertThat(o.name).isEqualTo("LOCSTL04.AUS.M");
-                assertThat(new HashMap(o.metaData)).hasSize(1).containsEntry(TIME_FORMAT_CONCEPT, "P1M");
-                assertThat(o.data).isNotNull();
+                assertThat(new HashMap(o.metaData)).hasSize(1).containsEntry("TIME_FORMAT", "P1M");
+                assertThat(o.data).isNull();
+                assertThat(o.invalidDataCause).startsWith("Cannot guess").contains("duplicated");
                 assertThat(p.getDisplayNodeName(p.toDataSet(o.moniker))).isEqualTo("Monthly");
                 single.set(o.moniker);
             });

@@ -1,50 +1,61 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package internal.sdmx;
 
-import sdmxdl.Dataflow;
-import sdmxdl.DataflowRef;
-import sdmxdl.Dimension;
-import sdmxdl.LanguagePriorityList;
-import sdmxdl.SdmxConnection;
-import sdmxdl.ext.spi.SdmxDialect;
-import sdmxdl.ext.spi.SdmxDialectLoader;
-import sdmxdl.web.SdmxWebManager;
-import sdmxdl.web.SdmxWebSource;
+import be.nbb.demetra.sdmx.web.SdmxWebProvider;
 import com.google.common.base.Strings;
+import ec.tstoolkit.utilities.GuavaCaches;
 import ec.util.completion.AutoCompletionSource;
-import static ec.util.completion.AutoCompletionSource.Behavior.ASYNC;
-import static ec.util.completion.AutoCompletionSource.Behavior.NONE;
-import static ec.util.completion.AutoCompletionSource.Behavior.SYNC;
 import ec.util.completion.ExtAutoCompletionSource;
 import ec.util.completion.swing.CustomListCellRenderer;
+import internal.util.DialectLoader;
+import nbbrd.desktop.favicon.DomainName;
+import nbbrd.desktop.favicon.FaviconRef;
+import nbbrd.desktop.favicon.FaviconSupport;
+import nbbrd.desktop.favicon.URLConnectionFactory;
+import org.openide.util.ImageUtilities;
+import org.openide.util.Lookup;
+import sdmxdl.*;
+import sdmxdl.ext.spi.Dialect;
+import sdmxdl.web.Network;
+import sdmxdl.web.SdmxWebManager;
+import sdmxdl.web.SdmxWebSource;
+import shaded.dotstat.nbbrd.io.WrappedIOException;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.swing.*;
 import java.io.IOException;
+import java.net.Proxy;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.swing.ListCellRenderer;
-import sdmxdl.SdmxManager;
+
+import static ec.util.completion.AutoCompletionSource.Behavior.*;
 
 /**
- *
  * @author Philippe Charles
  */
 @lombok.experimental.UtilityClass
@@ -52,31 +63,31 @@ public class SdmxAutoCompletion {
 
     public AutoCompletionSource onDialects() {
         return ExtAutoCompletionSource
-                .builder(o -> new SdmxDialectLoader().get())
+                .builder(o -> new DialectLoader().get())
                 .behavior(AutoCompletionSource.Behavior.SYNC)
                 .postProcessor(SdmxAutoCompletion::filterAndSortDialects)
-                .valueToString(SdmxDialect::getName)
+                .valueToString(Dialect::getName)
                 .build();
     }
 
-    private List<SdmxDialect> filterAndSortDialects(List<SdmxDialect> allValues, String term) {
+    private List<Dialect> filterAndSortDialects(List<Dialect> allValues, String term) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return allValues.stream()
                 .filter(o -> filter.test(o.getDescription()) || filter.test(o.getName()))
-                .sorted(Comparator.comparing(SdmxDialect::getDescription))
+                .sorted(Comparator.comparing(Dialect::getDescription))
                 .collect(Collectors.toList());
     }
 
     public ListCellRenderer getDialectRenderer() {
-        return CustomListCellRenderer.of(SdmxDialect::getName, SdmxDialect::getDescription);
+        return CustomListCellRenderer.of(Dialect::getName, Dialect::getDescription);
     }
 
     public AutoCompletionSource onSources(SdmxWebManager manager) {
         return ExtAutoCompletionSource
-                .builder(o -> getAllSources(manager))
+                .builder(term -> getAllSources(manager))
                 .behavior(AutoCompletionSource.Behavior.SYNC)
-                .postProcessor(SdmxAutoCompletion::filterAndSortSources)
-                .valueToString(SdmxWebSource::getName)
+                .postProcessor((values, term) -> filterAndSortSources(values, term, manager.getLanguages()))
+                .valueToString(SdmxWebSource::getId)
                 .build();
     }
 
@@ -89,15 +100,82 @@ public class SdmxAutoCompletion {
                 .collect(Collectors.toList());
     }
 
-    public ListCellRenderer getSourceRenderer() {
-        return CustomListCellRenderer.of(SdmxAutoCompletion::getNameAndDescription, o -> null);
+    public static ImageIcon getDefaultIcon() {
+        return ImageUtilities.loadImageIcon("be/nbb/demetra/dotstat/sdmx-logo.png", false);
     }
 
-    private String getNameAndDescription(SdmxWebSource o) {
-        return o.getName() + ": " + o.getDescription();
+    public static Icon getFavicon(URL website) {
+        return website != null
+                ? FAVICONS.getOrDefault(FaviconRef.of(DomainName.of(website), 16), getDefaultIcon())
+                : getDefaultIcon();
     }
 
-    public AutoCompletionSource onFlows(SdmxManager manager, Supplier<String> source, ConcurrentMap cache) {
+    public static Icon getFavicon(URL website, Runnable callback) {
+        return website != null
+                ? FAVICONS.getOrDefault(FaviconRef.of(DomainName.of(website), 16), callback, getDefaultIcon())
+                : getDefaultIcon();
+    }
+
+    public static final FaviconSupport FAVICONS = FaviconSupport
+            .ofServiceLoader()
+            .toBuilder()
+            .cache(GuavaCaches.ttlCacheAsMap(Duration.ofHours(1)))
+            .client(new ClientOverCustomNetwork())
+            .build();
+
+    private static final class ClientOverCustomNetwork implements URLConnectionFactory {
+
+        @Override
+        public URLConnection openConnection(URL url) throws IOException {
+            Network network = getNetwork();
+            Proxy proxy = selectProxy(network, url);
+            URLConnection result = network.getURLConnectionFactory().openConnection(url, proxy);
+            applyHttps(result, network);
+            return result;
+        }
+
+        private static void applyHttps(URLConnection result, Network network) {
+            if (result instanceof HttpsURLConnection) {
+                HttpsURLConnection https = (HttpsURLConnection) result;
+                https.setHostnameVerifier(network.getHostnameVerifier());
+                https.setSSLSocketFactory(network.getSSLSocketFactory());
+            }
+        }
+
+        private static Proxy selectProxy(Network network, URL url) throws IOException {
+            try {
+                return network.getProxySelector().select(url.toURI()).stream().findFirst().orElse(Proxy.NO_PROXY);
+            } catch (URISyntaxException ex) {
+                throw new IOException(ex);
+            }
+        }
+
+        private static Network getNetwork() {
+            return Optional.ofNullable(Lookup.getDefault().lookup(SdmxWebProvider.class))
+                    .map(provider -> provider.getSdmxManager().getNetwork())
+                    .orElseGet(Network::getDefault);
+        }
+    }
+
+    public ListCellRenderer getSourceRenderer(SdmxWebManager manager) {
+        return new CustomListCellRenderer<SdmxWebSource>() {
+            @Override
+            protected String getValueAsString(SdmxWebSource value) {
+                return getNameAndDescription(value, manager.getLanguages());
+            }
+
+            @Override
+            protected Icon toIcon(String term, JList list, SdmxWebSource value, int index, boolean isSelected, boolean cellHasFocus) {
+                return getFavicon(value.getWebsite(), list::repaint);
+            }
+        };
+    }
+
+    private String getNameAndDescription(SdmxWebSource o, LanguagePriorityList langs) {
+        return o.getId() + ": " + langs.select(o.getNames());
+    }
+
+    public AutoCompletionSource onFlows(SdmxWebManager manager, Supplier<String> source, ConcurrentMap cache) {
         return ExtAutoCompletionSource
                 .builder(o -> loadFlows(manager, source))
                 .behavior(o -> canLoadFlows(source) ? ASYNC : NONE)
@@ -108,10 +186,10 @@ public class SdmxAutoCompletion {
     }
 
     public ListCellRenderer getFlowsRenderer() {
-        return CustomListCellRenderer.of(Dataflow::getLabel, o -> o.getRef().toString());
+        return CustomListCellRenderer.of(Dataflow::getName, o -> o.getRef().toString());
     }
 
-    public AutoCompletionSource onDimensions(SdmxManager manager, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache) {
+    public AutoCompletionSource onDimensions(SdmxWebManager manager, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache) {
         return ExtAutoCompletionSource
                 .builder(o -> loadDimensions(manager, source, flow))
                 .behavior(o -> canLoadDimensions(source, flow) ? ASYNC : NONE)
@@ -122,10 +200,10 @@ public class SdmxAutoCompletion {
     }
 
     public ListCellRenderer getDimensionsRenderer() {
-        return CustomListCellRenderer.of(Dimension::getId, Dimension::getLabel);
+        return CustomListCellRenderer.of(Dimension::getId, Dimension::getName);
     }
 
-    public String getDefaultDimensionsAsString(SdmxManager manager, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache, CharSequence delimiter) throws Exception {
+    public String getDefaultDimensionsAsString(SdmxWebManager manager, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache, CharSequence delimiter) throws Exception {
         String key = getDimensionCacheKey(source, flow, manager.getLanguages());
         List<Dimension> result = (List<Dimension>) cache.get(key);
         if (result == null) {
@@ -138,17 +216,17 @@ public class SdmxAutoCompletion {
                 .collect(Collectors.joining(delimiter));
     }
 
-    private List<SdmxWebSource> filterAndSortSources(List<SdmxWebSource> allValues, String term) {
+    private List<SdmxWebSource> filterAndSortSources(List<SdmxWebSource> allValues, String term, LanguagePriorityList langs) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return allValues
                 .stream()
-                .filter(source -> filterSource(source, filter))
+                .filter(source -> filterSource(source, filter, langs))
                 .collect(Collectors.toList());
     }
 
-    private static boolean filterSource(SdmxWebSource source, Predicate<String> filter) {
-        return filter.test(source.getDescription())
-                || filter.test(source.getName())
+    private static boolean filterSource(SdmxWebSource source, Predicate<String> filter, LanguagePriorityList langs) {
+        return filter.test(langs.select(source.getNames()))
+                || filter.test(source.getId())
                 || source.getAliases().stream().anyMatch(filter);
     }
 
@@ -156,19 +234,19 @@ public class SdmxAutoCompletion {
         return !Strings.isNullOrEmpty(source.get());
     }
 
-    private List<Dataflow> loadFlows(SdmxManager manager, Supplier<String> source) throws IOException {
-        try (SdmxConnection c = manager.getConnection(source.get())) {
+    private List<Dataflow> loadFlows(SdmxWebManager manager, Supplier<String> source) throws IOException {
+        try (Connection c = manager.getConnection(source.get())) {
             return new ArrayList<>(c.getFlows());
         } catch (RuntimeException ex) {
-            throw new UnexpectedIOException(ex);
+            throw WrappedIOException.wrap(ex);
         }
     }
 
     private List<Dataflow> filterAndSortFlows(List<Dataflow> values, String term) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return values.stream()
-                .filter(o -> filter.test(o.getLabel()) || filter.test(o.getRef().getId()))
-                .sorted(Comparator.comparing(Dataflow::getLabel))
+                .filter(o -> filter.test(o.getName()) || filter.test(o.getRef().getId()) || filter.test(o.getDescription()))
+                .sorted(Comparator.comparing(Dataflow::getName))
                 .collect(Collectors.toList());
     }
 
@@ -180,18 +258,18 @@ public class SdmxAutoCompletion {
         return canLoadFlows(source) && !Strings.isNullOrEmpty(flow.get());
     }
 
-    private List<Dimension> loadDimensions(SdmxManager manager, Supplier<String> source, Supplier<String> flow) throws IOException {
-        try (SdmxConnection c = manager.getConnection(source.get())) {
+    private List<Dimension> loadDimensions(SdmxWebManager manager, Supplier<String> source, Supplier<String> flow) throws IOException {
+        try (Connection c = manager.getConnection(source.get())) {
             return new ArrayList<>(c.getStructure(DataflowRef.parse(flow.get())).getDimensions());
         } catch (RuntimeException ex) {
-            throw new UnexpectedIOException(ex);
+            throw WrappedIOException.wrap(ex);
         }
     }
 
     private List<Dimension> filterAndSortDimensions(List<Dimension> values, String term) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return values.stream()
-                .filter(o -> filter.test(o.getId()) || filter.test(o.getLabel()) || filter.test(String.valueOf(o.getPosition())))
+                .filter(o -> filter.test(o.getId()) || filter.test(o.getName()) || filter.test(String.valueOf(o.getPosition())))
                 .sorted(Comparator.comparing(Dimension::getId))
                 .collect(Collectors.toList());
     }

@@ -1,41 +1,34 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package test.samples;
 
-import sdmxdl.DataCursor;
-import sdmxdl.DataStructure;
-import sdmxdl.DataStructureRef;
-import sdmxdl.Dataflow;
-import sdmxdl.DataflowRef;
-import sdmxdl.LanguagePriorityList;
-import sdmxdl.repo.DataSet;
-import sdmxdl.samples.ByteSource;
-import sdmxdl.samples.SdmxSource;
-import sdmxdl.repo.SdmxRepository;
-import sdmxdl.Series;
-import sdmxdl.util.parser.ObsFactories;
-import sdmxdl.xml.stream.SdmxXmlStreams;
+import sdmxdl.*;
+import sdmxdl.format.DataCursor;
+import sdmxdl.format.ObsParser;
+import sdmxdl.format.xml.SdmxXmlStreams;
+import tests.sdmxdl.api.ByteSource;
+import tests.sdmxdl.format.xml.SdmxXmlSources;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
- *
  * @author Philippe Charles
  */
 @lombok.experimental.UtilityClass
@@ -46,21 +39,20 @@ public class FacadeResource {
 
     public static final DataflowRef NBB_FLOW_REF = DataflowRef.of("NBB", "TEST_DATASET", null);
 
-    public SdmxRepository nbb() throws IOException {
-        SdmxRepository result = NBB.get();
+    public DataRepository nbb() throws IOException {
+        DataRepository result = NBB.get();
         if (result == null) {
             LanguagePriorityList l = LanguagePriorityList.parse("fr");
 
-            List<DataStructure> structs = struct20(SdmxSource.NBB_DATA_STRUCTURE, l);
-            List<Dataflow> flows = flow20(SdmxSource.NBB_DATA_STRUCTURE, l);
-            List<Series> data = data20(SdmxSource.NBB_DATA, structs.get(0));
+            List<DataStructure> structs = struct20(SdmxXmlSources.NBB_DATA_STRUCTURE, l);
+            List<Dataflow> flows = flow20(SdmxXmlSources.NBB_DATA_STRUCTURE, l);
+            List<Series> data = data20(SdmxXmlSources.NBB_DATA, structs.get(0));
 
-            result = SdmxRepository.builder()
+            result = DataRepository.builder()
                     .structures(structs)
                     .flows(flows)
                     .dataSet(DataSet.builder().ref(NBB_FLOW_REF).data(data).build())
                     .name("NBB")
-                    .detailSupported(false)
                     .build();
 
             NBB.set(result);
@@ -68,21 +60,20 @@ public class FacadeResource {
         return result;
     }
 
-    public SdmxRepository ecb() throws IOException {
-        SdmxRepository result = ECB.get();
+    public DataRepository ecb() throws IOException {
+        DataRepository result = ECB.get();
         if (result == null) {
             LanguagePriorityList l = LanguagePriorityList.parse("fr");
 
-            List<DataStructure> structs = struct21(SdmxSource.ECB_DATA_STRUCTURE, l);
-            List<Dataflow> flows = flow21(SdmxSource.ECB_DATAFLOWS, l);
-            List<Series> data = data21(SdmxSource.ECB_DATA, structs.get(0));
+            List<DataStructure> structs = struct21(SdmxXmlSources.ECB_DATA_STRUCTURE, l);
+            List<Dataflow> flows = flow21(SdmxXmlSources.ECB_DATAFLOWS, l);
+            List<Series> data = data21(SdmxXmlSources.ECB_DATA, structs.get(0));
 
-            result = SdmxRepository.builder()
+            result = DataRepository.builder()
                     .structures(structs)
                     .flows(flows)
                     .dataSet(DataSet.builder().ref(ECB_FLOW_REF).data(data).build())
                     .name("ECB")
-                    .detailSupported(true)
                     .build();
 
             ECB.set(result);
@@ -90,8 +81,8 @@ public class FacadeResource {
         return result;
     }
 
-    private static final AtomicReference<SdmxRepository> NBB = new AtomicReference<>();
-    private static final AtomicReference<SdmxRepository> ECB = new AtomicReference<>();
+    private static final AtomicReference<DataRepository> NBB = new AtomicReference<>();
+    private static final AtomicReference<DataRepository> ECB = new AtomicReference<>();
 
     private List<DataStructure> struct20(ByteSource xml, LanguagePriorityList l) throws IOException {
         return SdmxXmlStreams.struct20(l).parseReader(xml::openReader);
@@ -105,8 +96,8 @@ public class FacadeResource {
     }
 
     List<Series> data20(ByteSource xml, DataStructure dsd) throws IOException {
-        try (DataCursor c = SdmxXmlStreams.genericData20(dsd, ObsFactories.SDMX20).parseReader(xml::openReader)) {
-            return c.toStream().collect(Collectors.toList());
+        try (DataCursor c = SdmxXmlStreams.genericData20(dsd, ObsParser::newDefault).parseReader(xml::openReader)) {
+            return c.asStream().collect(Collectors.toList());
         }
     }
 
@@ -119,13 +110,13 @@ public class FacadeResource {
     }
 
     List<Series> data21(ByteSource xml, DataStructure dsd) throws IOException {
-        try (DataCursor c = SdmxXmlStreams.genericData21(dsd, ObsFactories.SDMX21).parseReader(xml::openReader)) {
-            return c.toStream().collect(Collectors.toList());
+        try (DataCursor c = SdmxXmlStreams.genericData21(dsd, ObsParser::newDefault).parseReader(xml::openReader)) {
+            return c.asStream().collect(Collectors.toList());
         }
     }
 
     private Dataflow asDataflow(DataStructure o) {
         DataflowRef ref = DataflowRef.of(o.getRef().getAgency(), o.getRef().getId(), o.getRef().getVersion());
-        return Dataflow.of(ref, o.getRef(), o.getLabel());
+        return Dataflow.builder().ref(ref).structureRef(o.getRef()).name(o.getName()).build();
     }
 }

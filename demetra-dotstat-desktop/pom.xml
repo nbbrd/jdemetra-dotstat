@@ -6,7 +6,7 @@
     <parent>
         <groupId>be.nbb.demetra</groupId>
         <artifactId>demetra-dotstat-parent</artifactId>
-        <version>2.2.5</version>
+        <version>2.2.6</version>
     </parent>
 
     <artifactId>demetra-dotstat-desktop</artifactId>
@@ -144,17 +144,29 @@
             <groupId>com.github.nbbrd.java-net-proxy</groupId>
             <artifactId>java-net-proxy</artifactId>
             <version>1.0.1</version>
+            <exclusions>
+                <exclusion>
+                    <!-- already provided by demetra-dotstat-lib -->
+                    <artifactId>powershell-lib-java</artifactId>
+                    <groupId>com.github.tuupertunut</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.github.hakky54</groupId>
             <artifactId>sslcontext-kickstart</artifactId>
-            <version>7.0.0</version>
+            <version>8.0.0</version>
             <exclusions>
                 <exclusion>
                     <artifactId>slf4j-api</artifactId>
                     <groupId>org.slf4j</groupId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.github.nbbrd.java-desktop-util</groupId>
+            <artifactId>java-desktop-util-favicon</artifactId>
+            <version>2.3.0</version>
         </dependency>
     </dependencies>
 
@@ -174,12 +186,11 @@
             <plugin>
                 <groupId>org.apache.netbeans.utilities</groupId>
                 <artifactId>nbm-maven-plugin</artifactId>
-                <version>4.6</version>
+                <version>4.8</version>
                 <extensions>true</extensions>
                 <configuration>
                     <useOSGiDependencies>false</useOSGiDependencies>
                     <publicPackages>
-                        <publicPackage>be.nbb.demetra.sdmx.web</publicPackage>
                     </publicPackages>
                 </configuration>
             </plugin>
@@ -191,10 +202,27 @@
             <id>full-release</id>
             <build>
                 <plugins>
+                    <!-- Extract changelog for release -->
+                    <plugin>
+                        <groupId>com.github.nbbrd.heylogs</groupId>
+                        <artifactId>heylogs-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>extract-changelog</id>
+                                <goals>
+                                    <goal>extract</goal>
+                                </goals>
+                                <configuration>
+                                    <inputFile>${project.parent.basedir}/CHANGELOG.md</inputFile>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Release assets -->
                     <plugin>
                         <groupId>org.jreleaser</groupId>
                         <artifactId>jreleaser-maven-plugin</artifactId>
-                        <version>0.6.0</version>
+                        <version>1.5.1</version>
                         <executions>
                             <execution>
                                 <phase>install</phase>
@@ -208,11 +236,10 @@
                                 <release>
                                     <github>
                                         <skipTag>true</skipTag>
-                                        <draft>true</draft>
                                         <!-- Fix default value -->
                                         <branch>master</branch>
                                         <changelog>
-                                            <external>${project.basedir}/../CHANGELOG.md</external>
+                                            <external>${project.build.directory}/CHANGELOG.md</external>
                                         </changelog>
                                     </github>
                                 </release>

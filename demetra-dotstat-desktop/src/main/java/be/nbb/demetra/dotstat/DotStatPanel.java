@@ -28,6 +28,8 @@ import ec.util.completion.swing.FileListCellRenderer;
 import ec.util.completion.swing.JAutoCompletion;
 import ec.util.grid.swing.XTable;
 import ec.util.various.swing.FontAwesome;
+import ec.util.various.swing.StandardSwingColor;
+import ec.util.various.swing.TextPrompt;
 import ec.util.various.swing.ext.FontAwesomeUtils;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -55,6 +57,7 @@ import org.openide.util.lookup.AbstractLookup;
 import org.openide.util.lookup.InstanceContent;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
+import sdmxdl.LanguagePriorityList;
 
 final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
 
@@ -70,7 +73,9 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         customSourcesCompletion.setSource(new DesktopFileAutoCompletionSource(xmlFilter, new File[0]));
         customSourcesCompletion.getList().setCellRenderer(new FileListCellRenderer(Executors.newSingleThreadExecutor()));
         selectCustomSources.setText("");
-        selectCustomSources.setIcon(FontAwesome.FA_FILE_O.getIcon(selectCustomSources.getForeground(), selectCustomSources.getFont().getSize2D()));
+        selectCustomSources.setIcon(FontAwesome.FA_FILE_O.getIcon(selectCustomSources.getForeground(), 16f));
+        TextPrompt prompt = new TextPrompt("path to sources file", customSources);
+        StandardSwingColor.TEXT_FIELD_INACTIVE_FOREGROUND.lookup().ifPresent(prompt::setForeground);
 
         addButton.setEnabled(false);
         removeButton.setEnabled(false);
@@ -88,7 +93,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
         outlineView1.getOutline().setRootVisible(false);
         ((DefaultOutlineModel) outlineView1.getOutline().getModel()).setNodesColumnLabel("Source");
-        outlineView1.setPropertyColumns("description", "Description", "aliases", "Aliases");
+        outlineView1.setPropertyColumns("name", "Name", "aliases", "Aliases");
         outlineView1.getOutline().setColumnHidingAllowed(false);
         XTable.setWidthAsPercentages(outlineView1.getOutline(), .2, .6, .2);
 
@@ -123,10 +128,10 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         jLabel2 = new javax.swing.JLabel();
         customSources = new javax.swing.JTextField();
         selectCustomSources = new javax.swing.JButton();
+        curlBackendCheckBox = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(DotStatPanel.class, "DotStatPanel.jButton1.text")); // NOI18N
 
-        jToolBar1.setFloatable(false);
         jToolBar1.setOrientation(javax.swing.SwingConstants.VERTICAL);
         jToolBar1.setRollover(true);
 
@@ -196,30 +201,34 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(curlBackendCheckBox, org.openide.util.NbBundle.getMessage(DotStatPanel.class, "DotStatPanel.curlBackendCheckBox.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(outlineView1, javax.swing.GroupLayout.DEFAULT_SIZE, 487, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel2)
-                                .addGap(18, 18, 18)
-                                .addComponent(customSources, javax.swing.GroupLayout.PREFERRED_SIZE, 240, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(preferedLangTextBox, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(displayCodesCheckBox)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(selectCustomSources, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addComponent(outlineView1, javax.swing.GroupLayout.DEFAULT_SIZE, 487, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(12, 12, 12)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(customSources, javax.swing.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
+                    .addComponent(preferedLangTextBox))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(selectCustomSources, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(24, 24, 24)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(curlBackendCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(displayCodesCheckBox)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -231,8 +240,9 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
-                    .addComponent(customSources, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(selectCustomSources))
+                    .addComponent(curlBackendCheckBox)
+                    .addComponent(selectCustomSources, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(customSources, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
@@ -278,7 +288,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
     private void loadSources(SdmxWebManager webManager) {
         AbstractNodeBuilder b = new AbstractNodeBuilder();
         // webManager.getCustomSources().forEach(x -> b.add(new ConfigNode(x, true)));
-        webManager.getSources().values().stream().filter(source -> !source.isAlias()).forEach(x -> b.add(new ConfigNode(x, false)));
+        webManager.getSources().values().stream().filter(source -> !source.isAlias()).forEach(x -> b.add(new ConfigNode(x, false, webManager.getLanguages())));
         em.setRootContext(b.name("root").build());
     }
 
@@ -287,6 +297,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
             DotStatProviderBuddy.BuddyConfig bean = DotStatProviderBuddy.BuddyConfig.converter().reverse().convert(buddy.getConfig());
             preferedLangTextBox.setText(bean.getPreferredLanguage());
             displayCodesCheckBox.setSelected(bean.isDisplayCodes());
+            curlBackendCheckBox.setSelected(bean.isCurlBackend());
             customSources.setText(bean.getCustomSources().toString());
             loadSources(buddy.getWebManager());
         });
@@ -297,6 +308,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
             DotStatProviderBuddy.BuddyConfig bean = new DotStatProviderBuddy.BuddyConfig();
             bean.setPreferredLanguage(preferedLangTextBox.getText());
             bean.setDisplayCodes(displayCodesCheckBox.isSelected());
+            bean.setCurlBackend(curlBackendCheckBox.isSelected());
             bean.setCustomSources(new File(customSources.getText()));
             buddy.setConfig(DotStatProviderBuddy.BuddyConfig.converter().convert(bean));
         });
@@ -308,6 +320,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addButton;
+    private javax.swing.JCheckBox curlBackendCheckBox;
     private javax.swing.JTextField customSources;
     private javax.swing.JCheckBox displayCodesCheckBox;
     private javax.swing.JButton editButton;
@@ -325,13 +338,16 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
     private static final class ConfigNode extends AbstractNode {
 
-        public ConfigNode(SdmxWebSource source, boolean customSource) {
-            this(source, customSource, new InstanceContent());
+        private final LanguagePriorityList langs;
+        
+        public ConfigNode(SdmxWebSource source, boolean customSource, LanguagePriorityList langs) {
+            this(source, customSource, new InstanceContent(), langs);
         }
 
-        private ConfigNode(SdmxWebSource source, boolean customSource, InstanceContent abilities) {
+        private ConfigNode(SdmxWebSource source, boolean customSource, InstanceContent abilities, LanguagePriorityList langs) {
             super(Children.LEAF, new ProxyLookup(Lookups.singleton(source), new AbstractLookup(abilities)));
-            setDisplayName(source.getName());
+            this.langs = langs;
+            setDisplayName(source.getId());
             setShortDescription(source.toString());
 
             if (customSource) {
@@ -355,15 +371,15 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
             Sheet result = new Sheet();
             NodePropertySetBuilder b = new NodePropertySetBuilder();
             b.with(String.class)
-                    .select(bean, "getName", null)
+                    .select(bean, "getId", null)
+                    .display("Id")
+                    .add();
+            b.with(String.class)
+                    .selectConst("name", langs.select(bean.getNames()))
                     .display("Name")
                     .add();
             b.with(String.class)
-                    .select(bean, "getDescription", null)
-                    .display("Description")
-                    .add();
-            b.with(String.class)
-                    .selectConst("aliases", bean.getAliases().stream().collect(Collectors.joining(", ")))
+                    .selectConst("aliases", String.join(", ", bean.getAliases()))
                     .display("Aliases")
                     .add();
             b.with(String.class)
@@ -393,7 +409,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
             @Override
             public void edit() {
                 if (new PropertySheetDialogBuilder().title("Edit web source").icon(getIcon(BeanInfo.ICON_MONO_16x16)).editNode(ConfigNode.this)) {
-                    setDisplayName(getLookup().lookup(SdmxWebSource.class).getName());
+                    setDisplayName(getLookup().lookup(SdmxWebSource.class).getId());
                 }
             }
         }

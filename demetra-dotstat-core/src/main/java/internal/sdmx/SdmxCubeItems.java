@@ -17,10 +17,6 @@
 package internal.sdmx;
 
 import be.nbb.demetra.sdmx.file.SdmxFileBean;
-import sdmxdl.DataStructure;
-import sdmxdl.DataflowRef;
-import sdmxdl.Dimension;
-import sdmxdl.SdmxConnection;
 import sdmxdl.file.SdmxFileSource;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.HasFilePaths;
@@ -29,11 +25,6 @@ import ec.tss.tsproviders.cube.CubeId;
 import ec.tss.tsproviders.utils.IParam;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import nbbrd.io.function.IOSupplier;
 
 /**
  *
@@ -44,36 +35,6 @@ public class SdmxCubeItems {
 
     CubeAccessor accessor;
     IParam<DataSet, CubeId> idParam;
-
-    public static DataStructure loadStructure(IOSupplier<SdmxConnection> supplier, DataflowRef flow) throws IOException {
-        try (SdmxConnection conn = supplier.getWithIO()) {
-            return conn.getStructure(flow);
-        } catch (RuntimeException ex) {
-            throw new UnexpectedIOException(ex);
-        }
-    }
-
-    public static CubeId getOrLoadRoot(List<String> dimensions, IOSupplier<DataStructure> structure) throws IOException {
-        return dimensions.isEmpty()
-                ? CubeId.root(loadDefaultDimIds(structure))
-                : CubeId.root(dimensions);
-    }
-
-    public static List<String> loadDefaultDimIds(IOSupplier<DataStructure> structure) throws IOException {
-        return structure.getWithIO()
-                .getDimensions()
-                .stream()
-                .map(Dimension::getId)
-                .collect(Collectors.toList());
-    }
-
-    public static Optional<SdmxFileSource> tryResolveFileSet(HasFilePaths paths, SdmxFileBean bean) {
-        try {
-            return Optional.of(resolveFileSet(paths, bean));
-        } catch (FileNotFoundException ex) {
-            return Optional.empty();
-        }
-    }
 
     public static SdmxFileSource resolveFileSet(HasFilePaths paths, SdmxFileBean bean) throws FileNotFoundException {
         SdmxFileSource.Builder result = SdmxFileSource.builder().data(paths.resolveFilePath(bean.getFile()));

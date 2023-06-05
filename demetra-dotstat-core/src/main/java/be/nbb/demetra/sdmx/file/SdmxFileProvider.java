@@ -19,7 +19,6 @@ package be.nbb.demetra.sdmx.file;
 import be.nbb.demetra.sdmx.HasSdmxProperties;
 import internal.sdmx.SdmxCubeAccessor;
 import sdmxdl.DataflowRef;
-import sdmxdl.SdmxConnection;
 import sdmxdl.file.SdmxFileManager;
 import sdmxdl.file.SdmxFileSource;
 import com.google.common.cache.Cache;
@@ -46,13 +45,14 @@ import java.io.IOException;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sdmxdl.SdmxManager;
 import ec.tss.TsAsyncMode;
 import ec.tss.tsproviders.cursor.TsCursorAsFiller;
 import ec.tss.tsproviders.utils.TsFillerAsProvider;
 import java.io.EOFException;
+import java.util.Locale;
+
 import nbbrd.io.function.IOSupplier;
-import sdmxdl.xml.XmlFileSource;
+import sdmxdl.Connection;
 
 /**
  *
@@ -60,12 +60,12 @@ import sdmxdl.xml.XmlFileSource;
  * @since 2.2.0
  */
 @ServiceProvider(service = ITsProvider.class)
-public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
+public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties<SdmxFileManager> {
 
     public static final String NAME = "sdmx-file";
 
     @lombok.experimental.Delegate
-    private final HasSdmxProperties properties;
+    private final HasSdmxProperties<SdmxFileManager> properties;
 
     @lombok.experimental.Delegate
     private final HasDataSourceMutableList mutableListSupport;
@@ -115,7 +115,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
 
     @Override
     public boolean accept(File pathname) {
-        return pathname.getName().toLowerCase().endsWith(".xml");
+        return pathname.getName().toLowerCase(Locale.ROOT).endsWith(".xml");
     }
 
     private static String getSourceLabel(SdmxFileBean bean) {
@@ -145,32 +145,24 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties {
             return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> of(properties, paths, param, dataSource));
         }
 
-        private static SdmxCubeItems of(HasSdmxProperties properties, HasFilePaths paths, SdmxFileParam param, DataSource dataSource) throws IOException {
+        private static SdmxCubeItems of(HasSdmxProperties<SdmxFileManager> properties, HasFilePaths paths, SdmxFileParam param, DataSource dataSource) throws IOException {
             SdmxFileBean bean = param.get(dataSource);
             SdmxFileSource files = SdmxCubeItems.resolveFileSet(paths, bean);
 
-            DataflowRef flow = files.asDataflowRef();
+            DataflowRef flowRef = files.asDataflowRef();
 
-            IOSupplier<SdmxConnection> conn = toConnection(properties, files);
+            IOSupplier<Connection> conn = toConnection(properties, files);
 
-            CubeId root = SdmxCubeItems.getOrLoadRoot(bean.getDimensions(), () -> SdmxCubeItems.loadStructure(conn, flow));
-
-            CubeAccessor accessor = SdmxCubeAccessor.of(conn, flow, root, bean.getLabelAttribute(), getSourceLabel(bean), false);
+            CubeAccessor accessor = SdmxCubeAccessor.of(conn, flowRef, bean.getDimensions(), bean.getLabelAttribute(), getSourceLabel(bean), false);
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());
 
             return new SdmxCubeItems(accessor, idParam);
         }
 
-        private static IOSupplier<SdmxConnection> toConnection(HasSdmxProperties properties, SdmxFileSource files) throws IOException {
-            SdmxManager manager = properties.getSdmxManager();
-
-            if (manager instanceof SdmxFileManager) {
-                return () -> ((SdmxFileManager) manager).getConnection(files);
-            }
-
-            String name = XmlFileSource.getFormatter().formatToString(files);
-            return () -> manager.getConnection(name);
+        private static IOSupplier<Connection> toConnection(HasSdmxProperties<SdmxFileManager> properties, SdmxFileSource files) throws IOException {
+            SdmxFileManager manager = properties.getSdmxManager();
+            return () -> manager.getConnection(files);
         }
     }
 

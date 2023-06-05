@@ -6,7 +6,7 @@
     <parent>
         <groupId>be.nbb.demetra</groupId>
         <artifactId>demetra-dotstat-parent</artifactId>
-        <version>2.2.5</version>
+        <version>2.2.6</version>
     </parent>
 
     <artifactId>demetra-dotstat-core</artifactId>
@@ -43,7 +43,7 @@
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-openide-util-lookup</artifactId>
-            <version>RELEASE124</version>
+            <version>RELEASE170</version>
             <scope>provided</scope>
         </dependency>
 
@@ -73,8 +73,8 @@
 
         <!-- test only -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -89,8 +89,24 @@
         </dependency>
         <dependency>
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
-            <artifactId>sdmx-dl-tck</artifactId>
+            <artifactId>sdmx-dl-api</artifactId>
             <version>${sdmx-dl.version}</version>
+            <classifier>tests</classifier>
+            <type>test-jar</type>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.github.nbbrd.sdmx-dl</groupId>
+            <artifactId>sdmx-dl-format-xml</artifactId>
+            <version>${sdmx-dl.version}</version>
+            <classifier>tests</classifier>
+            <type>test-jar</type>
             <scope>test</scope>
             <exclusions>
                 <exclusion>

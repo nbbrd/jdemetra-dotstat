@@ -17,7 +17,6 @@
 package internal.sdmx;
 
 import sdmxdl.Key;
-import sdmxdl.SdmxConnection;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
@@ -26,11 +25,21 @@ import static internal.sdmx.SdmxQueryUtil.getAllSeries;
 import static internal.sdmx.SdmxQueryUtil.getAllSeriesWithData;
 import static internal.sdmx.SdmxQueryUtil.getChildren;
 import static internal.sdmx.SdmxQueryUtil.getSeriesWithData;
+import java.io.IOException;
+import java.util.EnumSet;
+import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import org.junit.jupiter.api.Test;
+import sdmxdl.Connection;
+import sdmxdl.DataRepository;
+import sdmxdl.Feature;
+import sdmxdl.web.SdmxWebSource;
+import sdmxdl.web.spi.WebContext;
 import test.samples.FacadeResource;
 import static test.samples.FacadeResource.ECB_FLOW_REF;
 import static test.samples.FacadeResource.NBB_FLOW_REF;
+import tests.sdmxdl.web.MockedDriver;
 
 /**
  *
@@ -40,13 +49,19 @@ public class SdmxQueryUtilTest {
 
     private final String title = "FR. Germany - Net lending (+) or net borrowing (-): general government :- Excessive deficit procedure (Including one-off proceeds relative to the allocation of mobile phone licences (UMTS))";
 
+    private Connection asConnection(DataRepository repo, Set<Feature> features) throws IOException {
+        MockedDriver driver = MockedDriver.builder().repo(repo, features).build();
+        SdmxWebSource source = driver.getDefaultSources().iterator().next();
+        return driver.connect(source, WebContext.builder().build());
+    }
+
     @Test
     public void testGetAllSeries20() throws Exception {
-        SdmxConnection conn = FacadeResource.nbb().asConnection();
+        Connection conn = asConnection(FacadeResource.nbb(), EnumSet.noneOf(Feature.class));
 
         Key single = Key.of("LOCSTL04", "AUS", "M");
 
-        try (TsCursor<Key> o = getAllSeries(conn, NBB_FLOW_REF, Key.ALL, SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> o = getAllSeries(conn, NBB_FLOW_REF, Key.ALL, SdmxQueryUtil.NO_LABEL)) {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesId()).isEqualTo(single);
             assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
@@ -54,7 +69,7 @@ public class SdmxQueryUtilTest {
             assertThat(o.nextSeries()).isFalse();
         }
 
-        try (TsCursor<Key> o = getAllSeries(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", ""), SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> o = getAllSeries(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", ""), SdmxQueryUtil.NO_LABEL)) {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesId()).isEqualTo(single);
             assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
@@ -62,7 +77,7 @@ public class SdmxQueryUtilTest {
             assertThat(o.nextSeries()).isFalse();
         }
 
-        try (TsCursor<Key> o = getAllSeries(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", ""), SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> o = getAllSeries(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", ""), SdmxQueryUtil.NO_LABEL)) {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesId()).isEqualTo(single);
             assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
@@ -73,73 +88,70 @@ public class SdmxQueryUtilTest {
 
     @Test
     public void testGetAllSeriesWithData20() throws Exception {
-        SdmxConnection conn = FacadeResource.nbb().asConnection();
+        Connection conn = asConnection(FacadeResource.nbb(), EnumSet.noneOf(Feature.class));
 
         Key single = Key.of("LOCSTL04", "AUS", "M");
 
-        try (TsCursor<Key> o = getAllSeriesWithData(conn, NBB_FLOW_REF, Key.ALL, SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> o = getAllSeriesWithData(conn, NBB_FLOW_REF, Key.ALL, SdmxQueryUtil.NO_LABEL)) {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesId()).isEqualTo(single);
             assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
-            assertThat(o.getSeriesMetaData()).isEmpty();
-            assertThat(o.getSeriesData().get().getLength()).isEqualTo(55);
+            assertThat(o.getSeriesMetaData()).containsKey("TIME_FORMAT");
+            assertThat(o.getSeriesData().isPresent()).isFalse();
+            assertThat(o.getSeriesData().getCause()).startsWith("Cannot guess").contains("duplicated");
             assertThat(o.nextSeries()).isFalse();
         }
 
-        try (TsCursor<Key> o = getAllSeriesWithData(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", ""), SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> o = getAllSeriesWithData(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", ""), SdmxQueryUtil.NO_LABEL)) {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesId()).isEqualTo(single);
             assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
-            assertThat(o.getSeriesMetaData()).isEmpty();
-            assertThat(o.getSeriesData().get().getLength()).isEqualTo(55);
+            assertThat(o.getSeriesMetaData()).containsKey("TIME_FORMAT");
+            assertThat(o.getSeriesData().isPresent()).isFalse();
+            assertThat(o.getSeriesData().getCause()).startsWith("Cannot guess").contains("duplicated");
             assertThat(o.nextSeries()).isFalse();
         }
 
-        try (TsCursor<Key> o = getAllSeriesWithData(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", ""), SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> o = getAllSeriesWithData(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", ""), SdmxQueryUtil.NO_LABEL)) {
             assertThat(o.nextSeries()).isTrue();
             assertThat(o.getSeriesId()).isEqualTo(single);
             assertThat(o.getSeriesLabel()).isEqualTo(single.toString());
-            assertThat(o.getSeriesMetaData()).isEmpty();
-            assertThat(o.getSeriesData().get().getLength()).isEqualTo(55);
+            assertThat(o.getSeriesMetaData()).containsKey("TIME_FORMAT");
+            assertThat(o.getSeriesData().isPresent()).isFalse();
+            assertThat(o.getSeriesData().getCause()).startsWith("Cannot guess").contains("duplicated");
             assertThat(o.nextSeries()).isFalse();
         }
     }
 
     @Test
     public void testGetSeriesWithData20() throws Exception {
-        SdmxConnection conn = FacadeResource.nbb().asConnection();
+        Connection conn = asConnection(FacadeResource.nbb(), EnumSet.noneOf(Feature.class));
 
-        try (TsCursor<Key> c = getSeriesWithData(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", "M"), SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> c = getSeriesWithData(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", "M"), SdmxQueryUtil.NO_LABEL)) {
             assertThat(c.nextSeries()).isTrue();
-            TsData o = c.getSeriesData().get();
-            assertThat(o.getStart()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1966, 1));
-            assertThat(o.getLastPeriod()).isEqualTo(new TsPeriod(TsFrequency.Monthly, 1970, 7));
-            assertThat(o.getLength()).isEqualTo(55);
-            assertThat(o.getObsCount()).isEqualTo(54);
-            assertThat(o.isMissing(50)).isTrue(); // 1970-04
-            assertThat(o.get(0)).isEqualTo(98.68823);
-            assertThat(o.get(54)).isEqualTo(101.1945);
+            assertThat(c.getSeriesData().isPresent()).isFalse();
+            assertThat(c.getSeriesData().getCause()).startsWith("Cannot guess").contains("duplicated");
             assertThat(c.nextSeries()).isFalse();
         }
     }
 
     @Test
     public void testGetChildren20() throws Exception {
-        SdmxConnection conn = FacadeResource.nbb().asConnection();
+        Connection conn = asConnection(FacadeResource.nbb(), EnumSet.noneOf(Feature.class));
 
-        assertThat(getChildren(conn, NBB_FLOW_REF, Key.ALL, 1)).containsExactly("LOCSTL04");
-        assertThat(getChildren(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", ""), 2)).containsExactly("AUS");
-        assertThat(getChildren(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", ""), 3)).containsExactly("M");
-        assertThat(getChildren(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", "M"), 2)).containsExactly("AUS");
+        assertThat(getChildren(conn, NBB_FLOW_REF, Key.ALL, 0)).containsExactly("LOCSTL04");
+        assertThat(getChildren(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", ""), 1)).containsExactly("AUS");
+        assertThat(getChildren(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "AUS", ""), 2)).containsExactly("M");
+        assertThat(getChildren(conn, NBB_FLOW_REF, Key.of("LOCSTL04", "", "M"), 1)).containsExactly("AUS");
     }
 
     @Test
     public void testGetAllSeries21() throws Exception {
-        SdmxConnection conn = FacadeResource.ecb().asConnection();
+        Connection conn = asConnection(FacadeResource.ecb(), EnumSet.allOf(Feature.class));
         Key key;
 
         key = Key.ALL;
-        try (TsCursor<Key> o = getAllSeries(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
+        try ( TsCursor<Key> o = getAllSeries(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
             int index = 0;
             while (o.nextSeries()) {
                 switch (index++) {
@@ -160,7 +172,7 @@ public class SdmxQueryUtilTest {
         }
 
         key = Key.of("A", "", "", "", "", "", "");
-        try (TsCursor<Key> o = getAllSeries(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
+        try ( TsCursor<Key> o = getAllSeries(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
             int index = 0;
             while (o.nextSeries()) {
                 index++;
@@ -170,7 +182,7 @@ public class SdmxQueryUtilTest {
         }
 
         key = Key.of("A", "DEU", "", "", "", "", "");
-        try (TsCursor<Key> o = getAllSeries(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
+        try ( TsCursor<Key> o = getAllSeries(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
             int index = 0;
             while (o.nextSeries()) {
                 index++;
@@ -182,11 +194,11 @@ public class SdmxQueryUtilTest {
 
     @Test
     public void testGetAllSeriesWithData21() throws Exception {
-        SdmxConnection conn = FacadeResource.ecb().asConnection();
+        Connection conn = asConnection(FacadeResource.ecb(), EnumSet.allOf(Feature.class));
         Key key;
 
         key = Key.ALL;
-        try (TsCursor<Key> o = getAllSeriesWithData(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
+        try ( TsCursor<Key> o = getAllSeriesWithData(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
             int index = 0;
             while (o.nextSeries()) {
                 switch (index++) {
@@ -203,7 +215,7 @@ public class SdmxQueryUtilTest {
         }
 
         key = Key.of("A", "DEU", "", "", "", "", "");
-        try (TsCursor<Key> o = getAllSeriesWithData(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
+        try ( TsCursor<Key> o = getAllSeriesWithData(conn, ECB_FLOW_REF, key, "EXT_TITLE")) {
             int index = 0;
             while (o.nextSeries()) {
                 switch (index++) {
@@ -222,11 +234,11 @@ public class SdmxQueryUtilTest {
 
     @Test
     public void testGetSeriesWithData21() throws Exception {
-        SdmxConnection conn = FacadeResource.ecb().asConnection();
+        Connection conn = asConnection(FacadeResource.ecb(), EnumSet.allOf(Feature.class));
 
         Key key = Key.of("A", "DEU", "1", "0", "319", "0", "UBLGE");
 
-        try (TsCursor<Key> c = getSeriesWithData(conn, ECB_FLOW_REF, key, SdmxQueryUtil.NO_LABEL)) {
+        try ( TsCursor<Key> c = getSeriesWithData(conn, ECB_FLOW_REF, key, SdmxQueryUtil.NO_LABEL)) {
             assertThat(c.nextSeries()).isTrue();
             TsData o = c.getSeriesData().get();
             assertThat(o.getStart()).isEqualTo(new TsPeriod(TsFrequency.Yearly, 1991, 0));
@@ -241,11 +253,11 @@ public class SdmxQueryUtilTest {
 
     @Test
     public void testGetChildren21() throws Exception {
-        SdmxConnection conn = FacadeResource.ecb().asConnection();
+        Connection conn = asConnection(FacadeResource.ecb(), EnumSet.allOf(Feature.class));
 
-        assertThat(getChildren(conn, ECB_FLOW_REF, Key.ALL, 1)).containsExactly("A");
-        assertThat(getChildren(conn, ECB_FLOW_REF, Key.of("A", "", "", "", "", "", ""), 2)).hasSize(30).contains("BEL", "POL");
-        assertThat(getChildren(conn, ECB_FLOW_REF, Key.of("A", "BEL", "", "", "", "", ""), 3)).containsExactly("1");
-        assertThat(getChildren(conn, ECB_FLOW_REF, Key.of("hello", "", "", "", "", "", ""), 2)).isEmpty();
+        assertThat(getChildren(conn, ECB_FLOW_REF, Key.ALL, 0)).containsExactly("A");
+        assertThat(getChildren(conn, ECB_FLOW_REF, Key.of("A", "", "", "", "", "", ""), 1)).hasSize(30).contains("BEL", "POL");
+        assertThat(getChildren(conn, ECB_FLOW_REF, Key.of("A", "BEL", "", "", "", "", ""), 2)).containsExactly("1");
+        assertThatIllegalArgumentException().isThrownBy(() -> getChildren(conn, ECB_FLOW_REF, Key.of("hello", "", "", "", "", "", ""), 1));
     }
 }

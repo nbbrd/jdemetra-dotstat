@@ -20,8 +20,7 @@ import be.nbb.demetra.sdmx.HasSdmxProperties;
 import sdmxdl.DataStructure;
 import sdmxdl.Dimension;
 import sdmxdl.Key;
-import sdmxdl.SdmxConnection;
-import sdmxdl.SdmxManager;
+import sdmxdl.Connection;
 import sdmxdl.web.SdmxWebManager;
 import com.google.common.collect.Maps;
 import ec.tss.ITsProvider;
@@ -33,6 +32,7 @@ import ec.tss.tsproviders.db.DbBean;
 import ec.tss.tsproviders.db.DbProvider;
 import internal.sdmx.SdmxPropertiesSupport;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Map;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -45,12 +45,12 @@ import org.slf4j.LoggerFactory;
  */
 @Deprecated
 @ServiceProvider(service = ITsProvider.class)
-public final class DotStatProvider extends DbProvider<DotStatBean> implements HasSdmxProperties {
+public final class DotStatProvider extends DbProvider<DotStatBean> implements HasSdmxProperties<SdmxWebManager> {
 
     public static final String NAME = "DOTSTAT", VERSION = "20150203";
 
     @lombok.experimental.Delegate
-    private final HasSdmxProperties properties;
+    private final HasSdmxProperties<SdmxWebManager> properties;
 
     private boolean displayCodes;
 
@@ -84,8 +84,8 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     public String getDisplayName(DataSource dataSource) {
         DotStatBean bean = decodeBean(dataSource);
         if (!displayCodes) {
-            try (SdmxConnection conn = connect(bean.getDbName())) {
-                return String.format("%s ~ %s", bean.getDbName(), conn.getFlow(bean.getFlowRef()).getLabel());
+            try (Connection conn = connect(bean.getDbName())) {
+                return String.format(Locale.ROOT, "%s ~ %s", bean.getDbName(), conn.getFlow(bean.getFlowRef()).getName());
             } catch (IOException | RuntimeException ex) {
             }
         }
@@ -95,7 +95,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     @Override
     public String getDisplayName(DataSet dataSet) {
         DotStatBean bean = decodeBean(dataSet.getDataSource());
-        try (SdmxConnection conn = connect(bean.getDbName())) {
+        try (Connection conn = connect(bean.getDbName())) {
             DataStructure dfs = conn.getStructure(bean.getFlowRef());
             Key.Builder b = Key.builder(dfs);
             for (Dimension o : dfs.getDimensions()) {
@@ -116,7 +116,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
         if (nodeDim != null) {
             if (!displayCodes) {
                 DotStatBean bean = decodeBean(dataSet.getDataSource());
-                try (SdmxConnection conn = connect(bean.getDbName())) {
+                try (Connection conn = connect(bean.getDbName())) {
                     DataStructure dfs = conn.getStructure(bean.getFlowRef());
                     for (Dimension o : dfs.getDimensions()) {
                         if (o.getId().equals(nodeDim.getKey())) {
@@ -143,10 +143,10 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     }
 
     public void setPreferredLanguage(@Nullable String lang) {
-        SdmxManager manager = getSdmxManager();
-        if (manager instanceof SdmxWebManager && lang != null) {
+        SdmxWebManager manager = getSdmxManager();
+        if (lang != null) {
             SdmxPropertiesSupport.tryParseLangs(lang)
-                    .ifPresent(newLang -> setSdmxManager(((SdmxWebManager) manager).toBuilder().languages(newLang).build()));
+                    .ifPresent(newLang -> setSdmxManager(manager.toBuilder().languages(newLang).build()));
         }
     }
 
@@ -158,7 +158,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
         this.displayCodes = displayCodes;
     }
 
-    private SdmxConnection connect(String name) throws IOException {
+    private Connection connect(String name) throws IOException {
         return getSdmxManager().getConnection(name);
     }
 
