@@ -53,7 +53,7 @@ public class DotStatAccessorTest {
                 .builder()
                 .driver(MockedDriver
                         .builder()
-                        .name("test")
+                        .id("test")
                         .repo(FacadeResource.nbb(), EnumSet.noneOf(Feature.class))
                         .repo(FacadeResource.ecb(), EnumSet.allOf(Feature.class))
                         .build())

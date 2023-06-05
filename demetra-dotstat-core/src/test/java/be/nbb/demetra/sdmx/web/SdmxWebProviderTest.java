@@ -102,7 +102,7 @@ public class SdmxWebProviderTest {
                 .builder()
                 .driver(MockedDriver
                         .builder()
-                        .name("demo")
+                        .id("demo")
                         .repo(RepoSamples.REPO, EnumSet.allOf(Feature.class))
                         .build())
                 .build();

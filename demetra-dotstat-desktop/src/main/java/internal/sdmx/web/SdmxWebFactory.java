@@ -2,11 +2,6 @@ package internal.sdmx.web;
 
 import ec.nbdemetra.ui.notification.MessageUtil;
 import internal.http.curl.CurlHttpURLConnection;
-import java.net.ProxySelector;
-import java.util.function.BiConsumer;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSocketFactory;
-
 import lombok.NonNull;
 import nbbrd.net.proxy.SystemProxySelector;
 import nl.altindag.ssl.SSLFactory;
@@ -14,13 +9,19 @@ import org.openide.awt.StatusDisplayer;
 import sdmxdl.DataRepository;
 import sdmxdl.ext.Cache;
 import sdmxdl.format.FileFormat;
-import sdmxdl.format.kryo.KryoFileFormat;
+import sdmxdl.format.spi.FileFormatProvider;
+import sdmxdl.format.spi.FileFormatProviderLoader;
 import sdmxdl.provider.ext.FileCache;
 import sdmxdl.provider.ext.VerboseCache;
 import sdmxdl.web.MonitorReports;
 import sdmxdl.web.Network;
 import sdmxdl.web.SdmxWebManager;
 import sdmxdl.web.URLConnectionFactory;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSocketFactory;
+import java.net.ProxySelector;
+import java.util.function.BiConsumer;
 
 @lombok.experimental.UtilityClass
 public class SdmxWebFactory {
@@ -70,22 +71,15 @@ public class SdmxWebFactory {
     }
 
     private static FileCache getFileCache(boolean noCacheCompression) {
+        FileFormatProvider formatProvider = FileFormatProviderLoader.load().stream().findFirst().orElseThrow(RuntimeException::new);
+        FileFormat<DataRepository> repositoryFormat = formatProvider.getDataRepositoryFormat();
+        FileFormat<MonitorReports> monitorFormat = formatProvider.getMonitorReportsFormat();
         return FileCache
                 .builder()
-                .repositoryFormat(getRepositoryFormat(noCacheCompression))
-                .monitorFormat(getMonitorFormat(noCacheCompression))
+                .repositoryFormat(noCacheCompression ? repositoryFormat : FileFormat.gzip(repositoryFormat))
+                .monitorFormat(noCacheCompression ? monitorFormat : FileFormat.gzip(monitorFormat))
                 .onIOException(MessageUtil::showException)
                 .build();
-    }
-
-    private static FileFormat<DataRepository> getRepositoryFormat(boolean noCacheCompression) {
-        FileFormat<DataRepository> result = FileFormat.of(KryoFileFormat.REPOSITORY, ".kryo");
-        return noCacheCompression ? result : FileFormat.gzip(result);
-    }
-
-    private static FileFormat<MonitorReports> getMonitorFormat(boolean noCacheCompression) {
-        FileFormat<MonitorReports> result = FileFormat.of(KryoFileFormat.MONITOR, ".kryo");
-        return noCacheCompression ? result : FileFormat.gzip(result);
     }
 
     private static Cache getVerboseCache(Cache delegate, boolean verbose) {
