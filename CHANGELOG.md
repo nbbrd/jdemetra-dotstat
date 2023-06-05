@@ -6,7 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-[JDemetra+ 2.2.3 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
+This is a feature release of **jdemetra-dotstat**.  
+[JDemetra+ 2.2.4 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
 
 ### Added
 
@@ -15,7 +16,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add source from Statistics Luxembourg
 - Add source from National Statistical Office of Thailand
 - Add source favicon and default SDMX icon
+- Add source from UN International Children's Emergency Fund
+- Add sources from Directorates General of the European Commission
+- Add source from Eurostat International trade in goods
 - Add support of multi-language descriptions in sources
+- Add curl backend option
 
 ### Fixed
 
@@ -25,6 +30,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Improve browsing by preloading resources
+- Modify ISTAT endpoint
+- Improve Eurostat driver
 
 ## [2.2.5] - 2021-09-14
 
