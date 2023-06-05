@@ -5,7 +5,7 @@
 
     <groupId>be.nbb.demetra</groupId>
     <artifactId>demetra-dotstat-parent</artifactId>
-    <version>2.2.6-SNAPSHOT</version>
+    <version>2.2.6</version>
     <packaging>pom</packaging>
 
     <name>Demetra - DotStat</name>
