@@ -17,6 +17,7 @@
 package be.nbb.demetra.dotstat;
 
 import be.nbb.demetra.sdmx.web.SdmxWebProviderBuddy;
+import sdmxdl.Languages;
 import sdmxdl.web.SdmxWebManager;
 import sdmxdl.web.SdmxWebSource;
 import ec.nbdemetra.ui.completion.JAutoCompletionService;
@@ -57,7 +58,6 @@ import org.openide.util.lookup.AbstractLookup;
 import org.openide.util.lookup.InstanceContent;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
-import sdmxdl.LanguagePriorityList;
 
 final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
 
@@ -285,10 +285,10 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
         return Optional.ofNullable(Lookup.getDefault().lookup(SdmxWebProviderBuddy.class));
     }
 
-    private void loadSources(SdmxWebManager webManager) {
+    private void loadSources(SdmxWebManager webManager, Languages languages) {
         AbstractNodeBuilder b = new AbstractNodeBuilder();
         // webManager.getCustomSources().forEach(x -> b.add(new ConfigNode(x, true)));
-        webManager.getSources().values().stream().filter(source -> !source.isAlias()).forEach(x -> b.add(new ConfigNode(x, false, webManager.getLanguages())));
+        webManager.getSources().values().stream().filter(source -> !source.isAlias()).forEach(x -> b.add(new ConfigNode(x, false, languages)));
         em.setRootContext(b.name("root").build());
     }
 
@@ -299,7 +299,7 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
             displayCodesCheckBox.setSelected(bean.isDisplayCodes());
             curlBackendCheckBox.setSelected(bean.isCurlBackend());
             customSources.setText(bean.getCustomSources().toString());
-            loadSources(buddy.getWebManager());
+            loadSources(buddy.getWebManager(), buddy.getLanguages());
         });
     }
 
@@ -338,13 +338,13 @@ final class DotStatPanel extends javax.swing.JPanel implements ExplorerManager.P
 
     private static final class ConfigNode extends AbstractNode {
 
-        private final LanguagePriorityList langs;
+        private final Languages langs;
         
-        public ConfigNode(SdmxWebSource source, boolean customSource, LanguagePriorityList langs) {
+        public ConfigNode(SdmxWebSource source, boolean customSource, Languages langs) {
             this(source, customSource, new InstanceContent(), langs);
         }
 
-        private ConfigNode(SdmxWebSource source, boolean customSource, InstanceContent abilities, LanguagePriorityList langs) {
+        private ConfigNode(SdmxWebSource source, boolean customSource, InstanceContent abilities, Languages langs) {
             super(Children.LEAF, new ProxyLookup(Lookups.singleton(source), new AbstractLookup(abilities)));
             this.langs = langs;
             setDisplayName(source.getId());

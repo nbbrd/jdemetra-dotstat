@@ -1,25 +1,22 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package be.nbb.demetra.sdmx.file;
 
 import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
-import nbbrd.io.function.IOFunction;
-import sdmxdl.file.SdmxFileManager;
-import sdmxdl.file.SdmxFileSource;
 import com.google.common.base.Converter;
 import ec.nbdemetra.ui.BeanHandler;
 import ec.nbdemetra.ui.Config;
@@ -34,29 +31,33 @@ import ec.tss.tsproviders.HasFilePaths;
 import ec.tss.tsproviders.IFileLoader;
 import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxAutoCompletion;
-import static internal.sdmx.SdmxCubeItems.resolveFileSet;
-import java.awt.Image;
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.time.Clock;
-import java.time.Duration;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.Supplier;
+import nbbrd.io.function.IOFunction;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.awt.StatusDisplayer;
 import org.openide.nodes.Sheet;
 import org.openide.util.ImageUtilities;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import org.openide.util.Lookup;
+import sdmxdl.file.SdmxFileManager;
+import sdmxdl.file.SdmxFileSource;
+import sdmxdl.file.spi.FileCaching;
+import sdmxdl.format.MemCachingSupport;
 import sdmxdl.format.xml.XmlFileSource;
-import sdmxdl.provider.ext.MapCache;
+
+import java.awt.*;
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
+
+import static internal.sdmx.SdmxCubeItems.resolveFileSet;
 
 /**
- *
  * @author Philippe Charles
  * @since 2.2.1
  */
@@ -131,17 +132,17 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
     private static SdmxFileManager createManager() {
         return SdmxFileManager.ofServiceLoader()
                 .toBuilder()
-                .eventListener((src, msg) -> StatusDisplayer.getDefault().setStatusText(msg))
-                .cache(getCache())
+                .onEvent((src, marker, msg) -> StatusDisplayer.getDefault().setStatusText(msg.toString()))
+                .caching(getCaching())
                 .build();
     }
 
-    private static MapCache getCache() {
-        return MapCache.of(
-                GuavaCaches.softValuesCacheAsMap(),
-                GuavaCaches.softValuesCacheAsMap(),
-                Clock.systemDefaultZone()
-        );
+    private static FileCaching getCaching() {
+        return MemCachingSupport
+                .builder()
+                .id("SHARED_SOFT_MEM")
+                .repositoriesOf(GuavaCaches.softValuesCacheAsMap())
+                .build();
     }
 
     private static Optional<SdmxFileProvider> lookupProvider() {
@@ -189,7 +190,7 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
     }
 
     @NbBundle.Messages({
-        "bean.cache.description=Mechanism used to improve performance."})
+            "bean.cache.description=Mechanism used to improve performance."})
     private Sheet createSheet(SdmxFileBean bean, IFileLoader loader, SdmxFileManager manager) {
         Sheet result = new Sheet();
         NodePropertySetBuilder b = new NodePropertySetBuilder();
@@ -199,8 +200,8 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
     }
 
     @NbBundle.Messages({
-        "bean.file.display=Data file",
-        "bean.file.description=The path to the sdmx data file.",})
+            "bean.file.display=Data file",
+            "bean.file.description=The path to the sdmx data file.",})
     private NodePropertySetBuilder withSource(NodePropertySetBuilder b, SdmxFileBean bean, IFileLoader loader) {
         b.withFile()
                 .select(bean, "file")
@@ -214,14 +215,14 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
     }
 
     @NbBundle.Messages({
-        "bean.structureFile.display=Structure file",
-        "bean.structureFile.description=The path to the sdmx structure file.",
-        "bean.dialect.display=Dialect",
-        "bean.dialect.description=The name of the dialect used to parse the sdmx data file.",
-        "bean.dimensions.display=Dataflow dimensions",
-        "bean.dimensions.description=An optional comma-separated list of dimensions that defines the order used to hierarchise time series.",
-        "bean.labelAttribute.display=Series label attribute",
-        "bean.labelAttribute.description=An optional attribute that carries the label of time series."
+            "bean.structureFile.display=Structure file",
+            "bean.structureFile.description=The path to the sdmx structure file.",
+            "bean.dialect.display=Dialect",
+            "bean.dialect.description=The name of the dialect used to parse the sdmx data file.",
+            "bean.dimensions.display=Dataflow dimensions",
+            "bean.dimensions.description=An optional comma-separated list of dimensions that defines the order used to hierarchise time series.",
+            "bean.labelAttribute.display=Series label attribute",
+            "bean.labelAttribute.description=An optional attribute that carries the label of time series."
     })
     private NodePropertySetBuilder withOptions(NodePropertySetBuilder b, SdmxFileBean bean, IFileLoader loader, SdmxFileManager manager) {
         b.withFile()
@@ -231,14 +232,6 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
                 .filterForSwing(new FileLoaderFileFilter(loader))
                 .paths(loader.getPaths())
                 .directories(false)
-                .add();
-
-        b.withAutoCompletion()
-                .select(bean, "dialect")
-                .source(SdmxAutoCompletion.onDialects())
-                .cellRenderer(SdmxAutoCompletion.getDialectRenderer())
-                .display(Bundle.bean_dialect_display())
-                .description(Bundle.bean_dialect_description())
                 .add();
 
         Supplier<String> toSource = () -> tryResolveFileSet(loader, bean).map(IOFunction.unchecked(XmlFileSource.getFormatter()::formatToString)).orElse("");

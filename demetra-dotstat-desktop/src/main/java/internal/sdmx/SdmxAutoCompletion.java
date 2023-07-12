@@ -22,7 +22,6 @@ import ec.tstoolkit.utilities.GuavaCaches;
 import ec.util.completion.AutoCompletionSource;
 import ec.util.completion.ExtAutoCompletionSource;
 import ec.util.completion.swing.CustomListCellRenderer;
-import internal.util.DialectLoader;
 import nbbrd.desktop.favicon.DomainName;
 import nbbrd.desktop.favicon.FaviconRef;
 import nbbrd.desktop.favicon.FaviconSupport;
@@ -30,10 +29,11 @@ import nbbrd.desktop.favicon.URLConnectionFactory;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import sdmxdl.*;
-import sdmxdl.ext.spi.Dialect;
-import sdmxdl.web.Network;
 import sdmxdl.web.SdmxWebManager;
 import sdmxdl.web.SdmxWebSource;
+import sdmxdl.web.spi.Network;
+import sdmxdl.web.spi.Networking;
+import sdmxdl.web.spi.SSLFactory;
 import shaded.dotstat.nbbrd.io.WrappedIOException;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -61,32 +61,11 @@ import static ec.util.completion.AutoCompletionSource.Behavior.*;
 @lombok.experimental.UtilityClass
 public class SdmxAutoCompletion {
 
-    public AutoCompletionSource onDialects() {
-        return ExtAutoCompletionSource
-                .builder(o -> new DialectLoader().get())
-                .behavior(AutoCompletionSource.Behavior.SYNC)
-                .postProcessor(SdmxAutoCompletion::filterAndSortDialects)
-                .valueToString(Dialect::getName)
-                .build();
-    }
-
-    private List<Dialect> filterAndSortDialects(List<Dialect> allValues, String term) {
-        Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
-        return allValues.stream()
-                .filter(o -> filter.test(o.getDescription()) || filter.test(o.getName()))
-                .sorted(Comparator.comparing(Dialect::getDescription))
-                .collect(Collectors.toList());
-    }
-
-    public ListCellRenderer getDialectRenderer() {
-        return CustomListCellRenderer.of(Dialect::getName, Dialect::getDescription);
-    }
-
-    public AutoCompletionSource onSources(SdmxWebManager manager) {
+    public AutoCompletionSource onSources(SdmxWebManager manager, Languages languages) {
         return ExtAutoCompletionSource
                 .builder(term -> getAllSources(manager))
                 .behavior(AutoCompletionSource.Behavior.SYNC)
-                .postProcessor((values, term) -> filterAndSortSources(values, term, manager.getLanguages()))
+                .postProcessor((values, term) -> filterAndSortSources(values, term, languages))
                 .valueToString(SdmxWebSource::getId)
                 .build();
     }
@@ -127,18 +106,27 @@ public class SdmxAutoCompletion {
 
         @Override
         public URLConnection openConnection(URL url) throws IOException {
-            Network network = getNetwork();
+            Network network = getNetworking().getNetwork(asSource(url));
             Proxy proxy = selectProxy(network, url);
             URLConnection result = network.getURLConnectionFactory().openConnection(url, proxy);
             applyHttps(result, network);
             return result;
         }
 
+        private static SdmxWebSource asSource(URL url) throws IOException {
+            try {
+                return SdmxWebSource.builder().id("").endpoint(url.toURI()).driver("").build();
+            } catch (URISyntaxException ex) {
+                throw new IOException(ex);
+            }
+        }
+
         private static void applyHttps(URLConnection result, Network network) {
             if (result instanceof HttpsURLConnection) {
                 HttpsURLConnection https = (HttpsURLConnection) result;
-                https.setHostnameVerifier(network.getHostnameVerifier());
-                https.setSSLSocketFactory(network.getSSLSocketFactory());
+                SSLFactory sslFactory = network.getSSLFactory();
+                https.setHostnameVerifier(sslFactory.getHostnameVerifier());
+                https.setSSLSocketFactory(sslFactory.getSSLSocketFactory());
             }
         }
 
@@ -150,18 +138,18 @@ public class SdmxAutoCompletion {
             }
         }
 
-        private static Network getNetwork() {
+        private static Networking getNetworking() {
             return Optional.ofNullable(Lookup.getDefault().lookup(SdmxWebProvider.class))
-                    .map(provider -> provider.getSdmxManager().getNetwork())
-                    .orElseGet(Network::getDefault);
+                    .map(provider -> provider.getSdmxManager().getNetworking())
+                    .orElseGet(Networking::getDefault);
         }
     }
 
-    public ListCellRenderer getSourceRenderer(SdmxWebManager manager) {
+    public ListCellRenderer getSourceRenderer(SdmxWebManager manager, Languages languages) {
         return new CustomListCellRenderer<SdmxWebSource>() {
             @Override
             protected String getValueAsString(SdmxWebSource value) {
-                return getNameAndDescription(value, manager.getLanguages());
+                return getNameAndDescription(value, languages);
             }
 
             @Override
@@ -171,17 +159,17 @@ public class SdmxAutoCompletion {
         };
     }
 
-    private String getNameAndDescription(SdmxWebSource o, LanguagePriorityList langs) {
+    private String getNameAndDescription(SdmxWebSource o, Languages langs) {
         return o.getId() + ": " + langs.select(o.getNames());
     }
 
-    public AutoCompletionSource onFlows(SdmxWebManager manager, Supplier<String> source, ConcurrentMap cache) {
+    public AutoCompletionSource onFlows(SdmxWebManager manager, Languages languages, Supplier<String> source, ConcurrentMap cache) {
         return ExtAutoCompletionSource
-                .builder(o -> loadFlows(manager, source))
+                .builder(o -> loadFlows(manager, languages, source))
                 .behavior(o -> canLoadFlows(source) ? ASYNC : NONE)
                 .postProcessor(SdmxAutoCompletion::filterAndSortFlows)
                 .valueToString(o -> o.getRef().toString())
-                .cache(cache, o -> getFlowCacheKey(source, manager.getLanguages()), SYNC)
+                .cache(cache, o -> getFlowCacheKey(source, languages), SYNC)
                 .build();
     }
 
@@ -189,13 +177,13 @@ public class SdmxAutoCompletion {
         return CustomListCellRenderer.of(Dataflow::getName, o -> o.getRef().toString());
     }
 
-    public AutoCompletionSource onDimensions(SdmxWebManager manager, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache) {
+    public AutoCompletionSource onDimensions(SdmxWebManager manager, Languages languages, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache) {
         return ExtAutoCompletionSource
-                .builder(o -> loadDimensions(manager, source, flow))
+                .builder(o -> loadDimensions(manager, languages, source, flow))
                 .behavior(o -> canLoadDimensions(source, flow) ? ASYNC : NONE)
                 .postProcessor(SdmxAutoCompletion::filterAndSortDimensions)
                 .valueToString(Dimension::getId)
-                .cache(cache, o -> getDimensionCacheKey(source, flow, manager.getLanguages()), SYNC)
+                .cache(cache, o -> getDimensionCacheKey(source, flow, languages), SYNC)
                 .build();
     }
 
@@ -203,11 +191,11 @@ public class SdmxAutoCompletion {
         return CustomListCellRenderer.of(Dimension::getId, Dimension::getName);
     }
 
-    public String getDefaultDimensionsAsString(SdmxWebManager manager, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache, CharSequence delimiter) throws Exception {
-        String key = getDimensionCacheKey(source, flow, manager.getLanguages());
+    public String getDefaultDimensionsAsString(SdmxWebManager manager, Languages languages, Supplier<String> source, Supplier<String> flow, ConcurrentMap cache, CharSequence delimiter) throws Exception {
+        String key = getDimensionCacheKey(source, flow, languages);
         List<Dimension> result = (List<Dimension>) cache.get(key);
         if (result == null) {
-            result = loadDimensions(manager, source, flow);
+            result = loadDimensions(manager, languages, source, flow);
             cache.put(key, result);
         }
         return result.stream()
@@ -216,7 +204,7 @@ public class SdmxAutoCompletion {
                 .collect(Collectors.joining(delimiter));
     }
 
-    private List<SdmxWebSource> filterAndSortSources(List<SdmxWebSource> allValues, String term, LanguagePriorityList langs) {
+    private List<SdmxWebSource> filterAndSortSources(List<SdmxWebSource> allValues, String term, Languages langs) {
         Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
         return allValues
                 .stream()
@@ -224,7 +212,7 @@ public class SdmxAutoCompletion {
                 .collect(Collectors.toList());
     }
 
-    private static boolean filterSource(SdmxWebSource source, Predicate<String> filter, LanguagePriorityList langs) {
+    private static boolean filterSource(SdmxWebSource source, Predicate<String> filter, Languages langs) {
         return filter.test(langs.select(source.getNames()))
                 || filter.test(source.getId())
                 || source.getAliases().stream().anyMatch(filter);
@@ -234,8 +222,8 @@ public class SdmxAutoCompletion {
         return !Strings.isNullOrEmpty(source.get());
     }
 
-    private List<Dataflow> loadFlows(SdmxWebManager manager, Supplier<String> source) throws IOException {
-        try (Connection c = manager.getConnection(source.get())) {
+    private List<Dataflow> loadFlows(SdmxWebManager manager, Languages languages, Supplier<String> source) throws IOException {
+        try (Connection c = manager.getConnection(source.get(), languages)) {
             return new ArrayList<>(c.getFlows());
         } catch (RuntimeException ex) {
             throw WrappedIOException.wrap(ex);
@@ -250,7 +238,7 @@ public class SdmxAutoCompletion {
                 .collect(Collectors.toList());
     }
 
-    private String getFlowCacheKey(Supplier<String> source, LanguagePriorityList languages) {
+    private String getFlowCacheKey(Supplier<String> source, Languages languages) {
         return source.get() + languages.toString();
     }
 
@@ -258,8 +246,8 @@ public class SdmxAutoCompletion {
         return canLoadFlows(source) && !Strings.isNullOrEmpty(flow.get());
     }
 
-    private List<Dimension> loadDimensions(SdmxWebManager manager, Supplier<String> source, Supplier<String> flow) throws IOException {
-        try (Connection c = manager.getConnection(source.get())) {
+    private List<Dimension> loadDimensions(SdmxWebManager manager, Languages languages, Supplier<String> source, Supplier<String> flow) throws IOException {
+        try (Connection c = manager.getConnection(source.get(), languages)) {
             return new ArrayList<>(c.getStructure(DataflowRef.parse(flow.get())).getDimensions());
         } catch (RuntimeException ex) {
             throw WrappedIOException.wrap(ex);
@@ -274,7 +262,7 @@ public class SdmxAutoCompletion {
                 .collect(Collectors.toList());
     }
 
-    private String getDimensionCacheKey(Supplier<String> source, Supplier<String> flow, LanguagePriorityList languages) {
+    private String getDimensionCacheKey(Supplier<String> source, Supplier<String> flow, Languages languages) {
         return source.get() + "/" + flow.get() + languages.toString();
     }
 }

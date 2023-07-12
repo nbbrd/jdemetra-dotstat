@@ -16,7 +16,7 @@
  */
 package internal.sdmx;
 
-import sdmxdl.Key;
+import sdmxdl.*;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
@@ -31,9 +31,6 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import org.junit.jupiter.api.Test;
-import sdmxdl.Connection;
-import sdmxdl.DataRepository;
-import sdmxdl.Feature;
 import sdmxdl.web.SdmxWebSource;
 import sdmxdl.web.spi.WebContext;
 import test.samples.FacadeResource;
@@ -52,7 +49,7 @@ public class SdmxQueryUtilTest {
     private Connection asConnection(DataRepository repo, Set<Feature> features) throws IOException {
         MockedDriver driver = MockedDriver.builder().repo(repo, features).build();
         SdmxWebSource source = driver.getDefaultSources().iterator().next();
-        return driver.connect(source, WebContext.builder().build());
+        return driver.connect(source, Languages.ANY, WebContext.builder().build());
     }
 
     @Test

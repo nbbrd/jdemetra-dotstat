@@ -162,7 +162,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties<Sd
 
         private static IOSupplier<Connection> toConnection(HasSdmxProperties<SdmxFileManager> properties, SdmxFileSource files) throws IOException {
             SdmxFileManager manager = properties.getSdmxManager();
-            return () -> manager.getConnection(files);
+            return () -> manager.getConnection(files, properties.getLanguages());
         }
     }
 

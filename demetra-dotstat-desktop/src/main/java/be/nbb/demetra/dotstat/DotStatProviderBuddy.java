@@ -1,17 +1,17 @@
 /*
  * Copyright 2015 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package be.nbb.demetra.dotstat;
@@ -27,23 +27,23 @@ import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
 import ec.tss.tsproviders.TsProviders;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tss.tsproviders.utils.Params;
+import ec.tstoolkit.utilities.GuavaCaches;
 import ec.util.completion.AutoCompletionSource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentMap;
-import javax.swing.ListCellRenderer;
+import internal.sdmx.SdmxAutoCompletion;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.ServiceProvider;
-import ec.tstoolkit.utilities.GuavaCaches;
-import internal.sdmx.SdmxAutoCompletion;
+
+import javax.swing.*;
 import java.io.File;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentMap;
 
 /**
- *
  * @author Philippe Charles
  */
 @Deprecated
@@ -105,7 +105,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
         Optional<DotStatProvider> provider = lookupProvider();
         if (provider.isPresent()) {
             DotStatProvider o = provider.get();
-            return () -> SdmxAutoCompletion.getDefaultDimensionsAsString(o.getSdmxManager(), bean::getDbName, bean::getTableName, autoCompletionCache, ",");
+            return () -> SdmxAutoCompletion.getDefaultDimensionsAsString(o.getSdmxManager(), o.getLanguages(), bean::getDbName, bean::getTableName, autoCompletionCache, ",");
         }
         return () -> "";
     }
@@ -124,7 +124,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
         Optional<DotStatProvider> provider = lookupProvider();
         if (provider.isPresent()) {
             DotStatProvider o = provider.get();
-            return SdmxAutoCompletion.onFlows(o.getSdmxManager(), bean::getDbName, autoCompletionCache);
+            return SdmxAutoCompletion.onFlows(o.getSdmxManager(), o.getLanguages(), bean::getDbName, autoCompletionCache);
         }
         return super.getTableSource(bean);
     }
@@ -139,7 +139,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
         Optional<DotStatProvider> provider = lookupProvider();
         if (provider.isPresent()) {
             DotStatProvider o = provider.get();
-            return SdmxAutoCompletion.onDimensions(o.getSdmxManager(), bean::getDbName, bean::getTableName, autoCompletionCache);
+            return SdmxAutoCompletion.onDimensions(o.getSdmxManager(), o.getLanguages(), bean::getDbName, bean::getTableName, autoCompletionCache);
         }
         return super.getColumnSource(bean);
     }

@@ -42,10 +42,6 @@ public class SdmxCubeItems {
         if (structure != null && !structure.toString().isEmpty()) {
             result.structure(paths.resolveFilePath(structure));
         }
-        String dialect = bean.getDialect();
-        if (dialect != null && !dialect.isEmpty()) {
-            result.dialect(dialect);
-        }
         return result.build();
     }
 }

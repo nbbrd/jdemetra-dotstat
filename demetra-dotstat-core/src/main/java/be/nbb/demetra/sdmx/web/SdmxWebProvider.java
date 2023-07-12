@@ -148,7 +148,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
 
         private static IOSupplier<Connection> toConnection(HasSdmxProperties<SdmxWebManager> properties, String name) {
             SdmxWebManager manager = properties.getSdmxManager();
-            return () -> manager.getConnection(name);
+            return () -> manager.getConnection(name, properties.getLanguages());
         }
     }
 }

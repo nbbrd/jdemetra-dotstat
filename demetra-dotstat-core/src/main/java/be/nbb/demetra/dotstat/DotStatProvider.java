@@ -1,27 +1,22 @@
 /*
  * Copyright 2015 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package be.nbb.demetra.dotstat;
 
 import be.nbb.demetra.sdmx.HasSdmxProperties;
-import sdmxdl.DataStructure;
-import sdmxdl.Dimension;
-import sdmxdl.Key;
-import sdmxdl.Connection;
-import sdmxdl.web.SdmxWebManager;
 import com.google.common.collect.Maps;
 import ec.tss.ITsProvider;
 import ec.tss.TsAsyncMode;
@@ -31,16 +26,21 @@ import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbBean;
 import ec.tss.tsproviders.db.DbProvider;
 import internal.sdmx.SdmxPropertiesSupport;
-import java.io.IOException;
-import java.util.Locale;
-import java.util.Map;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.LoggerFactory;
+import sdmxdl.Connection;
+import sdmxdl.DataStructure;
+import sdmxdl.Dimension;
+import sdmxdl.Key;
+import sdmxdl.web.SdmxWebManager;
+
+import java.io.IOException;
+import java.util.Locale;
+import java.util.Map;
 
 /**
- *
  * @author Philippe Charles
  */
 @Deprecated
@@ -139,14 +139,12 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
 
     @NonNull
     public String getPreferredLanguage() {
-        return getSdmxManager().getLanguages().toString();
+        return getLanguages().toString();
     }
 
     public void setPreferredLanguage(@Nullable String lang) {
-        SdmxWebManager manager = getSdmxManager();
         if (lang != null) {
-            SdmxPropertiesSupport.tryParseLangs(lang)
-                    .ifPresent(newLang -> setSdmxManager(manager.toBuilder().languages(newLang).build()));
+            SdmxPropertiesSupport.tryParseLanguages(lang).ifPresent(this::setLanguages);
         }
     }
 
@@ -159,7 +157,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     }
 
     private Connection connect(String name) throws IOException {
-        return getSdmxManager().getConnection(name);
+        return getSdmxManager().getConnection(name, getLanguages());
     }
 
     private static Map.@Nullable Entry<String, String> getNodeDimension(DataSet dataSet) {

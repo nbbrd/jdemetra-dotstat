@@ -1,27 +1,17 @@
 package internal.sdmx.web;
 
-import ec.nbdemetra.ui.notification.MessageUtil;
-import internal.http.curl.CurlHttpURLConnection;
 import lombok.NonNull;
 import nbbrd.net.proxy.SystemProxySelector;
 import nl.altindag.ssl.SSLFactory;
 import org.openide.awt.StatusDisplayer;
-import sdmxdl.DataRepository;
-import sdmxdl.ext.Cache;
-import sdmxdl.format.FileFormat;
-import sdmxdl.format.spi.FileFormatProvider;
-import sdmxdl.format.spi.FileFormatProviderLoader;
-import sdmxdl.provider.ext.FileCache;
-import sdmxdl.provider.ext.VerboseCache;
-import sdmxdl.web.MonitorReports;
-import sdmxdl.web.Network;
+import sdmxdl.provider.web.SingleNetworkingSupport;
 import sdmxdl.web.SdmxWebManager;
-import sdmxdl.web.URLConnectionFactory;
+import sdmxdl.web.spi.Networking;
+import sdmxdl.web.spi.URLConnectionFactory;
+import shaded.dotstat.nbbrd.io.curl.CurlHttpURLConnection;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
-import java.net.ProxySelector;
-import java.util.function.BiConsumer;
 
 @lombok.experimental.UtilityClass
 public class SdmxWebFactory {
@@ -29,64 +19,44 @@ public class SdmxWebFactory {
     public static SdmxWebManager createManager(boolean curlBackend) {
         return SdmxWebManager.ofServiceLoader()
                 .toBuilder()
-                .eventListener((src, msg) -> StatusDisplayer.getDefault().setStatusText(msg))
-                .network(getNetworkFactory(curlBackend))
-                .cache(getCache())
+                .onEvent((src, marker, msg) -> StatusDisplayer.getDefault().setStatusText(msg.toString()))
+                .networking(getNetworking(curlBackend))
                 .build();
     }
 
-    private static Network getNetworkFactory(boolean curlBackend) {
-        SSLFactory sslFactory = SSLFactory
+    private static Networking getNetworking(boolean curlBackend) {
+        SystemProxySelector systemProxySelector = SystemProxySelector.ofServiceLoader();
+
+        sdmxdl.web.spi.SSLFactory sslFactory = new SSLFactoryAdapter(SSLFactory
                 .builder()
                 .withDefaultTrustMaterial()
                 .withSystemTrustMaterial()
-                .build();
+                .build());
 
-        return new Network() {
-            @Override
-            public HostnameVerifier getHostnameVerifier() {
-                return sslFactory.getHostnameVerifier();
-            }
+        URLConnectionFactory urlConnectionFactory = curlBackend ? CurlHttpURLConnection::of : URLConnectionFactory.getDefault();
 
-            @Override
-            public @NonNull URLConnectionFactory getURLConnectionFactory() {
-                return curlBackend ? CurlHttpURLConnection::of : URLConnectionFactory.getDefault();
-            }
-
-            @Override
-            public ProxySelector getProxySelector() {
-                return SystemProxySelector.ofServiceLoader();
-            }
-
-            @Override
-            public SSLSocketFactory getSSLSocketFactory() {
-                return sslFactory.getSslSocketFactory();
-            }
-        };
-    }
-
-    private static Cache getCache() {
-        FileCache fileCache = getFileCache(false);
-        return getVerboseCache(fileCache, true);
-    }
-
-    private static FileCache getFileCache(boolean noCacheCompression) {
-        FileFormatProvider formatProvider = FileFormatProviderLoader.load().stream().findFirst().orElseThrow(RuntimeException::new);
-        FileFormat<DataRepository> repositoryFormat = formatProvider.getDataRepositoryFormat();
-        FileFormat<MonitorReports> monitorFormat = formatProvider.getMonitorReportsFormat();
-        return FileCache
+        return SingleNetworkingSupport
                 .builder()
-                .repositoryFormat(noCacheCompression ? repositoryFormat : FileFormat.gzip(repositoryFormat))
-                .monitorFormat(noCacheCompression ? monitorFormat : FileFormat.gzip(monitorFormat))
-                .onIOException(MessageUtil::showException)
+                .id("DRY")
+                .proxySelector(() -> systemProxySelector)
+                .sslFactory(() -> sslFactory)
+                .urlConnectionFactory(() -> urlConnectionFactory)
                 .build();
     }
 
-    private static Cache getVerboseCache(Cache delegate, boolean verbose) {
-        if (verbose) {
-            BiConsumer<String, Boolean> listener = (key, hit) -> StatusDisplayer.getDefault().setStatusText((hit ? "Hit " : "Miss ") + key);
-            return new VerboseCache(delegate, listener, listener);
+    @lombok.AllArgsConstructor
+    private static final class SSLFactoryAdapter implements sdmxdl.web.spi.SSLFactory {
+
+        private final @NonNull SSLFactory delegate;
+
+        @Override
+        public @NonNull SSLSocketFactory getSSLSocketFactory() {
+            return delegate.getSslSocketFactory();
         }
-        return delegate;
+
+        @Override
+        public @NonNull HostnameVerifier getHostnameVerifier() {
+            return delegate.getHostnameVerifier();
+        }
     }
 }

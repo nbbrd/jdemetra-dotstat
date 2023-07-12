@@ -16,9 +16,7 @@
  */
 package be.nbb.demetra.dotstat;
 
-import sdmxdl.DataStructure;
-import sdmxdl.DataflowRef;
-import sdmxdl.Key;
+import sdmxdl.*;
 import com.google.common.collect.ImmutableList;
 import ec.tss.tsproviders.cursor.TsCursor;
 import ec.tss.tsproviders.db.DbAccessor;
@@ -28,7 +26,7 @@ import ec.tstoolkit.design.VisibleForTesting;
 import internal.sdmx.SdmxQueryUtil;
 import java.io.IOException;
 import java.util.List;
-import sdmxdl.Connection;
+
 import sdmxdl.ext.SdmxCubeUtil;
 import sdmxdl.web.SdmxWebManager;
 
@@ -40,6 +38,7 @@ import sdmxdl.web.SdmxWebManager;
 final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
 
     private final SdmxWebManager manager;
+    private final Languages languages = Languages.ANY;
 
     DotStatAccessor(DotStatBean dbBean, SdmxWebManager manager) {
         super(dbBean);
@@ -62,28 +61,28 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
 
     @Override
     protected List<DbSetId> getAllSeries(DbSetId ref) throws Exception {
-        try (Connection conn = manager.getConnection(dbBean.getDbName())) {
+        try (Connection conn = manager.getConnection(dbBean.getDbName(), languages)) {
             return getAllSeries(conn, dbBean.getFlowRef(), ref);
         }
     }
 
     @Override
     protected List<DbSeries> getAllSeriesWithData(DbSetId ref) throws Exception {
-        try (Connection conn = manager.getConnection(dbBean.getDbName())) {
+        try (Connection conn = manager.getConnection(dbBean.getDbName(), languages)) {
             return getAllSeriesWithData(conn, dbBean.getFlowRef(), ref);
         }
     }
 
     @Override
     protected DbSeries getSeriesWithData(DbSetId ref) throws Exception {
-        try (Connection conn = manager.getConnection(dbBean.getDbName())) {
+        try (Connection conn = manager.getConnection(dbBean.getDbName(), languages)) {
             return getSeriesWithData(conn, dbBean.getFlowRef(), ref);
         }
     }
 
     @Override
     protected List<String> getChildren(DbSetId ref) throws Exception {
-        try (Connection conn = manager.getConnection(dbBean.getDbName())) {
+        try (Connection conn = manager.getConnection(dbBean.getDbName(), languages)) {
             return getChildren(conn, dbBean.getFlowRef(), ref);
         }
     }
