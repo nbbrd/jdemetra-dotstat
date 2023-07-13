@@ -16,6 +16,7 @@
  */
 package internal.sdmx;
 
+import lombok.NonNull;
 import sdmxdl.DataStructure;
 import sdmxdl.Key;
 import ec.tss.tsproviders.cube.CubeAccessor;
@@ -54,7 +55,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     }
 
     private final IOSupplier<Connection> supplier;
-    private final Dataflow flowRef;
+    private final Dataflow flow;
     private final DataStructure dsd;
     private final CubeId root;
     private final String labelAttribute;
@@ -72,15 +73,15 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     }
 
     @Override
-    public CubeId getRoot() {
+    public @NonNull CubeId getRoot() {
         return root;
     }
 
     @Override
-    public TsCursor<CubeId> getAllSeries(CubeId ref) throws IOException {
+    public @NonNull TsCursor<CubeId> getAllSeries(@NonNull CubeId ref) throws IOException {
         Connection conn = supplier.getWithIO();
         try {
-            return getAllSeries(conn, flowRef, dsd, ref, labelAttribute).onClose(conn);
+            return getAllSeries(conn, flow, dsd, ref, labelAttribute).onClose(conn);
         } catch (IOException ex) {
             throw close(conn, ex);
         } catch (RuntimeException ex) {
@@ -89,10 +90,10 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     }
 
     @Override
-    public TsCursor<CubeId> getAllSeriesWithData(CubeId ref) throws IOException {
+    public @NonNull TsCursor<CubeId> getAllSeriesWithData(@NonNull CubeId ref) throws IOException {
         Connection conn = supplier.getWithIO();
         try {
-            return getAllSeriesWithData(conn, flowRef, dsd, ref, labelAttribute).onClose(conn);
+            return getAllSeriesWithData(conn, flow, dsd, ref, labelAttribute).onClose(conn);
         } catch (IOException ex) {
             throw close(conn, ex);
         } catch (RuntimeException ex) {
@@ -101,10 +102,10 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     }
 
     @Override
-    public TsCursor<CubeId> getSeriesWithData(CubeId ref) throws IOException {
+    public @NonNull TsCursor<CubeId> getSeriesWithData(@NonNull CubeId ref) throws IOException {
         Connection conn = supplier.getWithIO();
         try {
-            return getSeriesWithData(conn, flowRef, dsd, ref, labelAttribute).onClose(conn);
+            return getSeriesWithData(conn, flow, dsd, ref, labelAttribute).onClose(conn);
         } catch (IOException ex) {
             throw close(conn, ex);
         } catch (RuntimeException ex) {
@@ -113,10 +114,10 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     }
 
     @Override
-    public IteratorWithIO<CubeId> getChildren(CubeId ref) throws IOException {
+    public @NonNull IteratorWithIO<CubeId> getChildren(@NonNull CubeId ref) throws IOException {
         Connection conn = supplier.getWithIO();
         try {
-            return getChildren(conn, flowRef, dsd, ref).onClose(conn);
+            return getChildren(conn, flow, dsd, ref).onClose(conn);
         } catch (IOException ex) {
             throw close(conn, ex);
         } catch (RuntimeException ex) {
@@ -125,12 +126,12 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     }
 
     @Override
-    public String getDisplayName() {
-        return String.format(Locale.ROOT, "%s ~ %s", sourceLabel, flowRef.getName());
+    public @NonNull String getDisplayName() {
+        return String.format(Locale.ROOT, "%s ~ %s", sourceLabel, flow.getName());
     }
 
     @Override
-    public String getDisplayName(CubeId id) {
+    public @NonNull String getDisplayName(CubeId id) {
         if (id.isVoid()) {
             return "All";
         }
@@ -138,7 +139,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     }
 
     @Override
-    public String getDisplayNodeName(CubeId id) {
+    public @NonNull String getDisplayNodeName(CubeId id) {
         if (id.isVoid()) {
             return "All";
         }
@@ -188,8 +189,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
 
     private static String getDimensionCodeId(CubeId ref) {
         int index = ref.getLevel() - 1;
-        String codeId = ref.getDimensionValue(index);
-        return codeId;
+        return ref.getDimensionValue(index);
     }
 
     private static String getDimensionCodeLabel(CubeId ref, DataStructure dsd) {

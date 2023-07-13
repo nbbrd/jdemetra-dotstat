@@ -23,7 +23,6 @@ import nbbrd.io.function.IORunnable;
 import sdmxdl.Languages;
 import sdmxdl.SdmxManager;
 
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -72,14 +71,6 @@ public final class SdmxPropertiesSupport<M extends SdmxManager<?>> implements Ha
         Languages old = this.languages.get();
         if (this.languages.compareAndSet(old, languages != null ? languages : defaultLanguages.get())) {
             onLanguagesChange.run();
-        }
-    }
-
-    public static Optional<Languages> tryParseLanguages(String text) {
-        try {
-            return Optional.of(Languages.parse(text));
-        } catch (IllegalArgumentException ex) {
-            return Optional.empty();
         }
     }
 }

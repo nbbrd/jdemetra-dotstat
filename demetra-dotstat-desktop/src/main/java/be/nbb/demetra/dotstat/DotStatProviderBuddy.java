@@ -27,21 +27,16 @@ import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
 import ec.tss.tsproviders.TsProviders;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tss.tsproviders.utils.Params;
-import ec.tstoolkit.utilities.GuavaCaches;
-import ec.util.completion.AutoCompletionSource;
-import internal.sdmx.SdmxAutoCompletion;
+import internal.sdmx.SdmxWebSourceService;
+import lombok.NonNull;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.ServiceProvider;
 
-import javax.swing.*;
 import java.io.File;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Philippe Charles
@@ -51,15 +46,9 @@ import java.util.concurrent.ConcurrentMap;
 public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> implements IConfigurable {
 
     private final Configurator<DotStatProviderBuddy> configurator;
-    private final ListCellRenderer tableRenderer;
-    private final ListCellRenderer columnRenderer;
-    private final ConcurrentMap autoCompletionCache;
 
     public DotStatProviderBuddy() {
         this.configurator = createConfigurator();
-        this.tableRenderer = SdmxAutoCompletion.getFlowsRenderer();
-        this.columnRenderer = SdmxAutoCompletion.getDimensionsRenderer();
-        this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
     }
 
     @Override
@@ -68,7 +57,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
     }
 
     @Override
-    public String getProviderName() {
+    public @NonNull String getProviderName() {
         return DotStatProvider.NAME;
     }
 
@@ -82,7 +71,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
     }
 
     @Override
-    protected NodePropertySetBuilder withSource(NodePropertySetBuilder b, DotStatBean bean) {
+    protected @NonNull NodePropertySetBuilder withSource(@NonNull NodePropertySetBuilder b, @NonNull DotStatBean bean) {
         withDbName(b, bean);
         b.withAutoCompletion()
                 .select(bean, "tableName")
@@ -94,73 +83,33 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
                 .select(bean, "dimColumns")
                 .source(getColumnSource(bean))
                 .separator(",")
-                .defaultValueSupplier(getDefaultDimColumnsSupplier(bean))
                 .cellRenderer(getColumnRenderer(bean))
                 .display("Dimensions")
                 .add();
         return b;
     }
 
-    private Callable<String> getDefaultDimColumnsSupplier(DotStatBean bean) {
-        Optional<DotStatProvider> provider = lookupProvider();
-        if (provider.isPresent()) {
-            DotStatProvider o = provider.get();
-            return () -> SdmxAutoCompletion.getDefaultDimensionsAsString(o.getSdmxManager(), o.getLanguages(), bean::getDbName, bean::getTableName, autoCompletionCache, ",");
-        }
-        return () -> "";
-    }
-
     @Override
-    protected NodePropertySetBuilder withDbName(NodePropertySetBuilder b, DotStatBean bean) {
+    protected @NonNull NodePropertySetBuilder withDbName(NodePropertySetBuilder b, @NonNull DotStatBean bean) {
         return b.withAutoCompletion()
                 .select(bean, "dbName")
-                .servicePath(SdmxWsAutoCompletionService.PATH)
+                .servicePath(SdmxWebSourceService.PATH)
                 .display("REST endpoint name")
                 .add();
     }
 
     @Override
-    protected AutoCompletionSource getTableSource(DotStatBean bean) {
-        Optional<DotStatProvider> provider = lookupProvider();
-        if (provider.isPresent()) {
-            DotStatProvider o = provider.get();
-            return SdmxAutoCompletion.onFlows(o.getSdmxManager(), o.getLanguages(), bean::getDbName, autoCompletionCache);
-        }
-        return super.getTableSource(bean);
-    }
-
-    @Override
-    protected ListCellRenderer getTableRenderer(DotStatBean bean) {
-        return tableRenderer;
-    }
-
-    @Override
-    protected AutoCompletionSource getColumnSource(DotStatBean bean) {
-        Optional<DotStatProvider> provider = lookupProvider();
-        if (provider.isPresent()) {
-            DotStatProvider o = provider.get();
-            return SdmxAutoCompletion.onDimensions(o.getSdmxManager(), o.getLanguages(), bean::getDbName, bean::getTableName, autoCompletionCache);
-        }
-        return super.getColumnSource(bean);
-    }
-
-    @Override
-    protected ListCellRenderer getColumnRenderer(DotStatBean bean) {
-        return columnRenderer;
-    }
-
-    @Override
-    public Config getConfig() {
+    public @NonNull Config getConfig() {
         return configurator.getConfig(this);
     }
 
     @Override
-    public void setConfig(Config config) throws IllegalArgumentException {
+    public void setConfig(@NonNull Config config) throws IllegalArgumentException {
         configurator.setConfig(this, config);
     }
 
     @Override
-    public Config editConfig(Config config) throws IllegalArgumentException {
+    public @NonNull Config editConfig(@NonNull Config config) throws IllegalArgumentException {
         OptionsDisplayer.getDefault().open(DotStatOptionsPanelController.ID);
         return config;
     }
@@ -218,7 +167,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
     private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, DotStatProviderBuddy> {
 
         @Override
-        public BuddyConfig loadBean(DotStatProviderBuddy resource) {
+        public @NonNull BuddyConfig loadBean(@NonNull DotStatProviderBuddy resource) {
             BuddyConfig result = new BuddyConfig();
             lookupProvider().ifPresent(o -> {
                 result.setPreferredLanguage(o.getPreferredLanguage());
@@ -228,7 +177,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
         }
 
         @Override
-        public void storeBean(DotStatProviderBuddy resource, BuddyConfig bean) {
+        public void storeBean(@NonNull DotStatProviderBuddy resource, @NonNull BuddyConfig bean) {
             lookupProvider().ifPresent(o -> {
                 o.setPreferredLanguage(bean.getPreferredLanguage());
                 o.setDisplayCodes(bean.isDisplayCodes());

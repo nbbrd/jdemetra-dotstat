@@ -26,14 +26,12 @@ import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbBean;
 import ec.tss.tsproviders.db.DbProvider;
 import internal.sdmx.SdmxPropertiesSupport;
+import nbbrd.io.text.Parser;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.LoggerFactory;
-import sdmxdl.Connection;
-import sdmxdl.DataStructure;
-import sdmxdl.Dimension;
-import sdmxdl.Key;
+import sdmxdl.*;
 import sdmxdl.web.SdmxWebManager;
 
 import java.io.IOException;
@@ -61,7 +59,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     }
 
     @Override
-    protected DbAccessor<DotStatBean> loadFromBean(DotStatBean bean) throws Exception {
+    protected @lombok.NonNull DbAccessor<DotStatBean> loadFromBean(@lombok.NonNull DotStatBean bean) throws Exception {
         return new DotStatAccessor(bean, getSdmxManager()).memoize();
     }
 
@@ -76,7 +74,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     }
 
     @Override
-    public String getDisplayName() {
+    public @lombok.NonNull String getDisplayName() {
         return "SDMX Web Services";
     }
 
@@ -133,7 +131,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     }
 
     @Override
-    public DataSource encodeBean(Object bean) throws IllegalArgumentException {
+    public @lombok.NonNull DataSource encodeBean(@lombok.NonNull Object bean) throws IllegalArgumentException {
         return support.checkBean(bean, DotStatBean.class).toDataSource(NAME, VERSION);
     }
 
@@ -143,9 +141,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     }
 
     public void setPreferredLanguage(@Nullable String lang) {
-        if (lang != null) {
-            SdmxPropertiesSupport.tryParseLanguages(lang).ifPresent(this::setLanguages);
-        }
+        setLanguages(Parser.of(Languages::parse).parseValue(lang).orElse(Languages.ANY));
     }
 
     public boolean isDisplayCodes() {

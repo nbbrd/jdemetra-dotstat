@@ -1,17 +1,17 @@
 /*
  * Copyright 2016 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package be.nbb.demetra.sdmx.web;
@@ -25,16 +25,15 @@ import ec.tss.tsproviders.cube.CubeId;
 import ec.tss.tsproviders.cube.CubeSupport;
 import ec.tss.tsproviders.utils.IConfig;
 import ec.tss.tsproviders.utils.IParam;
-import static ec.tss.tsproviders.utils.Params.onInteger;
-import static ec.tss.tsproviders.utils.Params.onLong;
-import static ec.tss.tsproviders.utils.Params.onString;
-import static ec.tss.tsproviders.utils.Params.onStringList;
+import lombok.NonNull;
+
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static ec.tss.tsproviders.utils.Params.*;
+
 /**
- *
  * @author Philippe Charles
  */
 interface SdmxWebParam extends IParam<DataSource, SdmxWebBean> {
@@ -61,7 +60,7 @@ interface SdmxWebParam extends IParam<DataSource, SdmxWebBean> {
         }
 
         @Override
-        public SdmxWebBean defaultValue() {
+        public @NonNull SdmxWebBean defaultValue() {
             SdmxWebBean result = new SdmxWebBean();
             result.setSource(dbName.defaultValue());
             result.setFlow(flowRef.defaultValue());
@@ -73,7 +72,7 @@ interface SdmxWebParam extends IParam<DataSource, SdmxWebBean> {
         }
 
         @Override
-        public SdmxWebBean get(DataSource dataSource) {
+        public @NonNull SdmxWebBean get(@NonNull DataSource dataSource) {
             SdmxWebBean result = new SdmxWebBean();
             result.setSource(dbName.get(dataSource));
             result.setFlow(flowRef.get(dataSource));
@@ -85,13 +84,15 @@ interface SdmxWebParam extends IParam<DataSource, SdmxWebBean> {
         }
 
         @Override
-        public void set(IConfig.Builder<?, DataSource> builder, SdmxWebBean value) {
-            dbName.set(builder, value.getSource());
-            flowRef.set(builder, value.getFlow());
-            dimensionIds.set(builder, value.getDimensions());
-            labelAttribute.set(builder, value.getLabelAttribute());
-            cacheTtl.set(builder, value.getCacheTtl().toMillis());
-            cacheDepth.set(builder, value.getCacheDepth());
+        public void set(IConfig.@NonNull Builder<?, DataSource> builder, SdmxWebBean value) {
+            if (value != null) {
+                dbName.set(builder, value.getSource());
+                flowRef.set(builder, value.getFlow());
+                dimensionIds.set(builder, value.getDimensions());
+                labelAttribute.set(builder, value.getLabelAttribute());
+                cacheTtl.set(builder, value.getCacheTtl().toMillis());
+                cacheDepth.set(builder, value.getCacheDepth());
+            }
         }
 
         @Override

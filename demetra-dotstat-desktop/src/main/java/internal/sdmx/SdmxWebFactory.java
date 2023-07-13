@@ -1,4 +1,4 @@
-package internal.sdmx.web;
+package internal.sdmx;
 
 import lombok.NonNull;
 import nbbrd.net.proxy.SystemProxySelector;
