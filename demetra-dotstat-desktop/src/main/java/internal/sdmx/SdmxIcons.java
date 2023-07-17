@@ -1,13 +1,14 @@
 package internal.sdmx;
 
-import be.nbb.demetra.sdmx.web.SdmxWebProvider;
+import ec.tstoolkit.utilities.GuavaCaches;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import nbbrd.desktop.favicon.DomainName;
 import nbbrd.desktop.favicon.FaviconRef;
 import nbbrd.desktop.favicon.FaviconSupport;
 import nbbrd.desktop.favicon.URLConnectionFactory;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.openide.util.ImageUtilities;
-import org.openide.util.Lookup;
 import sdmxdl.web.SdmxWebSource;
 import sdmxdl.web.spi.Network;
 import sdmxdl.web.spi.Networking;
@@ -20,41 +21,48 @@ import java.net.Proxy;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.HashMap;
-import java.util.Optional;
+import java.time.Duration;
 
 @lombok.experimental.UtilityClass
 public class SdmxIcons {
 
-    public static final FaviconSupport FAVICONS = FaviconSupport
-            .ofServiceLoader()
-            .toBuilder()
-            .client(new FaviconClientOverCustomNetwork())
-            .cache(new HashMap<>())
-            //            .cache(IOCacheFactoryLoader.get().ofTtl(Duration.ofHours(1)))
-            .build();
-
-    public static ImageIcon getDefaultIcon() {
+    public static @NonNull ImageIcon getDefaultIcon() {
         return ImageUtilities.loadImageIcon("be/nbb/demetra/dotstat/sdmx-logo.png", false);
     }
 
-    public static Icon getFavicon(URL website) {
+    public static @NonNull Icon getFavicon(@NonNull Networking networking, @Nullable URL website) {
         return website != null
-                ? FAVICONS.getOrDefault(FaviconRef.of(DomainName.of(website), 16), getDefaultIcon())
+                ? getFavicons(networking).getOrDefault(FaviconRef.of(DomainName.of(website), 16), getDefaultIcon())
                 : getDefaultIcon();
     }
 
-    public static Icon getFavicon(URL website, Runnable callback) {
+    public static @NonNull Icon getFavicon(@NonNull Networking networking, @Nullable URL website, @NonNull Runnable callback) {
         return website != null
-                ? FAVICONS.getOrDefault(FaviconRef.of(DomainName.of(website), 16), callback, getDefaultIcon())
+                ? getFavicons(networking).getOrDefault(FaviconRef.of(DomainName.of(website), 16), callback, getDefaultIcon())
                 : getDefaultIcon();
     }
 
-    private static final class FaviconClientOverCustomNetwork implements URLConnectionFactory {
+    private static FaviconSupport getFavicons(Networking networking) {
+        return FAVICONS
+                .toBuilder()
+                .client(new FaviconClientOverCustomNetworking(networking))
+                .build();
+    }
+
+    private static final FaviconSupport FAVICONS = FaviconSupport
+            .ofServiceLoader()
+            .toBuilder()
+            .cache(GuavaCaches.ttlCacheAsMap(Duration.ofHours(1)))
+            .build();
+
+    @AllArgsConstructor
+    private static final class FaviconClientOverCustomNetworking implements URLConnectionFactory {
+
+        private final @NonNull Networking networking;
 
         @Override
         public @NonNull URLConnection openConnection(@NonNull URL url) throws IOException {
-            Network network = getNetworking().getNetwork(asSource(url));
+            Network network = networking.getNetwork(asSource(url));
             Proxy proxy = selectProxy(network, url);
             URLConnection result = network.getURLConnectionFactory().openConnection(url, proxy);
             applyHttps(result, network);
@@ -84,12 +92,6 @@ public class SdmxIcons {
             } catch (URISyntaxException ex) {
                 throw new IOException(ex);
             }
-        }
-
-        private static Networking getNetworking() {
-            return Optional.ofNullable(Lookup.getDefault().lookup(SdmxWebProvider.class))
-                    .map(provider -> provider.getSdmxManager().getNetworking())
-                    .orElseGet(Networking::getDefault);
         }
     }
 }

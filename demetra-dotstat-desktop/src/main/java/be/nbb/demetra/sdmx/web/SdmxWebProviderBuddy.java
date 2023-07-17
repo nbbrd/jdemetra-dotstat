@@ -93,7 +93,7 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
 
     private Image getIcon(SdmxWebBean bean) {
         SdmxWebSource source = webManager.getSources().get(bean.getSource());
-        return source != null ? ImageUtilities.icon2Image(SdmxIcons.getFavicon(source.getWebsite())) : null;
+        return source != null ? ImageUtilities.icon2Image(SdmxIcons.getFavicon(webManager.getNetworking(), source.getWebsite())) : null;
     }
 
     @Override

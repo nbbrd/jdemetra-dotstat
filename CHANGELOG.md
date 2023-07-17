@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix favicons transparency, cache and loading
+- Fix dimensions and attributes autocompletion
+
+### Changed
+
+- Bump sdmx-dl from 3.0.0-beta.11 to 3.0.0-beta.12
+
 ## [2.2.6] - 2023-06-05
 
 This is a feature release of **jdemetra-dotstat**.  
