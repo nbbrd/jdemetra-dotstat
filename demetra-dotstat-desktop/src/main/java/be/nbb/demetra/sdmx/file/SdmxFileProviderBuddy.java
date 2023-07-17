@@ -16,26 +16,17 @@
  */
 package be.nbb.demetra.sdmx.file;
 
-import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
-import com.google.common.base.Converter;
-import ec.nbdemetra.ui.BeanHandler;
 import ec.nbdemetra.ui.Config;
-import ec.nbdemetra.ui.Configurator;
 import ec.nbdemetra.ui.IConfigurable;
 import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
 import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
 import ec.tss.tsproviders.DataSet;
-import ec.tstoolkit.utilities.GuavaCaches;
 import internal.sdmx.SdmxIcons;
+import lombok.AccessLevel;
 import lombok.NonNull;
-import org.netbeans.api.options.OptionsDisplayer;
-import org.openide.awt.StatusDisplayer;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
-import sdmxdl.file.SdmxFileManager;
-import sdmxdl.file.spi.FileCaching;
-import sdmxdl.format.MemCachingSupport;
 
 import java.awt.*;
 import java.beans.BeanInfo;
@@ -50,11 +41,20 @@ import java.util.Optional;
 @ServiceProvider(service = IDataSourceProviderBuddy.class)
 public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IConfigurable {
 
-    private final Configurator<SdmxFileProviderBuddy> configurator;
+    @lombok.Getter(AccessLevel.PACKAGE)
+    @lombok.Setter(AccessLevel.PACKAGE)
+    private SdmxFileConfiguration configuration;
 
     public SdmxFileProviderBuddy() {
-        this.configurator = createConfigurator();
-        lookupProvider().ifPresent(o -> o.setSdmxManager(createManager()));
+        this.configuration = new SdmxFileConfiguration();
+        updateProvider();
+    }
+
+    private void updateProvider() {
+        lookupProvider().ifPresent(provider -> {
+            provider.setSdmxManager(configuration.toSdmxFileManager());
+            provider.setLanguages(configuration.toLanguages());
+        });
     }
 
     @Override
@@ -90,7 +90,10 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
         if (bean instanceof SdmxFileBean) {
             Optional<SdmxFileProvider> provider = lookupProvider();
             if (provider.isPresent()) {
-                return editBean(title, (SdmxFileBean) bean, provider.get());
+                return new PropertySheetDialogBuilder()
+                        .title(title)
+                        .icon(getIcon(BeanInfo.ICON_COLOR_16x16, false))
+                        .editSheet(SdmxFileBeanSupport.newSheet((SdmxFileBean) bean, provider.get()));
             }
         }
         return IDataSourceProviderBuddy.super.editBean(title, bean);
@@ -98,79 +101,20 @@ public final class SdmxFileProviderBuddy implements IDataSourceProviderBuddy, IC
 
     @Override
     public @NonNull Config getConfig() {
-        return configurator.getConfig(this);
+        return SdmxFileConfiguration.CONFIGURATOR.getConfig(this);
     }
 
     @Override
     public void setConfig(@NonNull Config config) throws IllegalArgumentException {
-        configurator.setConfig(this, config);
+        SdmxFileConfiguration.CONFIGURATOR.setConfig(this, config);
     }
 
     @Override
     public @NonNull Config editConfig(@NonNull Config config) throws IllegalArgumentException {
-        OptionsDisplayer.getDefault().open(DotStatOptionsPanelController.ID);
-        return config;
-    }
-
-    //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private static SdmxFileManager createManager() {
-        return SdmxFileManager.ofServiceLoader()
-                .toBuilder()
-                .onEvent((src, marker, msg) -> StatusDisplayer.getDefault().setStatusText(msg.toString()))
-                .caching(getCaching())
-                .build();
-    }
-
-    private static FileCaching getCaching() {
-        return MemCachingSupport
-                .builder()
-                .id("SHARED_SOFT_MEM")
-                .repositoriesOf(GuavaCaches.softValuesCacheAsMap())
-                .build();
+        return SdmxFileConfiguration.CONFIGURATOR.editConfig(config);
     }
 
     private static Optional<SdmxFileProvider> lookupProvider() {
         return Optional.ofNullable(Lookup.getDefault().lookup(SdmxFileProvider.class));
     }
-
-    private static Configurator<SdmxFileProviderBuddy> createConfigurator() {
-        return new BuddyConfigHandler().toConfigurator(new BuddyConfigConverter());
-    }
-
-    private static final class BuddyConfig {
-
-    }
-
-    private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, SdmxFileProviderBuddy> {
-
-        @Override
-        public @NonNull BuddyConfig loadBean(@NonNull SdmxFileProviderBuddy resource) {
-            return new BuddyConfig();
-        }
-
-        @Override
-        public void storeBean(@NonNull SdmxFileProviderBuddy resource, @NonNull BuddyConfig bean) {
-        }
-    }
-
-    private static final class BuddyConfigConverter extends Converter<BuddyConfig, Config> {
-
-        @Override
-        protected Config doForward(BuddyConfig a) {
-            return Config.builder(Void.class.getName(), "INSTANCE", "2017").build();
-        }
-
-        @Override
-        protected BuddyConfig doBackward(Config b) {
-            return new BuddyConfig();
-        }
-    }
-
-    private boolean editBean(String title, SdmxFileBean bean, SdmxFileProvider o) {
-        return new PropertySheetDialogBuilder()
-                .title(title)
-                .icon(getIcon(BeanInfo.ICON_COLOR_16x16, false))
-                .editSheet(SdmxFileBeanSupport.newSheet(bean, o));
-    }
-    //</editor-fold>
 }

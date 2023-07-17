@@ -110,7 +110,6 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
 
     @Override
     public @NonNull Config editConfig(@NonNull Config config) throws IllegalArgumentException {
-        OptionsDisplayer.getDefault().open(DotStatOptionsPanelController.ID);
         return config;
     }
 

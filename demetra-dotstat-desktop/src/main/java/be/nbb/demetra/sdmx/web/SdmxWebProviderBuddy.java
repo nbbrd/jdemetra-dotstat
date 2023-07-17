@@ -16,39 +16,32 @@
  */
 package be.nbb.demetra.sdmx.web;
 
-import be.nbb.demetra.dotstat.DotStatOptionsPanelController;
-import be.nbb.demetra.dotstat.DotStatProviderBuddy.BuddyConfig;
-import ec.nbdemetra.ui.BeanHandler;
 import ec.nbdemetra.ui.Config;
-import ec.nbdemetra.ui.Configurator;
 import ec.nbdemetra.ui.IConfigurable;
 import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
 import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
 import ec.tss.TsMoniker;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.DataSource;
+import ec.util.various.swing.FontAwesome;
 import internal.sdmx.SdmxIcons;
-import internal.sdmx.SdmxWebFactory;
+import lombok.AccessLevel;
 import lombok.NonNull;
-import nbbrd.io.text.Parser;
-import org.netbeans.api.options.OptionsDisplayer;
-import org.openide.awt.StatusDisplayer;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
-import sdmxdl.Languages;
-import sdmxdl.format.xml.XmlWebSource;
-import sdmxdl.web.SdmxWebManager;
+import sdmxdl.Connection;
+import sdmxdl.Feature;
 import sdmxdl.web.SdmxWebSource;
 
 import java.awt.*;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
-import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
+
+import static ec.util.chart.impl.TangoColorScheme.DARK_ORANGE;
+import static ec.util.chart.swing.SwingColorSchemeSupport.rgbToColor;
 
 /**
  * @author Philippe Charles
@@ -57,27 +50,20 @@ import java.util.Optional;
 @ServiceProvider(service = IDataSourceProviderBuddy.class, supersedes = "be.nbb.demetra.dotstat.DotStatProviderBuddy")
 public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, IConfigurable {
 
-    private final Configurator<SdmxWebProviderBuddy> configurator;
-
-    private File customSources;
-
-    private boolean curlBackend;
-
-    @lombok.Getter
-    private SdmxWebManager webManager;
-
-    @lombok.Getter
-    private Languages languages;
+    @lombok.Getter(AccessLevel.PACKAGE)
+    @lombok.Setter(AccessLevel.PACKAGE)
+    private SdmxWebConfiguration configuration;
 
     public SdmxWebProviderBuddy() {
-        this.configurator = createConfigurator();
-        this.customSources = new File("");
-        this.curlBackend = false;
-        this.webManager = SdmxWebFactory.createManager(curlBackend);
-        this.languages = Languages.ANY;
-        lookupProvider().ifPresent(o -> {
-            o.setSdmxManager(webManager);
-            o.setLanguages(languages);
+        this.configuration = new SdmxWebConfiguration();
+        updateProvider();
+    }
+
+    private void updateProvider() {
+        lookupProvider().ifPresent(provider -> {
+            provider.setSdmxManager(configuration.toSdmxWebManager());
+            provider.setLanguages(configuration.toLanguages());
+            provider.setDisplayCodes(configuration.isDisplayCodes());
         });
     }
 
@@ -91,19 +77,18 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
         return SdmxIcons.getDefaultIcon().getImage();
     }
 
-    private Image getIcon(SdmxWebBean bean) {
-        SdmxWebSource source = webManager.getSources().get(bean.getSource());
-        return source != null ? ImageUtilities.icon2Image(SdmxIcons.getFavicon(webManager.getNetworking(), source.getWebsite())) : null;
-    }
-
     @Override
     public Image getIcon(@NonNull DataSource dataSource, int type, boolean opened) {
         Optional<SdmxWebProvider> lookupProvider = lookupProvider();
         if (lookupProvider.isPresent()) {
-            SdmxWebBean bean = lookupProvider.get().decodeBean(dataSource);
-            Image result = getIcon(bean);
-            if (result != null) {
-                return result;
+            SdmxWebProvider provider = lookupProvider.get();
+            SdmxWebBean bean = provider.decodeBean(dataSource);
+            SdmxWebSource source = provider.getSdmxManager().getSources().get(bean.getSource());
+            if (source != null) {
+                Image result = getSourceIcon(provider, source);
+                return supportsDataQueryDetail(provider, source)
+                        ? result
+                        : ImageUtilities.mergeImages(result, getWarningBadge(), 13, 8);
             }
         }
         return IDataSourceProviderBuddy.super.getIcon(dataSource, type, opened);
@@ -141,9 +126,9 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
             DataSet dataSet = provider.toDataSet(moniker);
             if (dataSet != null) {
                 SdmxWebBean bean = provider.decodeBean(dataSet.getDataSource());
-                Image result = getIcon(bean);
-                if (result != null) {
-                    return result;
+                SdmxWebSource source = provider.getSdmxManager().getSources().get(bean.getSource());
+                if (source != null) {
+                    return getSourceIcon(provider, source);
                 }
             }
         }
@@ -167,68 +152,37 @@ public final class SdmxWebProviderBuddy implements IDataSourceProviderBuddy, ICo
 
     @Override
     public @NonNull Config getConfig() {
-        return configurator.getConfig(this);
+        return SdmxWebConfiguration.CONFIGURATOR.getConfig(this);
     }
 
     @Override
     public void setConfig(@NonNull Config config) throws IllegalArgumentException {
-        configurator.setConfig(this, config);
+        SdmxWebConfiguration.CONFIGURATOR.setConfig(this, config);
+        updateProvider();
     }
 
     @Override
     public @NonNull Config editConfig(@NonNull Config config) throws IllegalArgumentException {
-        OptionsDisplayer.getDefault().open(DotStatOptionsPanelController.ID);
-        return config;
+        return SdmxWebConfiguration.CONFIGURATOR.editConfig(config);
     }
 
-    //<editor-fold defaultstate="collapsed" desc="Implementation details">
+    private static Image getSourceIcon(SdmxWebProvider provider, SdmxWebSource source) {
+        return ImageUtilities.icon2Image(SdmxIcons.getFavicon(provider.getSdmxManager().getNetworking(), source.getWebsite()));
+    }
+
+    private static boolean supportsDataQueryDetail(SdmxWebProvider provider, SdmxWebSource source) {
+        try (Connection conn = provider.getSdmxManager().getConnection(source, provider.getLanguages())) {
+            return conn.getSupportedFeatures().contains(Feature.DATA_QUERY_DETAIL);
+        } catch (IOException ex) {
+            return false;
+        }
+    }
+
+    private static Image getWarningBadge() {
+        return FontAwesome.FA_EXCLAMATION_TRIANGLE.getImage(rgbToColor(DARK_ORANGE), 8f);
+    }
+
     private static Optional<SdmxWebProvider> lookupProvider() {
         return Optional.ofNullable(Lookup.getDefault().lookup(SdmxWebProvider.class));
     }
-
-    private static Configurator<SdmxWebProviderBuddy> createConfigurator() {
-        return new BuddyConfigHandler().toConfigurator(BuddyConfig.converter());
-    }
-
-    private static List<SdmxWebSource> loadSources(File file) {
-        if (file.exists()) {
-            try {
-                return XmlWebSource.getParser().parseFile(file);
-            } catch (IOException ex) {
-                StatusDisplayer.getDefault().setStatusText(ex.getMessage());
-            }
-        }
-        return Collections.emptyList();
-    }
-
-    private static final class BuddyConfigHandler extends BeanHandler<BuddyConfig, SdmxWebProviderBuddy> {
-
-        @Override
-        public @NonNull BuddyConfig loadBean(SdmxWebProviderBuddy resource) {
-            BuddyConfig result = new BuddyConfig();
-            result.setCustomSources(resource.customSources);
-            result.setCurlBackend(resource.curlBackend);
-            result.setPreferredLanguage(resource.getLanguages().toString());
-            lookupProvider().ifPresent(provider -> {
-                result.setDisplayCodes(provider.isDisplayCodes());
-            });
-            return result;
-        }
-
-        @Override
-        public void storeBean(SdmxWebProviderBuddy resource, BuddyConfig bean) {
-            resource.customSources = bean.getCustomSources();
-            resource.curlBackend = bean.isCurlBackend();
-            resource.webManager = SdmxWebFactory.createManager(resource.curlBackend)
-                    .toBuilder()
-                    .customSources(loadSources(resource.customSources))
-                    .build();
-            resource.languages = Parser.of(Languages::parse).parseValue(bean.getPreferredLanguage()).orElse(Languages.ANY);
-            lookupProvider().ifPresent(provider -> {
-                provider.setDisplayCodes(bean.isDisplayCodes());
-                provider.setSdmxManager(resource.webManager);
-            });
-        }
-    }
-    //</editor-fold>
 }
