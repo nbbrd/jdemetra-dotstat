@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Add contextual actions to providers
+
 ### Fixed
 
 - Fix favicons transparency, cache and loading
