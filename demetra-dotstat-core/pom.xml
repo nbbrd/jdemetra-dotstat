@@ -49,16 +49,9 @@
 
         <!-- compile and runtime -->
         <dependency>
-            <groupId>be.nbb.demetra</groupId>
-            <artifactId>demetra-dotstat-lib</artifactId>
-            <version>${project.version}</version>
-            <exclusions>
-                <!-- Fix strange bug: shaded lib should not have dependencies -->
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>com.github.nbbrd.sdmx-dl</groupId>
+            <artifactId>sdmx-dl-standalone</artifactId>
+            <version>${sdmx-dl.version}</version>
         </dependency>
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
@@ -97,7 +90,7 @@
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
-                    <artifactId>*</artifactId>
+                    <artifactId>sdmx-dl-api</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -111,9 +104,15 @@
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
-                    <artifactId>*</artifactId>
+                    <artifactId>sdmx-dl-api</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.github.nbbrd.java-io-util</groupId>
+            <artifactId>java-io-base</artifactId>
+            <version>0.0.25</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

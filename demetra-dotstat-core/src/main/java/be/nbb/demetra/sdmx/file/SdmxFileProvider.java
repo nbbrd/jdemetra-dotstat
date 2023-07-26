@@ -34,7 +34,7 @@ import internal.sdmx.SdmxCubeAccessor;
 import internal.sdmx.SdmxCubeItems;
 import internal.sdmx.SdmxPropertiesSupport;
 import lombok.NonNull;
-import nbbrd.io.function.IOSupplier;
+import standalone_sdmxdl.nbbrd.io.function.IOSupplier;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

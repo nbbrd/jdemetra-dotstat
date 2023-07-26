@@ -26,7 +26,7 @@ import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbBean;
 import ec.tss.tsproviders.db.DbProvider;
 import internal.sdmx.SdmxPropertiesSupport;
-import nbbrd.io.text.Parser;
+import standalone_sdmxdl.nbbrd.io.text.Parser;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.openide.util.lookup.ServiceProvider;

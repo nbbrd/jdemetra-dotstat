@@ -17,9 +17,9 @@
 package test.samples;
 
 import sdmxdl.*;
-import sdmxdl.format.DataCursor;
-import sdmxdl.format.ObsParser;
-import sdmxdl.format.xml.SdmxXmlStreams;
+import standalone_sdmxdl.sdmxdl.format.DataCursor;
+import standalone_sdmxdl.sdmxdl.format.ObsParser;
+import standalone_sdmxdl.sdmxdl.format.xml.SdmxXmlStreams;
 import tests.sdmxdl.api.ByteSource;
 import tests.sdmxdl.format.xml.SdmxXmlSources;
 

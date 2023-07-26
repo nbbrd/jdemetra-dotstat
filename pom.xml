@@ -47,7 +47,6 @@
     <modules>
         <module>demetra-dotstat-core</module>
         <module>demetra-dotstat-desktop</module>
-        <module>demetra-dotstat-lib</module>
     </modules>
 
     <dependencyManagement>

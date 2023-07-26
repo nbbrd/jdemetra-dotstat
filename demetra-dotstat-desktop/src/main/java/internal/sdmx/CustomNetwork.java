@@ -5,7 +5,7 @@ import nbbrd.net.proxy.SystemProxySelector;
 import nl.altindag.ssl.SSLFactory;
 import sdmxdl.web.spi.Network;
 import sdmxdl.web.spi.URLConnectionFactory;
-import shaded.dotstat.nbbrd.io.curl.CurlHttpURLConnection;
+import standalone_sdmxdl.nbbrd.io.curl.CurlHttpURLConnection;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;

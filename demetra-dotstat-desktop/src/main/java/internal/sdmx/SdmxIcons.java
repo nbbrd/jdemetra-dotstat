@@ -62,7 +62,7 @@ public class SdmxIcons {
 
         @Override
         public @NonNull URLConnection openConnection(@NonNull URL url) throws IOException {
-            Network network = networking.getNetwork(asSource(url));
+            Network network = networking.getNetwork(asSource(url), null, null);
             Proxy proxy = selectProxy(network, url);
             URLConnection result = network.getURLConnectionFactory().openConnection(url, proxy);
             applyHttps(result, network);

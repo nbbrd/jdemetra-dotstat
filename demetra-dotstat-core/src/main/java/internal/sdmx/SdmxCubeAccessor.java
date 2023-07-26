@@ -17,6 +17,7 @@
 package internal.sdmx;
 
 import lombok.NonNull;
+import standalone_sdmxdl.nbbrd.io.WrappedIOException;
 import sdmxdl.DataStructure;
 import sdmxdl.Key;
 import ec.tss.tsproviders.cube.CubeAccessor;
@@ -30,13 +31,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import nbbrd.io.function.IOSupplier;
+import standalone_sdmxdl.nbbrd.io.function.IOSupplier;
 import sdmxdl.Connection;
 import sdmxdl.Dataflow;
 import sdmxdl.DataflowRef;
 import sdmxdl.Dimension;
 import sdmxdl.ext.SdmxCubeUtil;
-import shaded.dotstat.nbbrd.io.WrappedIOException;
 
 /**
  *

@@ -19,7 +19,7 @@ package internal.sdmx;
 import be.nbb.demetra.sdmx.HasSdmxProperties;
 import lombok.AccessLevel;
 import lombok.NonNull;
-import nbbrd.io.function.IORunnable;
+import standalone_sdmxdl.nbbrd.io.function.IORunnable;
 import sdmxdl.Languages;
 import sdmxdl.SdmxManager;
 

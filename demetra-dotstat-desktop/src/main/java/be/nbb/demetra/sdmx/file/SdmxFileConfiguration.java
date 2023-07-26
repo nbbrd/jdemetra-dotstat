@@ -19,7 +19,7 @@ import sdmxdl.Languages;
 import sdmxdl.file.SdmxFileManager;
 import sdmxdl.file.SdmxFileSource;
 import sdmxdl.file.spi.FileCaching;
-import sdmxdl.format.MemCachingSupport;
+import standalone_sdmxdl.sdmxdl.format.MemCachingSupport;
 
 import java.io.IOException;
 import java.util.Locale;

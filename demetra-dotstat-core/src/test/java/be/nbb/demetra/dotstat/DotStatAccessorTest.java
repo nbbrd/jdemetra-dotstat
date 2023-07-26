@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import sdmxdl.*;
 import sdmxdl.web.SdmxWebManager;
 import test.samples.FacadeResource;
-import tests.sdmxdl.web.MockedDriver;
+import tests.sdmxdl.web.spi.MockedDriver;
 
 import java.io.IOException;
 import java.util.EnumSet;

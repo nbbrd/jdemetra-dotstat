@@ -34,9 +34,10 @@ import org.junit.jupiter.api.Test;
 import sdmxdl.web.SdmxWebSource;
 import sdmxdl.web.spi.WebContext;
 import test.samples.FacadeResource;
+import tests.sdmxdl.web.spi.MockedDriver;
+
 import static test.samples.FacadeResource.ECB_FLOW_REF;
 import static test.samples.FacadeResource.NBB_FLOW_REF;
-import tests.sdmxdl.web.MockedDriver;
 
 /**
  *
