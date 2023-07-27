@@ -141,29 +141,6 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>com.github.nbbrd.java-net-proxy</groupId>
-            <artifactId>java-net-proxy</artifactId>
-            <version>1.0.1</version>
-            <exclusions>
-                <exclusion>
-                    <!-- already provided by demetra-dotstat-lib -->
-                    <artifactId>powershell-lib-java</artifactId>
-                    <groupId>com.github.tuupertunut</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>io.github.hakky54</groupId>
-            <artifactId>sslcontext-kickstart</artifactId>
-            <version>8.1.2</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>slf4j-api</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>com.github.nbbrd.java-desktop-util</groupId>
             <artifactId>java-desktop-util-favicon</artifactId>
             <version>2.3.0</version>
