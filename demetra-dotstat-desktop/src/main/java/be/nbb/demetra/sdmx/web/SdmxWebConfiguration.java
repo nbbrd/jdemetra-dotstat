@@ -19,8 +19,8 @@ import sdmxdl.Languages;
 import sdmxdl.web.SdmxWebManager;
 import sdmxdl.web.SdmxWebSource;
 import standalone_sdmxdl.sdmxdl.provider.ri.caching.RiCaching;
-import standalone_sdmxdl.sdmxdl.provider.ri.web.SourceProperties;
-import standalone_sdmxdl.sdmxdl.provider.ri.web.networking.RiNetworking;
+import standalone_sdmxdl.sdmxdl.provider.ri.drivers.SourceProperties;
+import standalone_sdmxdl.sdmxdl.provider.ri.networking.RiNetworking;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
