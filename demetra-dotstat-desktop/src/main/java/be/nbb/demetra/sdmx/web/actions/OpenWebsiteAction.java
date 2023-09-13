@@ -14,7 +14,7 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.Presenter;
-import sdmxdl.web.SdmxWebSource;
+import sdmxdl.web.WebSource;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -64,7 +64,7 @@ public final class OpenWebsiteAction extends AbilityNodeAction3<DataSource> impl
     }
 
     private URL getWebsite(SdmxWebProvider provider, DataSource dataSource) {
-        SdmxWebSource source = provider.getSdmxManager().getSources().get(provider.decodeBean(dataSource).getSource());
+        WebSource source = provider.getSdmxManager().getSources().get(provider.decodeBean(dataSource).getSource());
         return source != null ? source.getWebsite() : null;
     }
 

@@ -34,14 +34,14 @@ import internal.sdmx.SdmxCubeAccessor;
 import internal.sdmx.SdmxCubeItems;
 import internal.sdmx.SdmxPropertiesSupport;
 import lombok.NonNull;
-import standalone_sdmxdl.nbbrd.io.function.IOSupplier;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sdmxdl.Connection;
-import sdmxdl.DataflowRef;
+import sdmxdl.FlowRef;
+import sdmxdl.file.FileSource;
 import sdmxdl.file.SdmxFileManager;
-import sdmxdl.file.SdmxFileSource;
+import standalone_sdmxdl.nbbrd.io.function.IOSupplier;
 
 import java.io.EOFException;
 import java.io.File;
@@ -140,9 +140,9 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties<Sd
 
         private static SdmxCubeItems of(HasSdmxProperties<SdmxFileManager> properties, HasFilePaths paths, SdmxFileParam param, DataSource dataSource) throws IOException {
             SdmxFileBean bean = param.get(dataSource);
-            SdmxFileSource files = SdmxCubeItems.resolveFileSet(paths, bean);
+            FileSource files = SdmxCubeItems.resolveFileSet(paths, bean);
 
-            DataflowRef flowRef = files.asDataflowRef();
+            FlowRef flowRef = files.asDataflowRef();
 
             IOSupplier<Connection> conn = toConnection(properties, files);
 
@@ -153,7 +153,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties<Sd
             return new SdmxCubeItems(accessor, idParam);
         }
 
-        private static IOSupplier<Connection> toConnection(HasSdmxProperties<SdmxFileManager> properties, SdmxFileSource files) {
+        private static IOSupplier<Connection> toConnection(HasSdmxProperties<SdmxFileManager> properties, FileSource files) {
             SdmxFileManager manager = properties.getSdmxManager();
             return () -> manager.getConnection(files, properties.getLanguages());
         }

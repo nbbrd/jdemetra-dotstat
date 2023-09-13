@@ -9,7 +9,7 @@ import nbbrd.desktop.favicon.FaviconSupport;
 import nbbrd.desktop.favicon.URLConnectionFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.openide.util.ImageUtilities;
-import sdmxdl.web.SdmxWebSource;
+import sdmxdl.web.WebSource;
 import sdmxdl.web.spi.Network;
 import sdmxdl.web.spi.Networking;
 import sdmxdl.web.spi.SSLFactory;
@@ -69,9 +69,9 @@ public class SdmxIcons {
             return result;
         }
 
-        private static SdmxWebSource asSource(URL url) throws IOException {
+        private static WebSource asSource(URL url) throws IOException {
             try {
-                return SdmxWebSource.builder().id("").endpoint(url.toURI()).driver("").build();
+                return WebSource.builder().id("").endpoint(url.toURI()).driver("").build();
             } catch (URISyntaxException ex) {
                 throw new IOException(ex);
             }

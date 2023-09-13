@@ -91,7 +91,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKey() throws Exception {
-        DataStructure dsd = manager.getConnection("NBB", ANY).getStructure(NBB_FLOW_REF);
+        Structure dsd = manager.getConnection("NBB", ANY).getStructure(NBB_FLOW_REF);
 
         // default ordering of dimensions
         DbSetId r1 = DbSetId.root("SUBJECT", "LOCATION", "FREQUENCY");
@@ -112,7 +112,7 @@ public class DotStatAccessorTest {
     public void testGetKeyFromTs() throws Exception {
         assertThat(manager
                 .getConnection("NBB", ANY)
-                .getDataStream(NBB_FLOW_REF, DataQuery.builder().key(Key.ALL).detail(DataDetail.NO_DATA).build())
+                .getDataStream(NBB_FLOW_REF, Query.builder().key(Key.ALL).detail(Detail.NO_DATA).build())
                 .map(Series::getKey)
         ).contains(Key.parse("LOCSTL04.AUS.M"));
     }

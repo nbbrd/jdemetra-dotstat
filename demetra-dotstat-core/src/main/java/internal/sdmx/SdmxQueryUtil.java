@@ -49,25 +49,25 @@ public class SdmxQueryUtil {
     public final OptionalTsData MISSING_DATA = OptionalTsData.absent("No results matching the query");
 
     @NonNull
-    public TsCursor<Key> getAllSeries(Connection conn, DataflowRef flow, Key node, @Nullable String labelAttribute) throws IOException {
+    public TsCursor<Key> getAllSeries(Connection conn, FlowRef flow, Key node, @Nullable String labelAttribute) throws IOException {
         Stream<Series> result = SdmxCubeUtil.getAllSeries(conn, flow, node);
         return new SdmxDataAdapter(node, result, labelAttribute);
     }
 
     @NonNull
-    public TsCursor<Key> getAllSeriesWithData(Connection conn, DataflowRef flow, Key node, @Nullable String labelAttribute) throws IOException {
+    public TsCursor<Key> getAllSeriesWithData(Connection conn, FlowRef flow, Key node, @Nullable String labelAttribute) throws IOException {
         Stream<Series> result = SdmxCubeUtil.getAllSeriesWithData(conn, flow, node);
         return new SdmxDataAdapter(node, result, labelAttribute);
     }
 
     @NonNull
-    public TsCursor<Key> getSeriesWithData(Connection conn, DataflowRef flow, Key leaf, @Nullable String labelAttribute) throws IOException {
+    public TsCursor<Key> getSeriesWithData(Connection conn, FlowRef flow, Key leaf, @Nullable String labelAttribute) throws IOException {
         Optional<Series> result = SdmxCubeUtil.getSeriesWithData(conn, flow, leaf);
         return new SdmxDataAdapter(leaf, result.map(Stream::of).orElse(Stream.empty()), labelAttribute);
     }
 
     @NonNull
-    public List<String> getChildren(Connection conn, DataflowRef flow, Key node, int dimensionPosition) throws IOException {
+    public List<String> getChildren(Connection conn, FlowRef flow, Key node, int dimensionPosition) throws IOException {
         Stream<String> result = SdmxCubeUtil.getChildren(conn, flow, node, dimensionPosition);
         return result.sorted().collect(Collectors.toList());
     }

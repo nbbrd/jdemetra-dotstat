@@ -31,13 +31,13 @@ import internal.sdmx.SdmxCubeAccessor;
 import internal.sdmx.SdmxCubeItems;
 import internal.sdmx.SdmxPropertiesSupport;
 import lombok.NonNull;
-import standalone_sdmxdl.nbbrd.io.function.IOSupplier;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sdmxdl.Connection;
-import sdmxdl.DataflowRef;
+import sdmxdl.FlowRef;
 import sdmxdl.web.SdmxWebManager;
+import standalone_sdmxdl.nbbrd.io.function.IOSupplier;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -129,7 +129,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
         private static SdmxCubeItems of(HasSdmxProperties<SdmxWebManager> properties, SdmxWebParam param, DataSource dataSource, boolean displayCodes) throws IllegalArgumentException, IOException {
             SdmxWebBean bean = param.get(dataSource);
 
-            DataflowRef flowRef = DataflowRef.parse(bean.getFlow());
+            FlowRef flowRef = FlowRef.parse(bean.getFlow());
 
             IOSupplier<Connection> conn = toConnection(properties, bean.getSource());
 

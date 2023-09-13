@@ -17,7 +17,7 @@ import org.openide.awt.StatusDisplayer;
 import org.openide.nodes.Sheet;
 import sdmxdl.Languages;
 import sdmxdl.web.SdmxWebManager;
-import sdmxdl.web.SdmxWebSource;
+import sdmxdl.web.WebSource;
 import standalone_sdmxdl.sdmxdl.provider.ri.caching.RiCaching;
 import standalone_sdmxdl.sdmxdl.provider.ri.drivers.SourceProperties;
 import standalone_sdmxdl.sdmxdl.provider.ri.networking.RiNetworking;
@@ -95,7 +95,7 @@ public class SdmxWebConfiguration {
                 .build();
     }
 
-    private static List<SdmxWebSource> getCustomSources() {
+    private static List<WebSource> getCustomSources() {
         try {
             return SourceProperties.loadCustomSources();
         } catch (IOException e) {
@@ -109,11 +109,11 @@ public class SdmxWebConfiguration {
                 .orElse(Languages.ANY);
     }
 
-    private void reportEvent(SdmxWebSource source, String marker, CharSequence message) {
+    private void reportEvent(WebSource source, String marker, CharSequence message) {
         StatusDisplayer.getDefault().setStatusText(message.toString());
     }
 
-    private void reportError(SdmxWebSource source, String marker, CharSequence message, IOException error) {
+    private void reportError(WebSource source, String marker, CharSequence message, IOException error) {
         NotificationDisplayer.getDefault().notify(message.toString(), SdmxIcons.getDefaultIcon(), "", null);
     }
 

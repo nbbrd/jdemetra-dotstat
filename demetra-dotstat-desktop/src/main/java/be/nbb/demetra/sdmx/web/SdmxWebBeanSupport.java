@@ -46,7 +46,7 @@ class SdmxWebBeanSupport {
                 .description(Bundle.bean_source_description())
                 .add();
 
-        SdmxAutoCompletion dataflow = SdmxAutoCompletion.onDataflow(provider, bean, autoCompletionCache);
+        SdmxAutoCompletion dataflow = SdmxAutoCompletion.onFlow(provider, bean, autoCompletionCache);
 
         b.withAutoCompletion()
                 .select(bean, "flow")

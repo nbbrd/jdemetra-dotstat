@@ -16,8 +16,8 @@ import org.openide.awt.NotificationDisplayer;
 import org.openide.awt.StatusDisplayer;
 import org.openide.nodes.Sheet;
 import sdmxdl.Languages;
+import sdmxdl.file.FileSource;
 import sdmxdl.file.SdmxFileManager;
-import sdmxdl.file.SdmxFileSource;
 import sdmxdl.file.spi.FileCaching;
 import standalone_sdmxdl.sdmxdl.format.MemCachingSupport;
 
@@ -58,11 +58,11 @@ public class SdmxFileConfiguration {
     }
 
 
-    private void reportEvent(SdmxFileSource source, String marker, CharSequence message) {
+    private void reportEvent(FileSource source, String marker, CharSequence message) {
         StatusDisplayer.getDefault().setStatusText(message.toString());
     }
 
-    private void reportError(SdmxFileSource source, String marker, CharSequence message, IOException error) {
+    private void reportError(FileSource source, String marker, CharSequence message, IOException error) {
         NotificationDisplayer.getDefault().notify(message.toString(), SdmxIcons.getDefaultIcon(), "", null);
     }
 
