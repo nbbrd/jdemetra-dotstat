@@ -30,7 +30,7 @@ import java.util.EnumSet;
 import sdmxdl.Feature;
 import sdmxdl.web.SdmxWebManager;
 import tests.sdmxdl.api.RepoSamples;
-import tests.sdmxdl.web.MockedDriver;
+import tests.sdmxdl.web.spi.MockedDriver;
 
 /**
  *

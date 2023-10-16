@@ -26,6 +26,8 @@ import ec.tss.tsproviders.cube.CubeSupport;
 import ec.tss.tsproviders.utils.IConfig;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tss.tsproviders.utils.Params;
+import lombok.NonNull;
+
 import static ec.tss.tsproviders.utils.Params.onStringList;
 import java.io.File;
 import java.util.List;
@@ -57,7 +59,7 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
         }
 
         @Override
-        public SdmxFileBean defaultValue() {
+        public @NonNull SdmxFileBean defaultValue() {
             SdmxFileBean result = new SdmxFileBean();
             result.setFile(file.defaultValue());
             result.setStructureFile(structureFile.defaultValue());
@@ -68,7 +70,7 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
         }
 
         @Override
-        public SdmxFileBean get(DataSource dataSource) {
+        public @NonNull SdmxFileBean get(@NonNull DataSource dataSource) {
             SdmxFileBean result = new SdmxFileBean();
             result.setFile(file.get(dataSource));
             result.setStructureFile(structureFile.get(dataSource));
@@ -79,12 +81,14 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
         }
 
         @Override
-        public void set(IConfig.Builder<?, DataSource> builder, SdmxFileBean value) {
-            file.set(builder, value.getFile());
-            structureFile.set(builder, value.getStructureFile());
-            dialect.set(builder, value.getDialect());
-            dimensionIds.set(builder, value.getDimensions());
-            labelAttribute.set(builder, value.getLabelAttribute());
+        public void set(IConfig.@NonNull Builder<?, DataSource> builder, SdmxFileBean value) {
+            if (value != null) {
+                file.set(builder, value.getFile());
+                structureFile.set(builder, value.getStructureFile());
+                dialect.set(builder, value.getDialect());
+                dimensionIds.set(builder, value.getDimensions());
+                labelAttribute.set(builder, value.getLabelAttribute());
+            }
         }
 
         @Override

@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import sdmxdl.*;
 import sdmxdl.web.SdmxWebManager;
 import test.samples.FacadeResource;
-import tests.sdmxdl.web.MockedDriver;
+import tests.sdmxdl.web.spi.MockedDriver;
 
 import java.io.IOException;
 import java.util.EnumSet;
@@ -37,6 +37,7 @@ import java.util.function.Consumer;
 import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static sdmxdl.Languages.ANY;
 import static test.samples.FacadeResource.ECB_FLOW_REF;
 import static test.samples.FacadeResource.NBB_FLOW_REF;
 
@@ -90,7 +91,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKey() throws Exception {
-        DataStructure dsd = manager.getConnection("NBB").getStructure(NBB_FLOW_REF);
+        Structure dsd = manager.getConnection("NBB", ANY).getStructure(NBB_FLOW_REF);
 
         // default ordering of dimensions
         DbSetId r1 = DbSetId.root("SUBJECT", "LOCATION", "FREQUENCY");
@@ -110,8 +111,8 @@ public class DotStatAccessorTest {
     @Test
     public void testGetKeyFromTs() throws Exception {
         assertThat(manager
-                .getConnection("NBB")
-                .getDataStream(NBB_FLOW_REF, DataQuery.builder().key(Key.ALL).detail(DataDetail.NO_DATA).build())
+                .getConnection("NBB", ANY)
+                .getDataStream(NBB_FLOW_REF, Query.builder().key(Key.ALL).detail(Detail.NO_DATA).build())
                 .map(Series::getKey)
         ).contains(Key.parse("LOCSTL04.AUS.M"));
     }

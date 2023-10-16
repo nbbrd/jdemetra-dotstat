@@ -1,33 +1,25 @@
 /*
  * Copyright 2015 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package be.nbb.demetra.sdmx.web;
 
 import be.nbb.demetra.sdmx.HasSdmxProperties;
-import internal.sdmx.SdmxCubeAccessor;
-import sdmxdl.DataflowRef;
-import sdmxdl.web.SdmxWebManager;
 import com.google.common.cache.Cache;
 import ec.tss.ITsProvider;
-import ec.tss.tsproviders.DataSet;
-import ec.tss.tsproviders.DataSource;
-import ec.tss.tsproviders.HasDataMoniker;
-import ec.tss.tsproviders.HasDataSourceBean;
-import ec.tss.tsproviders.HasDataSourceMutableList;
-import ec.tss.tsproviders.IDataSourceLoader;
+import ec.tss.tsproviders.*;
 import ec.tss.tsproviders.cube.CubeAccessor;
 import ec.tss.tsproviders.cube.CubeId;
 import ec.tss.tsproviders.cube.CubeSupport;
@@ -35,19 +27,23 @@ import ec.tss.tsproviders.cursor.HasTsCursor;
 import ec.tss.tsproviders.utils.DataSourcePreconditions;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tstoolkit.utilities.GuavaCaches;
+import internal.sdmx.SdmxCubeAccessor;
 import internal.sdmx.SdmxCubeItems;
 import internal.sdmx.SdmxPropertiesSupport;
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BooleanSupplier;
+import lombok.NonNull;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import nbbrd.io.function.IOSupplier;
 import sdmxdl.Connection;
+import sdmxdl.FlowRef;
+import sdmxdl.web.SdmxWebManager;
+import standalone_sdmxdl.nbbrd.io.function.IOSupplier;
+
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 
 /**
- *
  * @author Philippe Charles
  * @since 2.2.0
  */
@@ -92,7 +88,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
     }
 
     @Override
-    public String getDisplayName() {
+    public @NonNull String getDisplayName() {
         return "SDMX Web Services";
     }
 
@@ -111,17 +107,17 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
     private static final class SdmxCubeResource implements CubeSupport.Resource {
 
         private final Cache<DataSource, SdmxCubeItems> cache;
-        private final HasSdmxProperties properties;
+        private final HasSdmxProperties<SdmxWebManager> properties;
         private final SdmxWebParam param;
         private final BooleanSupplier displayCodes;
 
         @Override
-        public CubeAccessor getAccessor(DataSource dataSource) throws IOException {
+        public @NonNull CubeAccessor getAccessor(@NonNull DataSource dataSource) throws IOException {
             return get(dataSource).getAccessor();
         }
 
         @Override
-        public IParam<DataSet, CubeId> getIdParam(DataSource dataSource) throws IOException {
+        public @NonNull IParam<DataSet, CubeId> getIdParam(@NonNull DataSource dataSource) throws IOException {
             return get(dataSource).getIdParam();
         }
 
@@ -133,7 +129,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
         private static SdmxCubeItems of(HasSdmxProperties<SdmxWebManager> properties, SdmxWebParam param, DataSource dataSource, boolean displayCodes) throws IllegalArgumentException, IOException {
             SdmxWebBean bean = param.get(dataSource);
 
-            DataflowRef flowRef = DataflowRef.parse(bean.getFlow());
+            FlowRef flowRef = FlowRef.parse(bean.getFlow());
 
             IOSupplier<Connection> conn = toConnection(properties, bean.getSource());
 
@@ -148,7 +144,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
 
         private static IOSupplier<Connection> toConnection(HasSdmxProperties<SdmxWebManager> properties, String name) {
             SdmxWebManager manager = properties.getSdmxManager();
-            return () -> manager.getConnection(name);
+            return () -> manager.getConnection(name, properties.getLanguages());
         }
     }
 }
