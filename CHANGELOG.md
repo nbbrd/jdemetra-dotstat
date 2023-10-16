@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.2.7] - 2023-10-16
+
+This is a feature release of **jdemetra-dotstat**.  
+[JDemetra+ 2.2.4 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
+
 ### Added
 
 - Add contextual actions to providers
@@ -18,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Bump sdmx-dl from 3.0.0-beta.11 to 3.0.0-beta.12
+- Bump sdmx-dl from 3.0.0-beta.11 to [3.0.0-beta.12](https://github.com/nbbrd/sdmx-dl/releases/tag/v3.0.0-beta.12)
 - Refactor providers configuration
 
 ## [2.2.6] - 2023-06-05
@@ -226,7 +231,8 @@ This is a feature release of **jdemetra-dotstat**.
 This is the initial release of **jdemetra-dotstat**.  
 [JDemetra+ 2.0.0 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
 
-[Unreleased]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.6...HEAD
+[Unreleased]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.7...HEAD
+[2.2.7]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.6...v2.2.7
 [2.2.6]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.5...v2.2.6
 [2.2.5]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.4...v2.2.5
 [2.2.4]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.3...v2.2.4
