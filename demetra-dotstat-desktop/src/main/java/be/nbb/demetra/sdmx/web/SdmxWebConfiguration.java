@@ -19,14 +19,11 @@ import sdmxdl.Languages;
 import sdmxdl.web.SdmxWebManager;
 import sdmxdl.web.WebSource;
 import standalone_sdmxdl.sdmxdl.provider.ri.caching.RiCaching;
-import standalone_sdmxdl.sdmxdl.provider.ri.drivers.SourceProperties;
 import standalone_sdmxdl.sdmxdl.provider.ri.networking.RiNetworking;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 
@@ -81,7 +78,7 @@ public class SdmxWebConfiguration {
     public SdmxWebManager toSdmxWebManager() {
         Properties properties = System.getProperties();
 
-        curlBackend.applyTo(properties, RiNetworking.CURL_BACKEND_PROPERTY);
+        curlBackend.applyTo(properties, RiNetworking.URL_BACKEND_PROPERTY, "JDK", "CURL");
         noCache.applyTo(properties, RiCaching.NO_CACHE_PROPERTY);
         autoProxy.applyTo(properties, RiNetworking.AUTO_PROXY_PROPERTY);
         noDefaultSSL.applyTo(properties, RiNetworking.NO_DEFAULT_SSL_PROPERTY);
@@ -91,16 +88,7 @@ public class SdmxWebConfiguration {
                 .toBuilder()
                 .onEvent(this::reportEvent)
                 .onError(this::reportError)
-                .customSources(getCustomSources())
                 .build();
-    }
-
-    private static List<WebSource> getCustomSources() {
-        try {
-            return SourceProperties.loadCustomSources();
-        } catch (IOException e) {
-            return Collections.emptyList();
-        }
     }
 
     public Languages toLanguages() {
