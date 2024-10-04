@@ -7,15 +7,19 @@ public enum Toggle {
     DEFAULT, DISABLE, ENABLE;
 
     public void applyTo(Properties properties, CharSequence key) {
+        applyTo(properties, key, "false", "true");
+    }
+
+    public void applyTo(Properties properties, CharSequence key, String disableValue, String enableValue) {
         switch (this) {
             case DEFAULT:
                 properties.remove(key.toString());
                 break;
             case DISABLE:
-                properties.setProperty(key.toString(), Boolean.toString(false));
+                properties.setProperty(key.toString(), disableValue);
                 break;
             case ENABLE:
-                properties.setProperty(key.toString(), Boolean.toString(true));
+                properties.setProperty(key.toString(), enableValue);
                 break;
         }
     }

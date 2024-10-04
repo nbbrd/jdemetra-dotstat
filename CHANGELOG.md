@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.2.8] - 2024-10-04
+
+This is a feature release of **jdemetra-dotstat**.  
+[JDemetra+ 2.2.4 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
+
+### Added
+
+- Add logging of events
+
+### Fixed
+
+- Fix sources file property in configuration
+
+### Changed
+
+- Bump sdmx-dl from 3.0.0-beta.12 to [3.0.0-beta.13](https://github.com/nbbrd/sdmx-dl/releases/tag/v3.0.0-beta.13)
+
 ## [2.2.7] - 2023-10-16
 
 This is a feature release of **jdemetra-dotstat**.  
@@ -63,12 +80,12 @@ This is a feature release of **jdemetra-dotstat**.
 ### Added
 
 - Add default user-agent `sdmx-dl/version`
-- Add source from Bundesbank 
-- Add source from Economic and Social Commission for Asia and the Pacific 
-- Add source from National Statistical Institute of Cambodia 
-- Add source from SDMX Global Registry 
-- Add source from Pacific Data Hub 
-- Add source from UK Data Service 
+- Add source from Bundesbank
+- Add source from Economic and Social Commission for Asia and the Pacific
+- Add source from National Statistical Institute of Cambodia
+- Add source from SDMX Global Registry
+- Add source from Pacific Data Hub
+- Add source from UK Data Service
 
 ## [2.2.4] - 2021-04-03
 
@@ -231,7 +248,8 @@ This is a feature release of **jdemetra-dotstat**.
 This is the initial release of **jdemetra-dotstat**.  
 [JDemetra+ 2.0.0 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
 
-[Unreleased]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.7...HEAD
+[Unreleased]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.8...HEAD
+[2.2.8]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.7...v2.2.8
 [2.2.7]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.6...v2.2.7
 [2.2.6]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.5...v2.2.6
 [2.2.5]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.4...v2.2.5

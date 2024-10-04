@@ -6,7 +6,7 @@
     <parent>
         <groupId>be.nbb.demetra</groupId>
         <artifactId>demetra-dotstat-parent</artifactId>
-        <version>2.2.7</version>
+        <version>2.2.8</version>
     </parent>
 
     <artifactId>demetra-dotstat-core</artifactId>
@@ -43,7 +43,7 @@
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-openide-util-lookup</artifactId>
-            <version>RELEASE190</version>
+            <version>RELEASE230</version>
             <scope>provided</scope>
         </dependency>
 
@@ -111,7 +111,7 @@
         <dependency>
             <groupId>com.github.nbbrd.java-io-util</groupId>
             <artifactId>java-io-base</artifactId>
-            <version>0.0.26</version>
+            <version>0.0.32</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

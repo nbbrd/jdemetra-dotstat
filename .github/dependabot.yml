@@ -7,6 +7,8 @@ updates:
       interval: "weekly"
       day: "saturday"
     open-pull-requests-limit: 10
+    ignore:
+      - dependency-name: "eu.europa.ec.joinup.sat:*"
   - package-ecosystem: "github-actions"
     target-branch: "develop"
     directory: "/"

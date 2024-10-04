@@ -18,18 +18,24 @@ import org.openide.nodes.Sheet;
 import sdmxdl.Languages;
 import sdmxdl.web.SdmxWebManager;
 import sdmxdl.web.WebSource;
+import standalone_sdmxdl.nbbrd.io.text.BooleanProperty;
+import standalone_sdmxdl.nbbrd.io.text.Property;
+import standalone_sdmxdl.sdmxdl.provider.PropertiesSupport;
 import standalone_sdmxdl.sdmxdl.provider.ri.caching.RiCaching;
-import standalone_sdmxdl.sdmxdl.provider.ri.drivers.SourceProperties;
 import standalone_sdmxdl.sdmxdl.provider.ri.networking.RiNetworking;
+import standalone_sdmxdl.sdmxdl.provider.ri.registry.RiRegistry;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.function.Function;
+import java.util.logging.Level;
 
+import static java.util.Collections.emptyMap;
+
+@lombok.extern.java.Log
 @lombok.Data
 public class SdmxWebConfiguration {
 
@@ -65,6 +71,10 @@ public class SdmxWebConfiguration {
     private static final boolean DEFAULT_DISPLAY_CODES = false;
     private boolean displayCodes = DEFAULT_DISPLAY_CODES;
 
+    private static final String LOG_EVENTS_PROPERTY = "logEvents";
+    private static final boolean DEFAULT_LOG_EVENTS = false;
+    private boolean logEvents = DEFAULT_LOG_EVENTS;
+
     public static SdmxWebConfiguration copyOf(SdmxWebConfiguration bean) {
         SdmxWebConfiguration result = new SdmxWebConfiguration();
         result.sources = bean.sources;
@@ -75,31 +85,43 @@ public class SdmxWebConfiguration {
         result.noDefaultSSL = bean.noDefaultSSL;
         result.noSystemSSL = bean.noSystemSSL;
         result.displayCodes = bean.displayCodes;
+        result.logEvents = bean.logEvents;
         return result;
     }
 
     public SdmxWebManager toSdmxWebManager() {
         Properties properties = System.getProperties();
 
-        curlBackend.applyTo(properties, RiNetworking.CURL_BACKEND_PROPERTY);
+        if (sources != null && !sources.getPath().isEmpty()) {
+            properties.setProperty(RiRegistry.SOURCES_FILE_PROPERTY.getKey(), sources.getPath());
+        } else {
+            properties.remove(RiRegistry.SOURCES_FILE_PROPERTY.getKey());
+        }
+
+        curlBackend.applyTo(properties, RiNetworking.URL_BACKEND_PROPERTY, "JDK", "CURL");
         noCache.applyTo(properties, RiCaching.NO_CACHE_PROPERTY);
         autoProxy.applyTo(properties, RiNetworking.AUTO_PROXY_PROPERTY);
         noDefaultSSL.applyTo(properties, RiNetworking.NO_DEFAULT_SSL_PROPERTY);
         noSystemSSL.applyTo(properties, RiNetworking.NO_SYSTEM_SSL_PROPERTY);
 
+        logConfig();
+
         return SdmxWebManager.ofServiceLoader()
                 .toBuilder()
                 .onEvent(this::reportEvent)
                 .onError(this::reportError)
-                .customSources(getCustomSources())
                 .build();
     }
 
-    private static List<WebSource> getCustomSources() {
-        try {
-            return SourceProperties.loadCustomSources();
-        } catch (IOException e) {
-            return Collections.emptyList();
+    private void logConfig() {
+        Function<? super String, ? extends CharSequence> properties = key -> PropertiesSupport.getProperty(emptyMap(), key);
+        if (log.isLoggable(Level.INFO)) {
+            for (Property<?> p : new Property<?>[]{RiRegistry.SOURCES_FILE_PROPERTY, RiNetworking.URL_BACKEND_PROPERTY}) {
+                log.log(Level.INFO, p.getKey() + ": " + p.get(properties));
+            }
+            for (BooleanProperty p : new BooleanProperty[]{RiCaching.NO_CACHE_PROPERTY, RiNetworking.AUTO_PROXY_PROPERTY, RiNetworking.NO_DEFAULT_SSL_PROPERTY, RiNetworking.NO_SYSTEM_SSL_PROPERTY}) {
+                log.log(Level.INFO, p.getKey() + ": " + p.get(properties));
+            }
         }
     }
 
@@ -111,10 +133,18 @@ public class SdmxWebConfiguration {
 
     private void reportEvent(WebSource source, String marker, CharSequence message) {
         StatusDisplayer.getDefault().setStatusText(message.toString());
+        if (logEvents) {
+            log.log(Level.INFO, () -> asLogMessage(source, marker, message));
+        }
     }
 
     private void reportError(WebSource source, String marker, CharSequence message, IOException error) {
         NotificationDisplayer.getDefault().notify(message.toString(), SdmxIcons.getDefaultIcon(), "", null);
+        log.log(Level.SEVERE, error, () -> asLogMessage(source, marker, message));
+    }
+
+    private static String asLogMessage(WebSource source, String marker, CharSequence message) {
+        return "[" + source.getId() + "] (" + marker + ") " + message;
     }
 
     Sheet toSheet() {
@@ -163,6 +193,11 @@ public class SdmxWebConfiguration {
                 .display("No system SSL")
                 .description("Disable system truststore")
                 .add();
+        b.withBoolean()
+                .select(this, LOG_EVENTS_PROPERTY)
+                .display("Log events")
+                .description("Log events in IDE logs")
+                .add();
         result.put(b.build());
 
         return result;
@@ -198,6 +233,7 @@ public class SdmxWebConfiguration {
         private final IParam<Config, Toggle> noDefaultSSL = Params.onEnum(DEFAULT_NO_DEFAULT_SSL, NO_DEFAULT_SSL_PROPERTY);
         private final IParam<Config, Toggle> noSystemSSL = Params.onEnum(DEFAULT_NO_SYSTEM_SSL, NO_SYSTEM_SSL_PROPERTY);
         private final IParam<Config, Boolean> displayCodes = Params.onBoolean(DEFAULT_DISPLAY_CODES, DISPLAY_CODES_PROPERTY);
+        private final IParam<Config, Boolean> logEvents = Params.onBoolean(DEFAULT_LOG_EVENTS, LOG_EVENTS_PROPERTY);
 
         @Override
         protected Config doForward(SdmxWebConfiguration a) {
@@ -210,6 +246,7 @@ public class SdmxWebConfiguration {
             noDefaultSSL.set(result, a.getNoDefaultSSL());
             noSystemSSL.set(result, a.getNoSystemSSL());
             displayCodes.set(result, a.isDisplayCodes());
+            logEvents.set(result, a.isLogEvents());
             return result.build();
         }
 
@@ -224,6 +261,7 @@ public class SdmxWebConfiguration {
             result.setNoDefaultSSL(noDefaultSSL.get(b));
             result.setNoSystemSSL(noSystemSSL.get(b));
             result.setDisplayCodes(displayCodes.get(b));
+            result.setLogEvents(logEvents.get(b));
             return result;
         }
     }
