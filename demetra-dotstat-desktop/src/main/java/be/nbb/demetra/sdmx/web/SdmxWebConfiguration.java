@@ -18,15 +18,22 @@ import org.openide.nodes.Sheet;
 import sdmxdl.Languages;
 import sdmxdl.web.SdmxWebManager;
 import sdmxdl.web.WebSource;
+import standalone_sdmxdl.nbbrd.io.text.BooleanProperty;
+import standalone_sdmxdl.nbbrd.io.text.Property;
+import standalone_sdmxdl.sdmxdl.provider.PropertiesSupport;
 import standalone_sdmxdl.sdmxdl.provider.ri.caching.RiCaching;
 import standalone_sdmxdl.sdmxdl.provider.ri.networking.RiNetworking;
+import standalone_sdmxdl.sdmxdl.provider.ri.registry.RiRegistry;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.logging.Level;
+
+import static java.util.Collections.emptyMap;
 
 @lombok.extern.java.Log
 @lombok.Data
@@ -85,17 +92,37 @@ public class SdmxWebConfiguration {
     public SdmxWebManager toSdmxWebManager() {
         Properties properties = System.getProperties();
 
+        if (sources != null && !sources.getPath().isEmpty()) {
+            properties.setProperty(RiRegistry.SOURCES_FILE_PROPERTY.getKey(), sources.getPath());
+        } else {
+            properties.remove(RiRegistry.SOURCES_FILE_PROPERTY.getKey());
+        }
+
         curlBackend.applyTo(properties, RiNetworking.URL_BACKEND_PROPERTY, "JDK", "CURL");
         noCache.applyTo(properties, RiCaching.NO_CACHE_PROPERTY);
         autoProxy.applyTo(properties, RiNetworking.AUTO_PROXY_PROPERTY);
         noDefaultSSL.applyTo(properties, RiNetworking.NO_DEFAULT_SSL_PROPERTY);
         noSystemSSL.applyTo(properties, RiNetworking.NO_SYSTEM_SSL_PROPERTY);
 
+        logConfig();
+
         return SdmxWebManager.ofServiceLoader()
                 .toBuilder()
                 .onEvent(this::reportEvent)
                 .onError(this::reportError)
                 .build();
+    }
+
+    private void logConfig() {
+        Function<? super String, ? extends CharSequence> properties = key -> PropertiesSupport.getProperty(emptyMap(), key);
+        if (log.isLoggable(Level.INFO)) {
+            for (Property<?> p : new Property<?>[]{RiRegistry.SOURCES_FILE_PROPERTY, RiNetworking.URL_BACKEND_PROPERTY}) {
+                log.log(Level.INFO, p.getKey() + ": " + p.get(properties));
+            }
+            for (BooleanProperty p : new BooleanProperty[]{RiCaching.NO_CACHE_PROPERTY, RiNetworking.AUTO_PROXY_PROPERTY, RiNetworking.NO_DEFAULT_SSL_PROPERTY, RiNetworking.NO_SYSTEM_SSL_PROPERTY}) {
+                log.log(Level.INFO, p.getKey() + ": " + p.get(properties));
+            }
+        }
     }
 
     public Languages toLanguages() {
