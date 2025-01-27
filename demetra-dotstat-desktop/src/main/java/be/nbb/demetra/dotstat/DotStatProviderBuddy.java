@@ -29,11 +29,11 @@ import ec.tss.tsproviders.utils.IParam;
 import ec.tss.tsproviders.utils.Params;
 import internal.sdmx.SdmxWebSourceService;
 import lombok.NonNull;
-import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.ServiceProvider;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -135,7 +135,7 @@ public final class DotStatProviderBuddy extends DbProviderBuddy<DotStatBean> imp
             private final IParam<Config, String> preferredLanguageParam = Params.onString("en", "preferredLanguage");
             private final IParam<Config, Boolean> displayCodesParam = Params.onBoolean(false, "displayCodes");
             private final IParam<Config, Boolean> curlBackendParam = Params.onBoolean(false, "curlBackend");
-            private final IParam<Config, File> customSourcesParam = Params.onFile(new File(""), "customSources");
+            private final IParam<Config, File> customSourcesParam = Params.onFile(Paths.get("").toFile(), "customSources");
 
             @Override
             protected Config doForward(BuddyConfig a) {
