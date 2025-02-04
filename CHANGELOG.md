@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.2.9] - 2025-02-04
+
+This is a feature release of **jdemetra-dotstat**.  
+[JDemetra+ 2.2.4 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
+
 ### Added
 
 - Add copy path actions
@@ -256,7 +261,8 @@ This is a feature release of **jdemetra-dotstat**.
 This is the initial release of **jdemetra-dotstat**.  
 [JDemetra+ 2.0.0 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
 
-[Unreleased]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.8...HEAD
+[Unreleased]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.9...HEAD
+[2.2.9]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.8...v2.2.9
 [2.2.8]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.7...v2.2.8
 [2.2.7]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.6...v2.2.7
 [2.2.6]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.5...v2.2.6
