@@ -25,6 +25,7 @@ import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.IDataSourceLoaderAssert;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -57,7 +58,7 @@ public class SdmxFileProviderTest {
     public static void beforeClass() throws IOException {
         NO_XML = File.createTempFile("sdmx_empty", ".xml");
         NO_XML.deleteOnExit();
-        BLANK = new File("");
+        BLANK = Paths.get("").toFile();
         GENERIC20 = createTemp(SdmxXmlSources.NBB_DATA, "sdmx_generic20", ".xml");
         STRUCT20 = createTemp(SdmxXmlSources.NBB_DATA_STRUCTURE, "sdmx_struct20", ".xml");
     }
@@ -76,7 +77,7 @@ public class SdmxFileProviderTest {
         String uri = "demetra://tsprovider/sdmx-file/v1/SERIES?f=BLS.xml&l=TITLE#k=Q.AT.ALL.BC.E.LE.B3.ST.S.DINX";
 
         SdmxFileBean bean = new SdmxFileBean();
-        bean.setFile(new File("BLS.xml"));
+        bean.setFile(Paths.get("BLS.xml").toFile());
         bean.setLabelAttribute("TITLE");
 
         DataSource.Builder dataSource = DataSource.builder("sdmx-file", "v1");

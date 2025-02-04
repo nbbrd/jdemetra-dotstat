@@ -28,6 +28,7 @@ import standalone_sdmxdl.sdmxdl.provider.ri.registry.RiRegistry;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.function.Function;
@@ -225,7 +226,7 @@ public class SdmxWebConfiguration {
 
     private static final class ConfigConverter extends Converter<SdmxWebConfiguration, Config> {
 
-        private final IParam<Config, File> sources = Params.onFile(new File(""), SOURCES_PROPERTY);
+        private final IParam<Config, File> sources = Params.onFile(Paths.get("").toFile(), SOURCES_PROPERTY);
         private final IParam<Config, String> languages = Params.onString("", LANGUAGES_PROPERTY);
         private final IParam<Config, Toggle> curlBackend = Params.onEnum(DEFAULT_CURL_BACKEND, CURL_BACKEND_PROPERTY);
         private final IParam<Config, Toggle> noCache = Params.onEnum(DEFAULT_NO_CACHE, NO_CACHE_PROPERTY);

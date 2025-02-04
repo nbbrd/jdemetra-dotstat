@@ -30,6 +30,7 @@ import lombok.NonNull;
 
 import static ec.tss.tsproviders.utils.Params.onStringList;
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -47,8 +48,8 @@ interface SdmxFileParam extends IParam<DataSource, SdmxFileBean> {
         private final Splitter dimensionSplitter = Splitter.on(',').trimResults().omitEmptyStrings();
         private final Joiner dimensionJoiner = Joiner.on(',');
 
-        private final IParam<DataSource, File> file = Params.onFile(new File(""), "f");
-        private final IParam<DataSource, File> structureFile = Params.onFile(new File(""), "s");
+        private final IParam<DataSource, File> file = Params.onFile(Paths.get("").toFile(), "f");
+        private final IParam<DataSource, File> structureFile = Params.onFile(Paths.get("").toFile(), "s");
         private final IParam<DataSource, String> dialect = Params.onString("", "j");
         private final IParam<DataSource, List<String>> dimensionIds = onStringList(ImmutableList.of(), "d", dimensionSplitter, dimensionJoiner);
         private final IParam<DataSource, String> labelAttribute = Params.onString("", "l");

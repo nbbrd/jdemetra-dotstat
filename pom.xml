@@ -5,7 +5,7 @@
 
     <groupId>be.nbb.demetra</groupId>
     <artifactId>demetra-dotstat-parent</artifactId>
-    <version>2.2.8</version>
+    <version>2.2.9</version>
     <packaging>pom</packaging>
 
     <name>Demetra - DotStat</name>
@@ -42,7 +42,7 @@
     <properties>
         <!-- Java 8+ config -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.outputTimestamp>2024-10-04T10:50:24Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2025-02-04T13:59:57Z</project.build.outputTimestamp>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
 
@@ -64,12 +64,12 @@
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
-                <version>1.18.34</version>
+                <version>1.18.36</version>
             </dependency>
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.11.1</version>
+                <version>5.11.4</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -113,17 +113,17 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.20.0</version>
+                    <version>3.21.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.0</version>
+                    <version>3.5.2</version>
 <!--                    <dependencies>-->
 <!--                        <dependency>-->
 <!--                            <groupId>org.apache.maven.surefire</groupId>-->
 <!--                            <artifactId>surefire-junit-platform</artifactId>-->
-<!--                            <version>3.5.0</version>-->
+<!--                            <version>3.5.2</version>-->
 <!--                        </dependency>-->
 <!--                    </dependencies>-->
                 </plugin>
@@ -131,7 +131,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.8.0</version>
+                    <version>3.8.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -141,12 +141,12 @@
                 <plugin>
                     <groupId>org.gaul</groupId>
                     <artifactId>modernizer-maven-plugin</artifactId>
-                    <version>2.9.0</version>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <groupId>de.thetaphi</groupId>
                     <artifactId>forbiddenapis</artifactId>
-                    <version>3.7</version>
+                    <version>3.8</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.nbbrd.heylogs</groupId>
@@ -166,7 +166,7 @@
                 <plugin>
                     <groupId>org.jreleaser</groupId>
                     <artifactId>jreleaser-maven-plugin</artifactId>
-                    <version>1.14.0</version>
+                    <version>1.16.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -279,7 +279,7 @@
                             <dependency>
                                 <groupId>org.kordamp.maven</groupId>
                                 <artifactId>pomchecker-enforcer-rules</artifactId>
-                                <version>1.13.0</version>
+                                <version>1.14.0</version>
                             </dependency>
                             <dependency>
                                 <groupId>org.codehaus.mojo</groupId>
