@@ -27,6 +27,7 @@ import ec.tss.tsproviders.cursor.HasTsCursor;
 import ec.tss.tsproviders.utils.DataSourcePreconditions;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tstoolkit.utilities.GuavaCaches;
+import internal.sdmx.SdmxBeans;
 import internal.sdmx.SdmxCubeAccessor;
 import internal.sdmx.SdmxCubeItems;
 import internal.sdmx.SdmxPropertiesSupport;
@@ -134,7 +135,7 @@ public final class SdmxWebProvider implements IDataSourceLoader, HasSdmxProperti
             IOSupplier<Connection> conn = toConnection(properties, bean.getSource());
 
             CubeAccessor accessor = SdmxCubeAccessor
-                    .of(conn, flowRef, bean.getDimensions(), bean.getLabelAttribute(), bean.getSource(), displayCodes)
+                    .of(conn, SdmxBeans.getDatabase(bean), flowRef, bean.getDimensions(), bean.getLabelAttribute(), bean.getSource(), displayCodes)
                     .bulk(bean.getCacheDepth(), GuavaCaches.ttlCacheAsMap(bean.getCacheTtl()));
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());

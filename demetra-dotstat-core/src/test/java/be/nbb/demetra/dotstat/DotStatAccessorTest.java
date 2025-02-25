@@ -37,6 +37,7 @@ import java.util.function.Consumer;
 import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static sdmxdl.DatabaseRef.NO_DATABASE;
 import static sdmxdl.Languages.ANY;
 import static test.samples.FacadeResource.ECB_FLOW_REF;
 import static test.samples.FacadeResource.NBB_FLOW_REF;
@@ -91,7 +92,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKey() throws Exception {
-        Structure dsd = manager.getConnection("NBB", ANY).getStructure(NBB_FLOW_REF);
+        Structure dsd = manager.getConnection("NBB", ANY).getStructure(NO_DATABASE, NBB_FLOW_REF);
 
         // default ordering of dimensions
         DbSetId r1 = DbSetId.root("SUBJECT", "LOCATION", "FREQUENCY");
@@ -112,7 +113,7 @@ public class DotStatAccessorTest {
     public void testGetKeyFromTs() throws Exception {
         assertThat(manager
                 .getConnection("NBB", ANY)
-                .getDataStream(NBB_FLOW_REF, Query.builder().key(Key.ALL).detail(Detail.NO_DATA).build())
+                .getDataStream(NO_DATABASE, NBB_FLOW_REF, Query.builder().key(Key.ALL).detail(Detail.NO_DATA).build())
                 .map(Series::getKey)
         ).contains(Key.parse("LOCSTL04.AUS.M"));
     }
