@@ -57,23 +57,23 @@ public abstract class SdmxAutoCompletion {
     }
 
     public static @NonNull SdmxAutoCompletion onFlow(@NonNull SdmxWebProvider provider, @NonNull SdmxWebBean bean, @NonNull ConcurrentMap<Object, Object> cache) {
-        return new FlowCompletion<>(provider, () -> getWebSourceOrNull(bean, provider), cache);
+        return new FlowCompletion<>(provider, () -> getWebSourceOrNull(bean, provider), () -> SdmxBeans.getDatabase(bean), cache);
     }
 
     public static @NonNull SdmxAutoCompletion onDimension(@NonNull SdmxWebProvider provider, @NonNull SdmxWebBean bean, @NonNull ConcurrentMap<Object, Object> cache) {
-        return new DimensionCompletion<>(provider, () -> getWebSourceOrNull(bean, provider), () -> getFlowRefOrNull(bean), cache);
+        return new DimensionCompletion<>(provider, () -> getWebSourceOrNull(bean, provider), () -> SdmxBeans.getDatabase(bean), () -> getFlowRefOrNull(bean), cache);
     }
 
     public static @NonNull SdmxAutoCompletion onDimension(@NonNull SdmxFileProvider provider, @NonNull SdmxFileBean bean, @NonNull ConcurrentMap<Object, Object> cache) {
-        return new DimensionCompletion<>(provider, () -> getFileSource(bean, provider).orElse(null), () -> getFileSource(bean, provider).map(FileSource::asDataflowRef).orElse(null), cache);
+        return new DimensionCompletion<>(provider, () -> getFileSource(bean, provider).orElse(null), () -> SdmxBeans.getDatabase(bean), () -> getFileSource(bean, provider).map(FileSource::asDataflowRef).orElse(null), cache);
     }
 
     public static @NonNull SdmxAutoCompletion onAttribute(@NonNull SdmxWebProvider provider, @NonNull SdmxWebBean bean, @NonNull ConcurrentMap<Object, Object> cache) {
-        return new AttributeCompletion<>(provider, () -> getWebSourceOrNull(bean, provider), () -> getFlowRefOrNull(bean), cache);
+        return new AttributeCompletion<>(provider, () -> getWebSourceOrNull(bean, provider), () -> SdmxBeans.getDatabase(bean), () -> getFlowRefOrNull(bean), cache);
     }
 
     public static @NonNull SdmxAutoCompletion onAttribute(@NonNull SdmxFileProvider provider, @NonNull SdmxFileBean bean, @NonNull ConcurrentMap<Object, Object> cache) {
-        return new AttributeCompletion<>(provider, () -> getFileSource(bean, provider).orElse(null), () -> getFileSource(bean, provider).map(FileSource::asDataflowRef).orElse(null), cache);
+        return new AttributeCompletion<>(provider, () -> getFileSource(bean, provider).orElse(null), () -> SdmxBeans.getDatabase(bean), () -> getFileSource(bean, provider).map(FileSource::asDataflowRef).orElse(null), cache);
     }
 
     @lombok.AllArgsConstructor
@@ -135,6 +135,8 @@ public abstract class SdmxAutoCompletion {
 
         private final @NonNull Supplier<S> source;
 
+        private final @NonNull Supplier<DatabaseRef> databaseRef;
+
         private final @NonNull ConcurrentMap<Object, Object> cache;
 
         @Override
@@ -155,7 +157,7 @@ public abstract class SdmxAutoCompletion {
 
         private List<Flow> load(String term) throws Exception {
             try (Connection c = provider.getSdmxManager().getConnection(source.get(), provider.getLanguages())) {
-                return new ArrayList<>(c.getFlows());
+                return new ArrayList<>(c.getFlows(databaseRef.get()));
             }
         }
 
@@ -183,6 +185,8 @@ public abstract class SdmxAutoCompletion {
 
         private final @NonNull Supplier<S> source;
 
+        private final @NonNull Supplier<DatabaseRef> databaseRef;
+
         private final @NonNull Supplier<FlowRef> flowRef;
 
         private final @NonNull ConcurrentMap<Object, Object> cache;
@@ -205,7 +209,7 @@ public abstract class SdmxAutoCompletion {
 
         private List<Dimension> load(String term) throws Exception {
             try (Connection c = provider.getSdmxManager().getConnection(source.get(), provider.getLanguages())) {
-                return new ArrayList<>(c.getStructure(flowRef.get()).getDimensions());
+                return new ArrayList<>(c.getStructure(databaseRef.get(), flowRef.get()).getDimensions());
             }
         }
 
@@ -233,6 +237,8 @@ public abstract class SdmxAutoCompletion {
 
         private final @NonNull Supplier<S> source;
 
+        private final @NonNull Supplier<DatabaseRef> databaseRef;
+
         private final @NonNull Supplier<FlowRef> flowRef;
 
         private final @NonNull ConcurrentMap<Object, Object> cache;
@@ -255,7 +261,7 @@ public abstract class SdmxAutoCompletion {
 
         private List<Attribute> load(String term) throws Exception {
             try (Connection c = provider.getSdmxManager().getConnection(source.get(), provider.getLanguages())) {
-                return new ArrayList<>(c.getStructure(flowRef.get()).getAttributes());
+                return new ArrayList<>(c.getStructure(databaseRef.get(), flowRef.get()).getAttributes());
             }
         }
 

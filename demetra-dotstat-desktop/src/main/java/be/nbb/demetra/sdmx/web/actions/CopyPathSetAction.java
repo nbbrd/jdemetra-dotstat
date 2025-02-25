@@ -9,20 +9,14 @@ import ec.tss.tsproviders.DataSource;
 import ec.ui.ExtAction;
 import internal.jd3.AbilityNodeAction3;
 import internal.jd3.TsManager3;
-import internal.sdmx.CatalogRef;
-import internal.sdmx.OnDemandMenuBuilder;
-import internal.sdmx.SdmxCommand;
-import internal.sdmx.SdmxURI;
+import internal.sdmx.*;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.Presenter;
-import sdmxdl.Connection;
-import sdmxdl.FlowRef;
-import sdmxdl.Key;
-import sdmxdl.Structure;
+import sdmxdl.*;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -57,8 +51,9 @@ public final class CopyPathSetAction extends AbilityNodeAction3<DataSet> impleme
         DataSet item = single(items).orElseThrow(NoSuchElementException::new);
         SdmxWebProvider provider = providerOf(item.getDataSource()).orElseThrow(NoSuchElementException::new);
         SdmxWebBean bean = provider.decodeBean(item.getDataSource());
+        DatabaseRef databaseRef = SdmxBeans.getDatabase(bean);
         FlowRef flowRef = FlowRef.parse(bean.getFlow());
-        Key key = getKey(provider, bean.getSource(), flowRef, item);
+        Key key = getKey(provider, bean.getSource(), databaseRef, flowRef, item);
         CatalogRef catalog = CatalogRef.NO_CATALOG;
         new OnDemandMenuBuilder()
                 .copyToClipboard("SDMX-DL URI", SdmxURI.dataSetURI(bean.getSource(), flowRef, key, catalog))
@@ -92,9 +87,9 @@ public final class CopyPathSetAction extends AbilityNodeAction3<DataSet> impleme
         return list.size() == 1 ? Optional.of(list.get(0)) : Optional.empty();
     }
 
-    private static Key getKey(SdmxWebProvider provider, String source, FlowRef flowRef, DataSet dataSet) {
+    private static Key getKey(SdmxWebProvider provider, String source, DatabaseRef databaseRef, FlowRef flowRef, DataSet dataSet) {
         try (Connection connection = provider.getSdmxManager().getConnection(source, provider.getLanguages())) {
-            Structure structure = connection.getStructure(flowRef);
+            Structure structure = connection.getStructure(databaseRef, flowRef);
             Key.Builder result = Key.builder(structure);
             structure.getDimensions().forEach(dimension -> result.put(dimension.getId(), dataSet.get(dimension.getId())));
             return result.build();

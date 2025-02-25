@@ -49,26 +49,26 @@ public class SdmxQueryUtil {
     public final OptionalTsData MISSING_DATA = OptionalTsData.absent("No results matching the query");
 
     @NonNull
-    public TsCursor<Key> getAllSeries(Connection conn, FlowRef flow, Key node, @Nullable String labelAttribute) throws IOException {
-        Stream<Series> result = SdmxCubeUtil.getAllSeries(conn, flow, node);
+    public TsCursor<Key> getAllSeries(Connection conn, DatabaseRef databaseRef, FlowRef flow, Key node, @Nullable String labelAttribute) throws IOException {
+        Stream<Series> result = SdmxCubeUtil.getAllSeries(conn, databaseRef, flow, node);
         return new SdmxDataAdapter(node, result, labelAttribute);
     }
 
     @NonNull
-    public TsCursor<Key> getAllSeriesWithData(Connection conn, FlowRef flow, Key node, @Nullable String labelAttribute) throws IOException {
-        Stream<Series> result = SdmxCubeUtil.getAllSeriesWithData(conn, flow, node);
+    public TsCursor<Key> getAllSeriesWithData(Connection conn, DatabaseRef databaseRef, FlowRef flow, Key node, @Nullable String labelAttribute) throws IOException {
+        Stream<Series> result = SdmxCubeUtil.getAllSeriesWithData(conn, databaseRef, flow, node);
         return new SdmxDataAdapter(node, result, labelAttribute);
     }
 
     @NonNull
-    public TsCursor<Key> getSeriesWithData(Connection conn, FlowRef flow, Key leaf, @Nullable String labelAttribute) throws IOException {
-        Optional<Series> result = SdmxCubeUtil.getSeriesWithData(conn, flow, leaf);
+    public TsCursor<Key> getSeriesWithData(Connection conn, DatabaseRef databaseRef, FlowRef flow, Key leaf, @Nullable String labelAttribute) throws IOException {
+        Optional<Series> result = SdmxCubeUtil.getSeriesWithData(conn, databaseRef, flow, leaf);
         return new SdmxDataAdapter(leaf, result.map(Stream::of).orElse(Stream.empty()), labelAttribute);
     }
 
     @NonNull
-    public List<String> getChildren(Connection conn, FlowRef flow, Key node, int dimensionPosition) throws IOException {
-        Stream<String> result = SdmxCubeUtil.getChildren(conn, flow, node, dimensionPosition);
+    public List<String> getChildren(Connection conn, DatabaseRef databaseRef, FlowRef flow, Key node, int dimensionPosition) throws IOException {
+        Stream<String> result = SdmxCubeUtil.getChildren(conn, databaseRef, flow, node, dimensionPosition);
         return result.sorted().collect(Collectors.toList());
     }
 

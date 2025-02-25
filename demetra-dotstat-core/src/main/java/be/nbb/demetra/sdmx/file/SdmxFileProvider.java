@@ -30,6 +30,7 @@ import ec.tss.tsproviders.utils.DataSourcePreconditions;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tss.tsproviders.utils.TsFillerAsProvider;
 import ec.tstoolkit.utilities.GuavaCaches;
+import internal.sdmx.SdmxBeans;
 import internal.sdmx.SdmxCubeAccessor;
 import internal.sdmx.SdmxCubeItems;
 import internal.sdmx.SdmxPropertiesSupport;
@@ -146,7 +147,7 @@ public final class SdmxFileProvider implements IFileLoader, HasSdmxProperties<Sd
 
             IOSupplier<Connection> conn = toConnection(properties, files);
 
-            CubeAccessor accessor = SdmxCubeAccessor.of(conn, flowRef, bean.getDimensions(), bean.getLabelAttribute(), getSourceLabel(bean), false);
+            CubeAccessor accessor = SdmxCubeAccessor.of(conn, SdmxBeans.getDatabase(bean), flowRef, bean.getDimensions(), bean.getLabelAttribute(), getSourceLabel(bean), false);
 
             IParam<DataSet, CubeId> idParam = param.getCubeIdParam(accessor.getRoot());
 

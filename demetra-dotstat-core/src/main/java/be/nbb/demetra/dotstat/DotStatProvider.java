@@ -38,6 +38,8 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 
+import static sdmxdl.DatabaseRef.NO_DATABASE;
+
 /**
  * @author Philippe Charles
  */
@@ -83,7 +85,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
         DotStatBean bean = decodeBean(dataSource);
         if (!displayCodes) {
             try (Connection conn = connect(bean.getDbName())) {
-                return String.format(Locale.ROOT, "%s ~ %s", bean.getDbName(), conn.getFlow(bean.getFlowRef()).getName());
+                return String.format(Locale.ROOT, "%s ~ %s", bean.getDbName(), conn.getFlow(NO_DATABASE, bean.getFlowRef()).getName());
             } catch (IOException | RuntimeException ex) {
             }
         }
@@ -94,7 +96,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
     public String getDisplayName(DataSet dataSet) {
         DotStatBean bean = decodeBean(dataSet.getDataSource());
         try (Connection conn = connect(bean.getDbName())) {
-            Structure dfs = conn.getStructure(bean.getFlowRef());
+            Structure dfs = conn.getStructure(NO_DATABASE, bean.getFlowRef());
             Key.Builder b = Key.builder(dfs);
             for (Dimension o : dfs.getDimensions()) {
                 String value = dataSet.get(o.getId());
@@ -115,7 +117,7 @@ public final class DotStatProvider extends DbProvider<DotStatBean> implements Ha
             if (!displayCodes) {
                 DotStatBean bean = decodeBean(dataSet.getDataSource());
                 try (Connection conn = connect(bean.getDbName())) {
-                    Structure dfs = conn.getStructure(bean.getFlowRef());
+                    Structure dfs = conn.getStructure(NO_DATABASE, bean.getFlowRef());
                     for (Dimension o : dfs.getDimensions()) {
                         if (o.getId().equals(nodeDim.getKey())) {
                             return o.getCodes().get(nodeDim.getValue());
