@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Migrate OSSRH to Central Portal
+
 ## [2.2.9] - 2025-02-04
 
 This is a feature release of **jdemetra-dotstat**.  
