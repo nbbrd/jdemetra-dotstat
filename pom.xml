@@ -5,7 +5,7 @@
 
     <groupId>be.nbb.demetra</groupId>
     <artifactId>demetra-dotstat-parent</artifactId>
-    <version>2.2.9</version>
+    <version>2.2.10</version>
     <packaging>pom</packaging>
 
     <name>Demetra - DotStat</name>
@@ -42,7 +42,7 @@
     <properties>
         <!-- Java 8+ config -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.outputTimestamp>2025-02-04T13:59:57Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2025-07-24T13:38:20Z</project.build.outputTimestamp>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
 
@@ -51,7 +51,7 @@
         <x.github.repo>jdemetra-dotstat</x.github.repo>
 
         <demetra.version>2.2.4</demetra.version>
-        <sdmx-dl.version>3.0.0-beta.13</sdmx-dl.version>
+        <sdmx-dl.version>3.0.0-beta.14</sdmx-dl.version>
     </properties>
 
     <modules>
@@ -64,12 +64,12 @@
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
-                <version>1.18.36</version>
+                <version>1.18.38</version>
             </dependency>
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.11.4</version>
+                <version>5.13.4</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -83,22 +83,22 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.4.0</version>
+                    <version>3.5.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.13.0</version>
+                    <version>3.14.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.1.3</version>
+                    <version>3.1.4</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.1.3</version>
+                    <version>3.1.4</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -118,14 +118,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.2</version>
-<!--                    <dependencies>-->
-<!--                        <dependency>-->
-<!--                            <groupId>org.apache.maven.surefire</groupId>-->
-<!--                            <artifactId>surefire-junit-platform</artifactId>-->
-<!--                            <version>3.5.2</version>-->
-<!--                        </dependency>-->
-<!--                    </dependencies>-->
+                    <version>3.5.3</version>
                 </plugin>
                 <!-- Other plugins -->
                 <plugin>
@@ -136,7 +129,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>3.5.0</version>
+                    <version>3.6.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.gaul</groupId>
@@ -146,12 +139,12 @@
                 <plugin>
                     <groupId>de.thetaphi</groupId>
                     <artifactId>forbiddenapis</artifactId>
-                    <version>3.8</version>
+                    <version>3.9</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.nbbrd.heylogs</groupId>
                     <artifactId>heylogs-maven-plugin</artifactId>
-                    <version>0.9.2</version>
+                    <version>0.11.1</version>
                 </plugin>
                 <plugin>
                     <groupId>com.amashchenko.maven.plugin</groupId>
@@ -161,12 +154,12 @@
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.12</version>
+                    <version>0.8.13</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jreleaser</groupId>
                     <artifactId>jreleaser-maven-plugin</artifactId>
-                    <version>1.16.0</version>
+                    <version>1.19.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -181,11 +174,12 @@
                             <goal>check</goal>
                         </goals>
                         <inherited>false</inherited>
-                        <configuration>
-                            <semver>true</semver>
-                        </configuration>
                     </execution>
                 </executions>
+                <configuration>
+                    <semver>true</semver>
+                    <tagPrefix>v</tagPrefix>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -262,6 +256,17 @@
             </properties>
         </profile>
 
+        <!-- Fix explicit search for annotation processors on JDK23+ -->
+        <profile>
+            <id>fix-proc-jdk23</id>
+            <activation>
+                <jdk>[23,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.proc>full</maven.compiler.proc>
+            </properties>
+        </profile>
+
         <!-- Enforce dependency & Maven-central rules -->
         <profile>
             <id>enforce-dependency-rules</id>
@@ -284,7 +289,7 @@
                             <dependency>
                                 <groupId>org.codehaus.mojo</groupId>
                                 <artifactId>extra-enforcer-rules</artifactId>
-                                <version>1.9.0</version>
+                                <version>1.10.0</version>
                             </dependency>
                         </dependencies>
                         <executions>
@@ -467,8 +472,8 @@
             </snapshots>
         </repository>
         <repository>
-            <id>sdmx-dl-snapshots</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+            <id>central-snapshots</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots/</url>
             <releases>
                 <enabled>false</enabled>
             </releases>

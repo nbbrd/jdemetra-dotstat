@@ -38,6 +38,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
 
     private final SdmxWebManager manager;
     private final Languages languages = Languages.ANY;
+    private final DatabaseRef database = DatabaseRef.NO_DATABASE;
 
     DotStatAccessor(DotStatBean dbBean, SdmxWebManager manager) {
         super(dbBean);
@@ -61,28 +62,28 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
     @Override
     protected List<DbSetId> getAllSeries(DbSetId ref) throws Exception {
         try (Connection conn = manager.getConnection(dbBean.getDbName(), languages)) {
-            return getAllSeries(conn, dbBean.getFlowRef(), ref);
+            return getAllSeries(conn, database, dbBean.getFlowRef(), ref);
         }
     }
 
     @Override
     protected List<DbSeries> getAllSeriesWithData(DbSetId ref) throws Exception {
         try (Connection conn = manager.getConnection(dbBean.getDbName(), languages)) {
-            return getAllSeriesWithData(conn, dbBean.getFlowRef(), ref);
+            return getAllSeriesWithData(conn, database, dbBean.getFlowRef(), ref);
         }
     }
 
     @Override
     protected DbSeries getSeriesWithData(DbSetId ref) throws Exception {
         try (Connection conn = manager.getConnection(dbBean.getDbName(), languages)) {
-            return getSeriesWithData(conn, dbBean.getFlowRef(), ref);
+            return getSeriesWithData(conn, database, dbBean.getFlowRef(), ref);
         }
     }
 
     @Override
     protected List<String> getChildren(DbSetId ref) throws Exception {
         try (Connection conn = manager.getConnection(dbBean.getDbName(), languages)) {
-            return getChildren(conn, dbBean.getFlowRef(), ref);
+            return getChildren(conn, database, dbBean.getFlowRef(), ref);
         }
     }
 
@@ -91,10 +92,10 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         return DbAccessor.BulkAccessor.from(this, dbBean.getCacheDepth(), DbAccessor.BulkAccessor.newTtlCache(dbBean.getCacheTtl()));
     }
 
-    private static List<DbSetId> getAllSeries(Connection conn, FlowRef flow, DbSetId node) throws IOException {
-        KeyConverter converter = KeyConverter.of(conn.getStructure(flow), node);
+    private static List<DbSetId> getAllSeries(Connection conn, DatabaseRef databaseRef, FlowRef flow, DbSetId node) throws IOException {
+        KeyConverter converter = KeyConverter.of(conn.getStructure(databaseRef, flow), node);
 
-        try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeries(conn, flow, converter.toKey(node), SdmxQueryUtil.NO_LABEL)) {
+        try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeries(conn, databaseRef, flow, converter.toKey(node), SdmxQueryUtil.NO_LABEL)) {
             ImmutableList.Builder<DbSetId> result = ImmutableList.builder();
             while (cursor.nextSeries()) {
                 result.add(converter.fromKey(cursor.getSeriesId()));
@@ -103,10 +104,10 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         }
     }
 
-    private static List<DbSeries> getAllSeriesWithData(Connection conn, FlowRef flow, DbSetId node) throws IOException {
-        KeyConverter converter = KeyConverter.of(conn.getStructure(flow), node);
+    private static List<DbSeries> getAllSeriesWithData(Connection conn, DatabaseRef databaseRef, FlowRef flow, DbSetId node) throws IOException {
+        KeyConverter converter = KeyConverter.of(conn.getStructure(databaseRef, flow), node);
 
-        try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeriesWithData(conn, flow, converter.toKey(node), SdmxQueryUtil.NO_LABEL)) {
+        try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeriesWithData(conn, databaseRef, flow, converter.toKey(node), SdmxQueryUtil.NO_LABEL)) {
             ImmutableList.Builder<DbSeries> result = ImmutableList.builder();
             while (cursor.nextSeries()) {
                 result.add(new DbSeries(converter.fromKey(cursor.getSeriesId()), cursor.getSeriesData()));
@@ -115,20 +116,20 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
         }
     }
 
-    private static DbSeries getSeriesWithData(Connection conn, FlowRef flow, DbSetId leaf) throws IOException {
-        KeyConverter converter = KeyConverter.of(conn.getStructure(flow), leaf);
+    private static DbSeries getSeriesWithData(Connection conn, DatabaseRef databaseRef, FlowRef flow, DbSetId leaf) throws IOException {
+        KeyConverter converter = KeyConverter.of(conn.getStructure(databaseRef, flow), leaf);
 
-        try (TsCursor<Key> cursor = SdmxQueryUtil.getSeriesWithData(conn, flow, converter.toKey(leaf), SdmxQueryUtil.NO_LABEL)) {
+        try (TsCursor<Key> cursor = SdmxQueryUtil.getSeriesWithData(conn, databaseRef, flow, converter.toKey(leaf), SdmxQueryUtil.NO_LABEL)) {
             return new DbSeries(leaf, cursor.nextSeries() ? cursor.getSeriesData() : SdmxQueryUtil.MISSING_DATA);
         }
     }
 
-    private static List<String> getChildren(Connection conn, FlowRef flow, DbSetId node) throws IOException {
-        Structure dsd = conn.getStructure(flow);
+    private static List<String> getChildren(Connection conn, DatabaseRef databaseRef, FlowRef flow, DbSetId node) throws IOException {
+        Structure dsd = conn.getStructure(databaseRef, flow);
         KeyConverter converter = KeyConverter.of(dsd, node);
         String dimensionId = node.getColumn(node.getLevel());
         int dimensionIndex = SdmxCubeUtil.getDimensionIndexById(dsd, dimensionId).orElseThrow(RuntimeException::new);
-        return SdmxQueryUtil.getChildren(conn, flow, converter.toKey(node), dimensionIndex);
+        return SdmxQueryUtil.getChildren(conn, databaseRef, flow, converter.toKey(node), dimensionIndex);
     }
 
     @VisibleForTesting
