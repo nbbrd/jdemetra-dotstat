@@ -272,6 +272,10 @@ This is a feature release of **jdemetra-dotstat**.
 This is the initial release of **jdemetra-dotstat**.  
 [JDemetra+ 2.0.0 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
 
+### Added
+
+- Initial release
+
 [Unreleased]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.10...HEAD
 [2.2.10]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.9...v2.2.10
 [2.2.9]: https://github.com/nbbrd/jdemetra-dotstat/compare/v2.2.8...v2.2.9
