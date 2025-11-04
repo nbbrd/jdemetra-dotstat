@@ -45,8 +45,8 @@ public class SdmxFileConfiguration {
     public SdmxFileManager toSdmxFileManager() {
         return SdmxFileManager.ofServiceLoader()
                 .toBuilder()
-                .onEvent(this::reportEvent)
-                .onError(this::reportError)
+                .onEvent(source -> (marker, message) -> reportEvent(source, marker, message))
+                .onError(source -> (marker, message, error) -> reportError(source, marker, message, error))
                 .caching(toCaching())
                 .build();
     }

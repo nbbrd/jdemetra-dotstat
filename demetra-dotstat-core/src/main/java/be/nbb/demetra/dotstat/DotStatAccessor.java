@@ -93,7 +93,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
     }
 
     private static List<DbSetId> getAllSeries(Connection conn, DatabaseRef databaseRef, FlowRef flow, DbSetId node) throws IOException {
-        KeyConverter converter = KeyConverter.of(conn.getStructure(databaseRef, flow), node);
+        KeyConverter converter = KeyConverter.of(conn.getMeta(databaseRef, flow).getStructure(), node);
 
         try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeries(conn, databaseRef, flow, converter.toKey(node), SdmxQueryUtil.NO_LABEL)) {
             ImmutableList.Builder<DbSetId> result = ImmutableList.builder();
@@ -105,7 +105,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
     }
 
     private static List<DbSeries> getAllSeriesWithData(Connection conn, DatabaseRef databaseRef, FlowRef flow, DbSetId node) throws IOException {
-        KeyConverter converter = KeyConverter.of(conn.getStructure(databaseRef, flow), node);
+        KeyConverter converter = KeyConverter.of(conn.getMeta(databaseRef, flow).getStructure(), node);
 
         try (TsCursor<Key> cursor = SdmxQueryUtil.getAllSeriesWithData(conn, databaseRef, flow, converter.toKey(node), SdmxQueryUtil.NO_LABEL)) {
             ImmutableList.Builder<DbSeries> result = ImmutableList.builder();
@@ -117,7 +117,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
     }
 
     private static DbSeries getSeriesWithData(Connection conn, DatabaseRef databaseRef, FlowRef flow, DbSetId leaf) throws IOException {
-        KeyConverter converter = KeyConverter.of(conn.getStructure(databaseRef, flow), leaf);
+        KeyConverter converter = KeyConverter.of(conn.getMeta(databaseRef, flow).getStructure(), leaf);
 
         try (TsCursor<Key> cursor = SdmxQueryUtil.getSeriesWithData(conn, databaseRef, flow, converter.toKey(leaf), SdmxQueryUtil.NO_LABEL)) {
             return new DbSeries(leaf, cursor.nextSeries() ? cursor.getSeriesData() : SdmxQueryUtil.MISSING_DATA);
@@ -125,7 +125,7 @@ final class DotStatAccessor extends DbAccessor.Abstract<DotStatBean> {
     }
 
     private static List<String> getChildren(Connection conn, DatabaseRef databaseRef, FlowRef flow, DbSetId node) throws IOException {
-        Structure dsd = conn.getStructure(databaseRef, flow);
+        Structure dsd = conn.getMeta(databaseRef, flow).getStructure();
         KeyConverter converter = KeyConverter.of(dsd, node);
         String dimensionId = node.getColumn(node.getLevel());
         int dimensionIndex = SdmxCubeUtil.getDimensionIndexById(dsd, dimensionId).orElseThrow(RuntimeException::new);

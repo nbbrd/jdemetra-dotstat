@@ -92,7 +92,7 @@ public class DotStatAccessorTest {
 
     @Test
     public void testGetKey() throws Exception {
-        Structure dsd = manager.getConnection("NBB", ANY).getStructure(NO_DATABASE, NBB_FLOW_REF);
+        Structure dsd = manager.getConnection("NBB", ANY).getMeta(NO_DATABASE, NBB_FLOW_REF).getStructure();
 
         // default ordering of dimensions
         DbSetId r1 = DbSetId.root("SUBJECT", "LOCATION", "FREQUENCY");
@@ -239,6 +239,6 @@ public class DotStatAccessorTest {
                 .hasSize(1)
                 .contains("1");
 
-        assertThatIllegalArgumentException().isThrownBy(() -> accessor.getChildren("hello"));
+        assertThat(accessor.getChildren("hello")).isEmpty();
     }
 }

@@ -254,6 +254,6 @@ public class SdmxQueryUtilTest {
         assertThat(getChildren(conn, NO_DATABASE, ECB_FLOW_REF, Key.ALL, 0)).containsExactly("A");
         assertThat(getChildren(conn, NO_DATABASE, ECB_FLOW_REF, Key.of("A", "", "", "", "", "", ""), 1)).hasSize(30).contains("BEL", "POL");
         assertThat(getChildren(conn, NO_DATABASE, ECB_FLOW_REF, Key.of("A", "BEL", "", "", "", "", ""), 2)).containsExactly("1");
-        assertThatIllegalArgumentException().isThrownBy(() -> getChildren(conn, NO_DATABASE, ECB_FLOW_REF, Key.of("hello", "", "", "", "", "", ""), 1));
+        assertThat(getChildren(conn, NO_DATABASE, ECB_FLOW_REF, Key.of("hello", "", "", "", "", "", ""), 1)).isEmpty();
     }
 }

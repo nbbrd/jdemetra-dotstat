@@ -42,17 +42,15 @@ public final class SdmxCubeAccessor implements CubeAccessor {
 
     public static SdmxCubeAccessor of(IOSupplier<Connection> supplier, DatabaseRef databaseRef, FlowRef flowRef, List<String> dimensions, String labelAttribute, String sourceLabel, boolean displayCodes) throws IOException {
         try (Connection conn = supplier.getWithIO()) {
-            Flow flow = conn.getFlow(databaseRef, flowRef);
-            Structure dsd = conn.getStructure(databaseRef, flowRef);
-            CubeId root = getOrLoadRoot(dimensions, dsd);
-            return new SdmxCubeAccessor(supplier, databaseRef, flow, dsd, root, labelAttribute, sourceLabel, displayCodes);
+            MetaSet meta = conn.getMeta(databaseRef, flowRef);
+            CubeId root = getOrLoadRoot(dimensions, meta.getStructure());
+            return new SdmxCubeAccessor(supplier, databaseRef, meta, root, labelAttribute, sourceLabel, displayCodes);
         }
     }
 
     private final IOSupplier<Connection> supplier;
     private final DatabaseRef databaseRef;
-    private final Flow flow;
-    private final Structure dsd;
+    private final MetaSet meta;
     private final CubeId root;
     private final String labelAttribute;
     private final String sourceLabel;
@@ -77,7 +75,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     public @NonNull TsCursor<CubeId> getAllSeries(@NonNull CubeId ref) throws IOException {
         Connection conn = supplier.getWithIO();
         try {
-            return getAllSeries(conn, databaseRef, flow, dsd, ref, labelAttribute).onClose(conn);
+            return getAllSeries(conn, databaseRef, meta, ref, labelAttribute).onClose(conn);
         } catch (IOException ex) {
             throw close(conn, ex);
         } catch (RuntimeException ex) {
@@ -89,7 +87,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     public @NonNull TsCursor<CubeId> getAllSeriesWithData(@NonNull CubeId ref) throws IOException {
         Connection conn = supplier.getWithIO();
         try {
-            return getAllSeriesWithData(conn, databaseRef, flow, dsd, ref, labelAttribute).onClose(conn);
+            return getAllSeriesWithData(conn, databaseRef, meta, ref, labelAttribute).onClose(conn);
         } catch (IOException ex) {
             throw close(conn, ex);
         } catch (RuntimeException ex) {
@@ -101,7 +99,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     public @NonNull TsCursor<CubeId> getSeriesWithData(@NonNull CubeId ref) throws IOException {
         Connection conn = supplier.getWithIO();
         try {
-            return getSeriesWithData(conn, databaseRef, flow, dsd, ref, labelAttribute).onClose(conn);
+            return getSeriesWithData(conn, databaseRef, meta, ref, labelAttribute).onClose(conn);
         } catch (IOException ex) {
             throw close(conn, ex);
         } catch (RuntimeException ex) {
@@ -113,7 +111,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
     public @NonNull IteratorWithIO<CubeId> getChildren(@NonNull CubeId ref) throws IOException {
         Connection conn = supplier.getWithIO();
         try {
-            return getChildren(conn, databaseRef, flow, dsd, ref).onClose(conn);
+            return getChildren(conn, databaseRef, meta, ref).onClose(conn);
         } catch (IOException ex) {
             throw close(conn, ex);
         } catch (RuntimeException ex) {
@@ -123,7 +121,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
 
     @Override
     public @NonNull String getDisplayName() {
-        return String.format(Locale.ROOT, "%s ~ %s", sourceLabel, flow.getName());
+        return String.format(Locale.ROOT, "%s ~ %s", sourceLabel, meta.getFlow().getName());
     }
 
     @Override
@@ -131,7 +129,7 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         if (id.isVoid()) {
             return "All";
         }
-        return getKey(dsd, id).toString();
+        return getKey(meta.getStructure(), id).toString();
     }
 
     @Override
@@ -141,36 +139,36 @@ public final class SdmxCubeAccessor implements CubeAccessor {
         }
         return displayCodes
                 ? getDimensionCodeId(id)
-                : getDimensionCodeLabel(id, dsd);
+                : getDimensionCodeLabel(id, meta.getStructure());
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private static TsCursor<CubeId> getAllSeries(Connection conn, DatabaseRef databaseRef, Flow flow, Structure dsd, CubeId node, String labelAttribute) throws IOException {
-        KeyConverter converter = KeyConverter.of(dsd, node);
+    private static TsCursor<CubeId> getAllSeries(Connection conn, DatabaseRef databaseRef, MetaSet meta, CubeId node, String labelAttribute) throws IOException {
+        KeyConverter converter = KeyConverter.of(meta.getStructure(), node);
         return SdmxQueryUtil
-                .getAllSeries(conn, databaseRef, flow.getRef(), converter.toKey(node), labelAttribute)
+                .getAllSeries(conn, databaseRef, meta.getFlow().getRef(), converter.toKey(node), labelAttribute)
                 .transform(converter::fromKey);
     }
 
-    private static TsCursor<CubeId> getAllSeriesWithData(Connection conn, DatabaseRef databaseRef, Flow flow, Structure dsd, CubeId node, String labelAttribute) throws IOException {
-        KeyConverter converter = KeyConverter.of(dsd, node);
+    private static TsCursor<CubeId> getAllSeriesWithData(Connection conn, DatabaseRef databaseRef, MetaSet meta, CubeId node, String labelAttribute) throws IOException {
+        KeyConverter converter = KeyConverter.of(meta.getStructure(), node);
         return SdmxQueryUtil
-                .getAllSeriesWithData(conn, databaseRef, flow.getRef(), converter.toKey(node), labelAttribute)
+                .getAllSeriesWithData(conn, databaseRef, meta.getFlow().getRef(), converter.toKey(node), labelAttribute)
                 .transform(converter::fromKey);
     }
 
-    private static TsCursor<CubeId> getSeriesWithData(Connection conn, DatabaseRef databaseRef, Flow flow, Structure dsd, CubeId leaf, String labelAttribute) throws IOException {
-        KeyConverter converter = KeyConverter.of(dsd, leaf);
+    private static TsCursor<CubeId> getSeriesWithData(Connection conn, DatabaseRef databaseRef, MetaSet meta, CubeId leaf, String labelAttribute) throws IOException {
+        KeyConverter converter = KeyConverter.of(meta.getStructure(), leaf);
         return SdmxQueryUtil
-                .getSeriesWithData(conn, databaseRef, flow.getRef(), converter.toKey(leaf), labelAttribute)
+                .getSeriesWithData(conn, databaseRef, meta.getFlow().getRef(), converter.toKey(leaf), labelAttribute)
                 .transform(converter::fromKey);
     }
 
-    private static IteratorWithIO<CubeId> getChildren(Connection conn, DatabaseRef databaseRef, Flow flow, Structure dsd, CubeId node) throws IOException {
-        KeyConverter converter = KeyConverter.of(dsd, node);
+    private static IteratorWithIO<CubeId> getChildren(Connection conn, DatabaseRef databaseRef, MetaSet meta, CubeId node) throws IOException {
+        KeyConverter converter = KeyConverter.of(meta.getStructure(), node);
         String dimensionId = node.getDimensionId(node.getLevel());
-        int dimensionIndex = SdmxCubeUtil.getDimensionIndexById(dsd, dimensionId).orElseThrow(RuntimeException::new);
-        List<String> children = SdmxQueryUtil.getChildren(conn, databaseRef, flow.getRef(), converter.toKey(node), dimensionIndex);
+        int dimensionIndex = SdmxCubeUtil.getDimensionIndexById(meta.getStructure(), dimensionId).orElseThrow(RuntimeException::new);
+        List<String> children = SdmxQueryUtil.getChildren(conn, databaseRef, meta.getFlow().getRef(), converter.toKey(node), dimensionIndex);
         return IteratorWithIO.from(children.iterator()).transform(node::child);
     }
 

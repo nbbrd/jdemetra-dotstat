@@ -12,7 +12,6 @@ import org.openide.util.NbBundle;
 import sdmxdl.Dimension;
 
 import java.time.Duration;
-import java.util.Comparator;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
@@ -75,7 +74,7 @@ class SdmxFileBeanSupport {
                 .source(dimension.getSource())
                 .cellRenderer(dimension.getRenderer())
                 .separator(",")
-                .defaultValueSupplier(() -> dimension.getSource().getValues("").stream().map(sdmxdl.Dimension.class::cast).sorted(Comparator.comparingInt(sdmxdl.Dimension::getPosition)).map(Dimension::getId).collect(Collectors.joining(",")))
+                .defaultValueSupplier(() -> dimension.getSource().getValues("").stream().map(sdmxdl.Dimension.class::cast).map(Dimension::getId).collect(Collectors.joining(",")))
                 .display(Bundle.bean_dimensions_display())
                 .description(Bundle.bean_dimensions_description())
                 .add();
