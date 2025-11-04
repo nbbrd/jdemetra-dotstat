@@ -54,16 +54,22 @@ public final class CopyPathSetAction extends AbilityNodeAction3<DataSet> impleme
         DatabaseRef databaseRef = SdmxBeans.getDatabase(bean);
         FlowRef flowRef = FlowRef.parse(bean.getFlow());
         Key key = getKey(provider, bean.getSource(), databaseRef, flowRef, item);
-        CatalogRef catalog = CatalogRef.NO_CATALOG;
+        KeyRequest keyRequest = KeyRequest
+                .builder()
+                .languages(provider.getLanguages())
+                .database(databaseRef)
+                .flow(flowRef)
+                .key(key)
+                .build();
         new OnDemandMenuBuilder()
-                .copyToClipboard("SDMX-DL URI", SdmxURI.dataSetURI(bean.getSource(), flowRef, key, catalog))
+                .copyToClipboard("SDMX-DL URI", SdmxURI.fromKeyRequest(bean.getSource(), keyRequest).toString())
                 .copyToClipboard("Source", bean.getSource())
-                .copyToClipboard("Flow", flowRef.toString())
+                .copyToClipboard("Flow", flowRef.toShortString())
                 .copyToClipboard("Key", key.toString())
                 .addSeparator()
-                .copyToClipboard("Fetch data command", SdmxCommand.fetchData(catalog, bean.getSource(), flowRef.toString(), key))
-                .copyToClipboard("Fetch meta command", SdmxCommand.fetchMeta(catalog, bean.getSource(), flowRef.toString(), key))
-                .copyToClipboard("Fetch keys command", SdmxCommand.fetchKeys(catalog, bean.getSource(), flowRef.toString(), key))
+                .copyToClipboard("Fetch data command", SdmxCommand.fetchData(bean.getSource(), keyRequest))
+                .copyToClipboard("Fetch meta command", SdmxCommand.fetchMeta(bean.getSource(), keyRequest))
+                .copyToClipboard("Fetch keys command", SdmxCommand.fetchKeys(bean.getSource(), keyRequest))
                 .showMenuAsPopup(null);
     }
 
@@ -88,8 +94,17 @@ public final class CopyPathSetAction extends AbilityNodeAction3<DataSet> impleme
     }
 
     private static Key getKey(SdmxWebProvider provider, String source, DatabaseRef databaseRef, FlowRef flowRef, DataSet dataSet) {
-        try (Connection connection = provider.getSdmxManager().getConnection(source, provider.getLanguages())) {
-            Structure structure = connection.getStructure(databaseRef, flowRef);
+        try {
+            Structure structure = provider
+                    .getSdmxManager()
+                    .usingName(source)
+                    .getMeta(FlowRequest
+                            .builder()
+                            .languages(provider.getLanguages())
+                            .database(databaseRef)
+                            .flow(flowRef)
+                            .build())
+                    .getStructure();
             Key.Builder result = Key.builder(structure);
             structure.getDimensions().forEach(dimension -> result.put(dimension.getId(), dataSet.get(dimension.getId())));
             return result.build();

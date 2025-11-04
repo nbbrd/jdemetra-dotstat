@@ -1,7 +1,9 @@
 package internal.sdmx;
 
-import sdmxdl.FlowRef;
+import sdmxdl.DatabaseRef;
+import sdmxdl.FlowRequest;
 import sdmxdl.Key;
+import sdmxdl.KeyRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -26,8 +28,8 @@ public class SdmxCommand {
         ).trim();
     }
 
-    public static Builder builderOf(CatalogRef ref) {
-        return builder().option("c", !ref.equals(CatalogRef.NO_CATALOG) ? ref.toString() : null);
+    public static Builder builderOf(DatabaseRef ref) {
+        return builder().option("d", !ref.equals(DatabaseRef.NO_DATABASE) ? ref.toString() : null);
     }
 
     private static String toOptionText(Map.Entry<String, String> e) {
@@ -41,28 +43,28 @@ public class SdmxCommand {
         }
     }
 
-    public static String of(CatalogRef catalog, String... parameters) {
-        return builderOf(catalog).parameters(asList(parameters)).build().toText();
+    public static String of(DatabaseRef database, String... parameters) {
+        return builderOf(database).parameters(asList(parameters)).build().toText();
     }
 
-    public static String fetchData(CatalogRef catalog, String source, String flow, Key key) {
-        return of(catalog, "fetch", "data", source, flow, toCommandParameter(key));
+    public static String fetchData(String source, KeyRequest request) {
+        return of(request.getDatabase(), "fetch", "data", source, request.getFlow().toString(), toCommandParameter(request.getKey()));
     }
 
-    public static String fetchMeta(CatalogRef catalog, String source, String flow, Key key) {
-        return of(catalog, "fetch", "meta", source, flow, toCommandParameter(key));
+    public static String fetchMeta(String source, KeyRequest request) {
+        return of(request.getDatabase(), "fetch", "meta", source, request.getFlow().toString(), toCommandParameter(request.getKey()));
     }
 
-    public static String fetchKeys(CatalogRef catalog, String source, String flow, Key key) {
-        return of(catalog, "fetch", "keys", source, flow, toCommandParameter(key));
+    public static String fetchKeys(String source, KeyRequest request) {
+        return of(request.getDatabase(), "fetch", "keys", source, request.getFlow().toString(), toCommandParameter(request.getKey()));
     }
 
-    public static String listDimensions(CatalogRef catalog, String source, FlowRef flow) {
-        return of(catalog, "list", "dimensions", source, flow.toString());
+    public static String listDimensions(String source, FlowRequest request) {
+        return of(request.getDatabase(), "list", "dimensions", source, request.getFlow().toString());
     }
 
-    public static String listAttributes(CatalogRef catalog, String source, FlowRef flow) {
-        return of(catalog, "list", "attributes", source, flow.toString());
+    public static String listAttributes(String source, FlowRequest request) {
+        return of(request.getDatabase(), "list", "attributes", source, request.getFlow().toString());
     }
 
     private static String toCommandParameter(Key key) {

@@ -12,7 +12,6 @@ import org.openide.util.NbBundle;
 import sdmxdl.Dimension;
 
 import java.time.Duration;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -72,7 +71,7 @@ class SdmxWebBeanSupport {
                         Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)
                 .source(dimension.getSource())
                 .separator(",")
-                .defaultValueSupplier(() -> dimension.getSource().getValues("").stream().map(sdmxdl.Dimension.class::cast).sorted(Comparator.comparingInt(sdmxdl.Dimension::getPosition)).map(Dimension::getId).collect(Collectors.joining(",")))
+                .defaultValueSupplier(() -> dimension.getSource().getValues("").stream().map(sdmxdl.Dimension.class::cast).map(Dimension::getId).collect(Collectors.joining(",")))
                 .cellRenderer(dimension.getRenderer())
                 .display(Bundle.bean_dimensions_display())
                 .description(Bundle.bean_dimensions_description())
