@@ -33,7 +33,6 @@ import sdmxdl.web.WebSource;
 import javax.swing.*;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
@@ -41,6 +40,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static ec.util.completion.AutoCompletionSource.Behavior.*;
+import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -135,7 +135,7 @@ public abstract class SdmxAutoCompletion {
 
         private final @NonNull Supplier<S> source;
 
-        private final @NonNull Supplier<DatabaseRef> databaseRef;
+        private final @NonNull Supplier<DatabaseRef> database;
 
         private final @NonNull ConcurrentMap<Object, Object> cache;
 
@@ -145,20 +145,27 @@ public abstract class SdmxAutoCompletion {
                     .builder(this::load)
                     .behavior(this::getBehavior)
                     .postProcessor(this::filterAndSort)
-                    .valueToString(o -> o.getRef().toString())
+                    .valueToString(o -> o.getRef().toShortString())
                     .cache(cache, this::getCacheKey, SYNC)
                     .build();
         }
 
         @Override
         public @NonNull ListCellRenderer<?> getRenderer() {
-            return CustomListCellRenderer.<Flow>of(flow -> flow.getRef() + "<br><i>" + flow.getName(), flow -> flow.getRef().toString());
+            return CustomListCellRenderer.<Flow>of(flow -> flow.getRef().toShortString() + "<br><i>" + flow.getName(), flow -> flow.getRef().toString());
         }
 
         private List<Flow> load(String term) throws Exception {
-            try (Connection c = provider.getSdmxManager().getConnection(source.get(), provider.getLanguages())) {
-                return new ArrayList<>(c.getFlows(databaseRef.get()));
-            }
+            return new ArrayList<>(
+                    provider
+                            .getSdmxManager()
+                            .using(source.get())
+                            .getFlows(DatabaseRequest
+                                    .builder()
+                                    .languages(provider.getLanguages())
+                                    .database(database.get())
+                                    .build())
+            );
         }
 
         private AutoCompletionSource.Behavior getBehavior(String term) {
@@ -169,7 +176,7 @@ public abstract class SdmxAutoCompletion {
             Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
             return values.stream()
                     .filter(o -> filter.test(o.getName()) || filter.test(o.getRef().getId()) || filter.test(o.getDescription()))
-                    .sorted(Comparator.comparing(Flow::getName))
+                    .sorted(comparing(Flow::getName))
                     .collect(toList());
         }
 
@@ -185,7 +192,7 @@ public abstract class SdmxAutoCompletion {
 
         private final @NonNull Supplier<S> source;
 
-        private final @NonNull Supplier<DatabaseRef> databaseRef;
+        private final @NonNull Supplier<DatabaseRef> database;
 
         private final @NonNull Supplier<FlowRef> flowRef;
 
@@ -208,9 +215,17 @@ public abstract class SdmxAutoCompletion {
         }
 
         private List<Dimension> load(String term) throws Exception {
-            try (Connection c = provider.getSdmxManager().getConnection(source.get(), provider.getLanguages())) {
-                return new ArrayList<>(c.getStructure(databaseRef.get(), flowRef.get()).getDimensions());
-            }
+            return provider
+                    .getSdmxManager()
+                    .using(source.get())
+                    .getMeta(FlowRequest
+                            .builder()
+                            .languages(provider.getLanguages())
+                            .database(database.get())
+                            .flow(flowRef.get())
+                            .build())
+                    .getStructure()
+                    .getDimensions();
         }
 
         private AutoCompletionSource.Behavior getBehavior(String term) {
@@ -220,8 +235,8 @@ public abstract class SdmxAutoCompletion {
         private List<Dimension> filterAndSort(List<Dimension> values, String term) {
             Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
             return values.stream()
-                    .filter(o -> filter.test(o.getId()) || filter.test(o.getName()) || filter.test(String.valueOf(o.getPosition())))
-                    .sorted(Comparator.comparing(Dimension::getId))
+                    .filter(o -> filter.test(o.getId()) || filter.test(o.getName()))
+                    .sorted(comparing(Dimension::getId))
                     .collect(toList());
         }
 
@@ -237,7 +252,7 @@ public abstract class SdmxAutoCompletion {
 
         private final @NonNull Supplier<S> source;
 
-        private final @NonNull Supplier<DatabaseRef> databaseRef;
+        private final @NonNull Supplier<DatabaseRef> database;
 
         private final @NonNull Supplier<FlowRef> flowRef;
 
@@ -260,9 +275,19 @@ public abstract class SdmxAutoCompletion {
         }
 
         private List<Attribute> load(String term) throws Exception {
-            try (Connection c = provider.getSdmxManager().getConnection(source.get(), provider.getLanguages())) {
-                return new ArrayList<>(c.getStructure(databaseRef.get(), flowRef.get()).getAttributes());
-            }
+            return new ArrayList<>(
+                    provider
+                            .getSdmxManager()
+                            .using(source.get())
+                            .getMeta(FlowRequest
+                                    .builder()
+                                    .languages(provider.getLanguages())
+                                    .database(database.get())
+                                    .flow(flowRef.get())
+                                    .build())
+                            .getStructure()
+                            .getAttributes()
+            );
         }
 
         private AutoCompletionSource.Behavior getBehavior(String term) {
@@ -273,7 +298,7 @@ public abstract class SdmxAutoCompletion {
             Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
             return values.stream()
                     .filter(o -> filter.test(o.getId()) || filter.test(o.getName()))
-                    .sorted(Comparator.comparing(Attribute::getId))
+                    .sorted(comparing(Attribute::getId))
                     .collect(toList());
         }
 
