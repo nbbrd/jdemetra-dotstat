@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+This is a bugfix release of **jdemetra-dotstat**.  
+[JDemetra+ 2.2.4 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
+
+### Changed
+
+- Bump sdmx-dl from 3.0.0-beta.16 to [3.0.0-beta.17](https://github.com/nbbrd/sdmx-dl/releases/tag/v3.0.0-beta.17)
+- Bump java-desktop-util-favicon from 2.5.0 to [2.6.0](https://github.com/nbbrd/java-desktop-util/releases/tag/v2.6.0)
+
 ## [2.2.11] - 2025-11-13
 
 This is a bugfix release of **jdemetra-dotstat**.  
