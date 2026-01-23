@@ -5,7 +5,7 @@
 
     <groupId>be.nbb.demetra</groupId>
     <artifactId>demetra-dotstat-parent</artifactId>
-    <version>2.2.12</version>
+    <version>2.2.13-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Demetra - DotStat</name>
@@ -42,7 +42,7 @@
     <properties>
         <!-- Java 8+ config -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.outputTimestamp>2026-01-23T10:16:19Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2026-01-23T10:16:27Z</project.build.outputTimestamp>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
         <requiredMavenVersion>3.9.11</requiredMavenVersion>
