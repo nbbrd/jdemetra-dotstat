@@ -25,6 +25,17 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- Force to latest versions to avoid dependency alerts -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>33.5.0-jre</version>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>3.27.7</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
