@@ -173,7 +173,7 @@ This is a feature release of **jdemetra-dotstat**.
 ### Added
 
 - Add support of system proxy selector under Windows
-- Improve error reporting
+- Improve error reporting (again)
 - Improve logging of web queries
 
 ### Fixed
