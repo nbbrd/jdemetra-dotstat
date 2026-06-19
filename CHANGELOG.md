@@ -67,13 +67,13 @@ This is a feature release of **jdemetra-dotstat**.
 
 - Add logging of events
 
-### Fixed
-
-- Fix sources file property in configuration
-
 ### Changed
 
 - Bump sdmx-dl from 3.0.0-beta.12 to [3.0.0-beta.13](https://github.com/nbbrd/sdmx-dl/releases/tag/v3.0.0-beta.13)
+
+### Fixed
+
+- Fix sources file property in configuration
 
 ## [2.2.7] - 2023-10-16
 
@@ -85,15 +85,15 @@ This is a feature release of **jdemetra-dotstat**.
 - Add contextual actions to providers
 - Allow configuration by environment variables
 
-### Fixed
-
-- Fix favicons transparency, cache and loading
-- Fix dimensions and attributes autocompletion
-
 ### Changed
 
 - Bump sdmx-dl from 3.0.0-beta.11 to [3.0.0-beta.12](https://github.com/nbbrd/sdmx-dl/releases/tag/v3.0.0-beta.12)
 - Refactor providers configuration
+
+### Fixed
+
+- Fix favicons transparency, cache and loading
+- Fix dimensions and attributes autocompletion
 
 ## [2.2.6] - 2023-06-05
 
@@ -113,16 +113,16 @@ This is a feature release of **jdemetra-dotstat**.
 - Add support of multi-language descriptions in sources
 - Add curl backend option
 
-### Fixed
-
-- Migrate ABS source to the new server
-- Fix obs gathering on single obs
-
 ### Changed
 
 - Improve browsing by preloading resources
 - Modify ISTAT endpoint
 - Improve Eurostat driver
+
+### Fixed
+
+- Migrate ABS source to the new server
+- Fix obs gathering on single obs
 
 ## [2.2.5] - 2021-09-14
 
@@ -267,15 +267,15 @@ This is a feature release of **jdemetra-dotstat**.
 - Add support of ESTAT large response
 - Add UNDATA entry point
 
+### Changed
+
+- v2.0.2 or previous releases must be uninstalled before installing the new one
+
 ### Fixed
 
 - Fix infinite timeouts
 - Fix ESTAT web service update
 - Fix two dots string keys
-
-### Changed
-
-- v2.0.2 or previous releases must be uninstalled before installing the new one
 
 ## [2.0.2] - 2016-01-15
 
