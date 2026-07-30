@@ -1,17 +1,17 @@
 /*
  * Copyright 2016 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package be.nbb.demetra.sdmx.file;
@@ -23,18 +23,20 @@ import ec.tss.TsMoniker;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.IDataSourceLoaderAssert;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicReference;
-import static org.assertj.core.api.Assertions.*;
-
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import tests.sdmxdl.api.ByteSource;
 import tests.sdmxdl.format.xml.SdmxXmlSources;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  *
@@ -48,7 +50,7 @@ public class SdmxFileProviderTest {
     private static File STRUCT20;
 
     private static File createTemp(ByteSource bytes, String prefix, String suffix) throws IOException {
-        File result = File.createTempFile(prefix, suffix);
+        File result = Files.createTempFile(prefix, suffix).toFile();
         result.deleteOnExit();
         bytes.copyTo(result);
         return result;
@@ -56,7 +58,7 @@ public class SdmxFileProviderTest {
 
     @BeforeAll
     public static void beforeClass() throws IOException {
-        NO_XML = File.createTempFile("sdmx_empty", ".xml");
+        NO_XML = Files.createTempFile("sdmx_empty", ".xml").toFile();
         NO_XML.deleteOnExit();
         BLANK = Paths.get("").toFile();
         GENERIC20 = createTemp(SdmxXmlSources.NBB_DATA, "sdmx_generic20", ".xml");
@@ -86,7 +88,7 @@ public class SdmxFileProviderTest {
                 .put("k", "Q.AT.ALL.BC.E.LE.B3.ST.S.DINX")
                 .build();
 
-        try ( SdmxFileProvider p = new SdmxFileProvider()) {
+        try (SdmxFileProvider p = new SdmxFileProvider()) {
             assertThat(p.toDataSet(new TsMoniker("sdmx-file", uri))).isEqualTo(expected);
         }
     }
@@ -98,7 +100,7 @@ public class SdmxFileProviderTest {
 
     @Test
     public void testContent() throws IOException {
-        try ( SdmxFileProvider p = new SdmxFileProvider()) {
+        try (SdmxFileProvider p = new SdmxFileProvider()) {
 
             AtomicReference<TsMoniker> single = new AtomicReference<>();
             assertThat(newColInfo(p, GENERIC20, STRUCT20)).satisfies(info -> {
