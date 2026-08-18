@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -38,7 +37,6 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
     <dependencies>
         <!-- compile only -->
         <dependency>
@@ -95,8 +93,8 @@
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-api</artifactId>
             <version>${sdmx-dl.version}</version>
-            <classifier>tests</classifier>
             <type>test-jar</type>
+            <classifier>tests</classifier>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -109,8 +107,8 @@
             <groupId>com.github.nbbrd.sdmx-dl</groupId>
             <artifactId>sdmx-dl-format-xml</artifactId>
             <version>${sdmx-dl.version}</version>
-            <classifier>tests</classifier>
             <type>test-jar</type>
+            <classifier>tests</classifier>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
