@@ -4,26 +4,28 @@ import be.nbb.demetra.sdmx.file.SdmxFileBean;
 import be.nbb.demetra.sdmx.file.SdmxFileProvider;
 import be.nbb.demetra.sdmx.web.SdmxWebBean;
 import be.nbb.demetra.sdmx.web.SdmxWebProvider;
+import java.io.FileNotFoundException;
+import java.util.Optional;
 import sdmxdl.DatabaseRef;
 import sdmxdl.FlowRef;
 import sdmxdl.file.FileSource;
 import sdmxdl.web.WebSource;
 
-import java.io.FileNotFoundException;
-import java.util.Optional;
-
 public final class SdmxBeans {
 
     private SdmxBeans() {
-        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+        throw new UnsupportedOperationException(
+                "This is a utility class and cannot be instantiated");
     }
 
     public static WebSource getWebSourceOrNull(SdmxWebBean bean, SdmxWebProvider provider) {
         return provider.getSdmxManager().getSources().get(bean.getSource());
     }
 
-    public static DatabaseRef getDatabase(SdmxWebBean ignore) {
-        return DatabaseRef.NO_DATABASE;
+    public static DatabaseRef getDatabase(SdmxWebBean bean) {
+        return bean.getDatabase() != null
+                ? DatabaseRef.parse(bean.getDatabase())
+                : DatabaseRef.NO_DATABASE;
     }
 
     public static DatabaseRef getDatabase(SdmxFileBean ignore) {

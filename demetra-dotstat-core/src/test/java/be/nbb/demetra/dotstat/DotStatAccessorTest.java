@@ -16,7 +16,6 @@
  */
 package be.nbb.demetra.dotstat;
 
-import com.google.common.base.Joiner;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbSeries;
 import ec.tss.tsproviders.db.DbSetId;
@@ -36,7 +35,6 @@ import java.util.function.Consumer;
 
 import static be.nbb.demetra.dotstat.DotStatAccessor.getKey;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static sdmxdl.DatabaseRef.NO_DATABASE;
 import static sdmxdl.Languages.ANY;
 import static test.samples.FacadeResource.ECB_FLOW_REF;
@@ -66,7 +64,7 @@ public class DotStatAccessorTest {
         DotStatBean result = new DotStatBean();
         result.setDbName("NBB");
         result.setFlowRef(NBB_FLOW_REF);
-        result.setDimColumns(Joiner.on(',').join(new String[]{"SUBJECT", "LOCATION", "FREQUENCY"}));
+        result.setDimColumns(String.join(",", "SUBJECT", "LOCATION", "FREQUENCY"));
         return result;
     }
 
@@ -81,7 +79,7 @@ public class DotStatAccessorTest {
         DotStatBean result = new DotStatBean();
         result.setDbName("ECB");
         result.setFlowRef(ECB_FLOW_REF);
-        result.setDimColumns(Joiner.on(',').join(dimensions));
+        result.setDimColumns(String.join(",", dimensions));
         return result;
     }
 
