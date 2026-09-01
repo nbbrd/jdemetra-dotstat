@@ -16,6 +16,10 @@
  */
 package internal.sdmx;
 
+import static ec.util.completion.AutoCompletionSource.Behavior.*;
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.toList;
+
 import be.nbb.demetra.sdmx.HasSdmxProperties;
 import be.nbb.demetra.sdmx.file.SdmxFileBean;
 import be.nbb.demetra.sdmx.file.SdmxFileProvider;
@@ -24,13 +28,6 @@ import be.nbb.demetra.sdmx.web.SdmxWebProvider;
 import ec.util.completion.AutoCompletionSource;
 import ec.util.completion.ExtAutoCompletionSource;
 import ec.util.completion.swing.CustomListCellRenderer;
-import lombok.NonNull;
-import sdmxdl.*;
-import sdmxdl.file.FileSource;
-import sdmxdl.web.SdmxWebManager;
-import sdmxdl.web.WebSource;
-
-import javax.swing.*;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,10 +35,12 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-
-import static ec.util.completion.AutoCompletionSource.Behavior.*;
-import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.toList;
+import javax.swing.*;
+import lombok.NonNull;
+import sdmxdl.*;
+import sdmxdl.file.FileSource;
+import sdmxdl.web.SdmxWebManager;
+import sdmxdl.web.WebSource;
 
 /**
  * @author Philippe Charles
@@ -56,24 +55,71 @@ public abstract class SdmxAutoCompletion {
         return new WebSourceCompletion(provider);
     }
 
-    public static @NonNull SdmxAutoCompletion onFlow(@NonNull SdmxWebProvider provider, @NonNull SdmxWebBean bean, @NonNull ConcurrentMap<Object, Object> cache) {
-        return new FlowCompletion<>(provider, () -> getWebSourceOrNull(bean, provider), () -> SdmxBeans.getDatabase(bean), cache);
+    public static @NonNull SdmxAutoCompletion onDatabase(
+            @NonNull SdmxWebProvider provider,
+            @NonNull SdmxWebBean bean,
+            @NonNull ConcurrentMap<Object, Object> cache) {
+        return new DatabaseCompletion<>(
+                provider, () -> SdmxBeans.getWebSourceOrNull(bean, provider), cache);
     }
 
-    public static @NonNull SdmxAutoCompletion onDimension(@NonNull SdmxWebProvider provider, @NonNull SdmxWebBean bean, @NonNull ConcurrentMap<Object, Object> cache) {
-        return new DimensionCompletion<>(provider, () -> getWebSourceOrNull(bean, provider), () -> SdmxBeans.getDatabase(bean), () -> getFlowRefOrNull(bean), cache);
+    public static @NonNull SdmxAutoCompletion onFlow(
+            @NonNull SdmxWebProvider provider,
+            @NonNull SdmxWebBean bean,
+            @NonNull ConcurrentMap<Object, Object> cache) {
+        return new FlowCompletion<>(
+                provider,
+                () -> getWebSourceOrNull(bean, provider),
+                () -> SdmxBeans.getDatabase(bean),
+                cache);
     }
 
-    public static @NonNull SdmxAutoCompletion onDimension(@NonNull SdmxFileProvider provider, @NonNull SdmxFileBean bean, @NonNull ConcurrentMap<Object, Object> cache) {
-        return new DimensionCompletion<>(provider, () -> getFileSource(bean, provider).orElse(null), () -> SdmxBeans.getDatabase(bean), () -> getFileSource(bean, provider).map(FileSource::asDataflowRef).orElse(null), cache);
+    public static @NonNull SdmxAutoCompletion onDimension(
+            @NonNull SdmxWebProvider provider,
+            @NonNull SdmxWebBean bean,
+            @NonNull ConcurrentMap<Object, Object> cache) {
+        return new DimensionCompletion<>(
+                provider,
+                () -> getWebSourceOrNull(bean, provider),
+                () -> SdmxBeans.getDatabase(bean),
+                () -> getFlowRefOrNull(bean),
+                cache);
     }
 
-    public static @NonNull SdmxAutoCompletion onAttribute(@NonNull SdmxWebProvider provider, @NonNull SdmxWebBean bean, @NonNull ConcurrentMap<Object, Object> cache) {
-        return new AttributeCompletion<>(provider, () -> getWebSourceOrNull(bean, provider), () -> SdmxBeans.getDatabase(bean), () -> getFlowRefOrNull(bean), cache);
+    public static @NonNull SdmxAutoCompletion onDimension(
+            @NonNull SdmxFileProvider provider,
+            @NonNull SdmxFileBean bean,
+            @NonNull ConcurrentMap<Object, Object> cache) {
+        return new DimensionCompletion<>(
+                provider,
+                () -> getFileSource(bean, provider).orElse(null),
+                () -> SdmxBeans.getDatabase(bean),
+                () -> getFileSource(bean, provider).map(FileSource::asDataflowRef).orElse(null),
+                cache);
     }
 
-    public static @NonNull SdmxAutoCompletion onAttribute(@NonNull SdmxFileProvider provider, @NonNull SdmxFileBean bean, @NonNull ConcurrentMap<Object, Object> cache) {
-        return new AttributeCompletion<>(provider, () -> getFileSource(bean, provider).orElse(null), () -> SdmxBeans.getDatabase(bean), () -> getFileSource(bean, provider).map(FileSource::asDataflowRef).orElse(null), cache);
+    public static @NonNull SdmxAutoCompletion onAttribute(
+            @NonNull SdmxWebProvider provider,
+            @NonNull SdmxWebBean bean,
+            @NonNull ConcurrentMap<Object, Object> cache) {
+        return new AttributeCompletion<>(
+                provider,
+                () -> getWebSourceOrNull(bean, provider),
+                () -> SdmxBeans.getDatabase(bean),
+                () -> getFlowRefOrNull(bean),
+                cache);
+    }
+
+    public static @NonNull SdmxAutoCompletion onAttribute(
+            @NonNull SdmxFileProvider provider,
+            @NonNull SdmxFileBean bean,
+            @NonNull ConcurrentMap<Object, Object> cache) {
+        return new AttributeCompletion<>(
+                provider,
+                () -> getFileSource(bean, provider).orElse(null),
+                () -> SdmxBeans.getDatabase(bean),
+                () -> getFileSource(bean, provider).map(FileSource::asDataflowRef).orElse(null),
+                cache);
     }
 
     @lombok.AllArgsConstructor
@@ -83,8 +129,7 @@ public abstract class SdmxAutoCompletion {
 
         @Override
         public @NonNull AutoCompletionSource getSource() {
-            return ExtAutoCompletionSource
-                    .builder(this::load)
+            return ExtAutoCompletionSource.builder(this::load)
                     .behavior(SYNC)
                     .postProcessor(this::filterAndSort)
                     .valueToString(WebSource::getId)
@@ -100,18 +145,23 @@ public abstract class SdmxAutoCompletion {
                 }
 
                 @Override
-                protected Icon toIcon(String term, JList list, WebSource value, int index, boolean isSelected, boolean cellHasFocus) {
-                    return SdmxIcons.getFavicon(provider.getSdmxManager().getNetworking(), value.getWebsite(), list::repaint);
+                protected Icon toIcon(
+                        String term,
+                        JList list,
+                        WebSource value,
+                        int index,
+                        boolean isSelected,
+                        boolean cellHasFocus) {
+                    return SdmxIcons.getFavicon(
+                            provider.getSdmxManager().getNetworking(),
+                            value.getWebsite(),
+                            list::repaint);
                 }
             };
         }
 
         private List<WebSource> load(String term) {
-            return provider
-                    .getSdmxManager()
-                    .getSources()
-                    .values()
-                    .stream()
+            return provider.getSdmxManager().getSources().values().stream()
                     .filter(source -> !source.isAlias())
                     .collect(toList());
         }
@@ -122,9 +172,63 @@ public abstract class SdmxAutoCompletion {
 
         private Predicate<WebSource> getFilter(String term) {
             Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
-            return value -> filter.test(provider.getLanguages().select(value.getNames()))
-                    || filter.test(value.getId())
-                    || value.getAliases().stream().anyMatch(filter);
+            return value ->
+                    filter.test(provider.getLanguages().select(value.getNames()))
+                            || filter.test(value.getId())
+                            || value.getAliases().stream().anyMatch(filter);
+        }
+    }
+
+    @lombok.AllArgsConstructor
+    private static final class DatabaseCompletion<S extends Source> extends SdmxAutoCompletion {
+
+        private final @NonNull HasSdmxProperties<? extends SdmxManager<S>> provider;
+
+        private final @NonNull Supplier<S> source;
+
+        private final @NonNull ConcurrentMap<Object, Object> cache;
+
+        @Override
+        public @NonNull AutoCompletionSource getSource() {
+            return ExtAutoCompletionSource.builder(this::load)
+                    .behavior(this::getBehavior)
+                    .postProcessor(this::filterAndSort)
+                    .valueToString(o -> o.getRef().toString())
+                    .cache(cache, this::getCacheKey, SYNC)
+                    .build();
+        }
+
+        @Override
+        public @NonNull ListCellRenderer<?> getRenderer() {
+            return CustomListCellRenderer.<Database>of(
+                    flow -> flow.getRef() + "<br><i>" + flow.getName(),
+                    flow -> flow.getRef().toString());
+        }
+
+        private List<Database> load(String term) throws Exception {
+            return new ArrayList<>(
+                    provider.getSdmxManager()
+                            .using(source.get())
+                            .getDatabases(
+                                    SourceRequest.builder()
+                                            .languages(provider.getLanguages())
+                                            .build()));
+        }
+
+        private AutoCompletionSource.Behavior getBehavior(String term) {
+            return source.get() != null ? ASYNC : NONE;
+        }
+
+        private List<Database> filterAndSort(List<Database> values, String term) {
+            Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
+            return values.stream()
+                    .filter(o -> filter.test(o.getName()) || filter.test(o.getRef().getId()))
+                    .sorted(comparing(Database::getName))
+                    .collect(toList());
+        }
+
+        private String getCacheKey(String term) {
+            return "Database" + source.get() + provider.getLanguages();
         }
     }
 
@@ -141,8 +245,7 @@ public abstract class SdmxAutoCompletion {
 
         @Override
         public @NonNull AutoCompletionSource getSource() {
-            return ExtAutoCompletionSource
-                    .builder(this::load)
+            return ExtAutoCompletionSource.builder(this::load)
                     .behavior(this::getBehavior)
                     .postProcessor(this::filterAndSort)
                     .valueToString(o -> o.getRef().toShortString())
@@ -152,20 +255,20 @@ public abstract class SdmxAutoCompletion {
 
         @Override
         public @NonNull ListCellRenderer<?> getRenderer() {
-            return CustomListCellRenderer.<Flow>of(flow -> flow.getRef().toShortString() + "<br><i>" + flow.getName(), flow -> flow.getRef().toString());
+            return CustomListCellRenderer.<Flow>of(
+                    flow -> flow.getRef().toShortString() + "<br><i>" + flow.getName(),
+                    flow -> flow.getRef().toString());
         }
 
         private List<Flow> load(String term) throws Exception {
             return new ArrayList<>(
-                    provider
-                            .getSdmxManager()
+                    provider.getSdmxManager()
                             .using(source.get())
-                            .getFlows(DatabaseRequest
-                                    .builder()
-                                    .languages(provider.getLanguages())
-                                    .database(database.get())
-                                    .build())
-            );
+                            .getFlows(
+                                    DatabaseRequest.builder()
+                                            .languages(provider.getLanguages())
+                                            .database(database.get())
+                                            .build()));
         }
 
         private AutoCompletionSource.Behavior getBehavior(String term) {
@@ -175,13 +278,17 @@ public abstract class SdmxAutoCompletion {
         private List<Flow> filterAndSort(List<Flow> values, String term) {
             Predicate<String> filter = ExtAutoCompletionSource.basicFilter(term);
             return values.stream()
-                    .filter(o -> filter.test(o.getName()) || filter.test(o.getRef().getId()) || filter.test(o.getDescription()))
+                    .filter(
+                            o ->
+                                    filter.test(o.getName())
+                                            || filter.test(o.getRef().getId())
+                                            || filter.test(o.getDescription()))
                     .sorted(comparing(Flow::getName))
                     .collect(toList());
         }
 
         private String getCacheKey(String term) {
-            return "Flow" + source.get() + provider.getLanguages();
+            return "Flow" + source.get() + database.get() + provider.getLanguages();
         }
     }
 
@@ -200,8 +307,7 @@ public abstract class SdmxAutoCompletion {
 
         @Override
         public @NonNull AutoCompletionSource getSource() {
-            return ExtAutoCompletionSource
-                    .builder(this::load)
+            return ExtAutoCompletionSource.builder(this::load)
                     .behavior(this::getBehavior)
                     .postProcessor(this::filterAndSort)
                     .valueToString(Dimension::getId)
@@ -215,15 +321,14 @@ public abstract class SdmxAutoCompletion {
         }
 
         private List<Dimension> load(String term) throws Exception {
-            return provider
-                    .getSdmxManager()
+            return provider.getSdmxManager()
                     .using(source.get())
-                    .getMeta(FlowRequest
-                            .builder()
-                            .languages(provider.getLanguages())
-                            .database(database.get())
-                            .flow(flowRef.get())
-                            .build())
+                    .getMeta(
+                            FlowRequest.builder()
+                                    .languages(provider.getLanguages())
+                                    .database(database.get())
+                                    .flow(flowRef.get())
+                                    .build())
                     .getStructure()
                     .getDimensions();
         }
@@ -241,7 +346,11 @@ public abstract class SdmxAutoCompletion {
         }
 
         private String getCacheKey(String term) {
-            return "Dimension" + source.get() + flowRef.get() + provider.getLanguages();
+            return "Dimension"
+                    + source.get()
+                    + database.get()
+                    + flowRef.get()
+                    + provider.getLanguages();
         }
     }
 
@@ -260,8 +369,7 @@ public abstract class SdmxAutoCompletion {
 
         @Override
         public @NonNull AutoCompletionSource getSource() {
-            return ExtAutoCompletionSource
-                    .builder(this::load)
+            return ExtAutoCompletionSource.builder(this::load)
                     .behavior(this::getBehavior)
                     .postProcessor(this::filterAndSort)
                     .valueToString(Attribute::getId)
@@ -276,18 +384,16 @@ public abstract class SdmxAutoCompletion {
 
         private List<Attribute> load(String term) throws Exception {
             return new ArrayList<>(
-                    provider
-                            .getSdmxManager()
+                    provider.getSdmxManager()
                             .using(source.get())
-                            .getMeta(FlowRequest
-                                    .builder()
-                                    .languages(provider.getLanguages())
-                                    .database(database.get())
-                                    .flow(flowRef.get())
-                                    .build())
+                            .getMeta(
+                                    FlowRequest.builder()
+                                            .languages(provider.getLanguages())
+                                            .database(database.get())
+                                            .flow(flowRef.get())
+                                            .build())
                             .getStructure()
-                            .getAttributes()
-            );
+                            .getAttributes());
         }
 
         private AutoCompletionSource.Behavior getBehavior(String term) {
@@ -303,7 +409,11 @@ public abstract class SdmxAutoCompletion {
         }
 
         private String getCacheKey(String term) {
-            return "Attribute" + source.get() + flowRef.get() + provider.getLanguages();
+            return "Attribute"
+                    + source.get()
+                    + database.get()
+                    + flowRef.get()
+                    + provider.getLanguages();
         }
     }
 
@@ -319,7 +429,8 @@ public abstract class SdmxAutoCompletion {
         }
     }
 
-    private static Optional<FileSource> getFileSource(SdmxFileBean bean, SdmxFileProvider provider) {
+    private static Optional<FileSource> getFileSource(
+            SdmxFileBean bean, SdmxFileProvider provider) {
         try {
             return Optional.of(SdmxCubeItems.resolveFileSet(provider, bean));
         } catch (FileNotFoundException ex) {

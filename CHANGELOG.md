@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+This is a feature release of **jdemetra-dotstat**.  
+[JDemetra+ 2.2.4 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
+
+### Added
+
+- Add support of databases in UI
+
+### Changed
+
+- Bump sdmx-dl from 3.1.1 to [3.2.0](https://github.com/nbbrd/sdmx-dl/releases/tag/v3.2.0)
+
 ## [2.2.14] - 2026-06-19
 
 This is a bugfix release of **jdemetra-dotstat**.  
