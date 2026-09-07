@@ -273,9 +273,7 @@
                 <artifactId>spotless-maven-plugin</artifactId>
                 <configuration>
                     <java>
-                        <googleJavaFormat>
-                            <style>AOSP</style>
-                        </googleJavaFormat>
+                        <palantirJavaFormat/>
                         <importOrder/>
                         <removeUnusedImports />
                         <formatAnnotations />
