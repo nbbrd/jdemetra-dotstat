@@ -115,6 +115,10 @@
                     <groupId>*</groupId>
                     <artifactId>sdmx-dl-api</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>java-io-xml</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
